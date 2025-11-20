@@ -12,52 +12,125 @@
         }
 
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
             --secondary: #10b981;
+            --secondary-dark: #059669;
             --accent: #f59e0b;
+            --accent-light: #fbbf24;
             --danger: #ef4444;
-            --text-dark: #1f2937;
-            --text-light: #6b7280;
-            --background: #f9fafb;
+            --danger-dark: #dc2626;
+            --purple: #a855f7;
+            --pink: #ec4899;
+            --cyan: #06b6d4;
+            --text-dark: #0f172a;
+            --text-medium: #475569;
+            --text-light: #94a3b8;
+            --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --card-bg: #ffffff;
-            --border: #e5e7eb;
-            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: var(--background);
+            background: #f1f5f9;
             color: var(--text-dark);
             font-size: 18px;
             line-height: 1.6;
-            padding-bottom: 90px;
+            padding-bottom: 100px;
             min-height: 100vh;
         }
 
-        /* Header */
+        /* Header with Gradient */
         .header {
-            background: var(--primary);
+            background: var(--background);
             color: white;
-            padding: 20px;
+            padding: 28px 20px;
             text-align: center;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-lg);
             position: sticky;
             top: 0;
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .header h1 {
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.95;
+            margin-top: 4px;
+            font-weight: 500;
         }
 
         /* Container */
         .container {
             max-width: 800px;
             margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
             padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--purple));
+        }
+
+        .stat-card:active {
+            transform: translateY(2px);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            background: var(--background);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-medium);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         /* Pages */
@@ -67,13 +140,13 @@
 
         .page.active {
             display: block;
-            animation: fadeIn 0.3s ease-in;
+            animation: pageSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        @keyframes fadeIn {
+        @keyframes pageSlideIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -81,80 +154,248 @@
             }
         }
 
-        /* Section Title */
-        .section-title {
-            font-size: 24px;
-            font-weight: 700;
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
-            color: var(--text-dark);
         }
 
-        /* Cards */
-        .card {
+        .section-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+        }
+
+        .filter-toggle {
             background: var(--card-bg);
+            border: 2px solid var(--border);
+            padding: 8px 16px;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-medium);
+            cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .card:active {
-            transform: scale(0.98);
+        .filter-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .filter-toggle.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Add Form - Collapsible */
+        .add-form-container {
+            margin-bottom: 24px;
+        }
+
+        .add-form-toggle {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 68px;
+        }
+
+        .add-form-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .add-form-toggle:active {
+            transform: translateY(0);
+        }
+
+        .add-form {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 12px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border);
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .add-form.open {
+            max-height: 800px;
+            opacity: 1;
+            margin-top: 12px;
+        }
+
+        .form-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 18px;
+            font-size: 18px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #fafafa;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Cards */
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: cardSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes cardSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card.completed {
+            opacity: 0.6;
         }
 
         /* Category Badge */
         .category-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 24px;
             font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .category-food {
-            background: #dbeafe;
-            color: #1e40af;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
         }
 
         .category-cleaning {
-            background: #d1fae5;
-            color: #065f46;
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .category-pet {
-            background: #fef3c7;
-            color: #92400e;
+            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
 
         /* Item Content */
         .item-content {
             display: flex;
             align-items: flex-start;
-            gap: 16px;
+            gap: 20px;
         }
 
         .checkbox-wrapper {
             flex-shrink: 0;
+            position: relative;
         }
 
         .checkbox {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             cursor: pointer;
             accent-color: var(--secondary);
+            transform: scale(1.2);
         }
 
         .item-details {
             flex: 1;
+            min-width: 0;
         }
 
         .item-name {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-dark);
+            word-wrap: break-word;
         }
 
         .item-name.completed {
@@ -163,171 +404,152 @@
         }
 
         .item-note {
-            color: var(--text-light);
+            color: var(--text-medium);
             font-size: 16px;
-            margin-top: 4px;
+            margin-top: 6px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-light);
         }
 
         .item-meta {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-top: 8px;
+            margin-top: 12px;
             flex-wrap: wrap;
         }
 
         .badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 6px 12px;
+            gap: 6px;
+            padding: 8px 14px;
             border-radius: 20px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .badge-recurring {
-            background: #fef3c7;
-            color: #92400e;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
         }
 
         .badge-member {
-            background: #dbeafe;
-            color: #1e40af;
+            background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+            color: white;
         }
 
         .delete-btn {
-            background: var(--danger);
+            background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 12px 20px;
+            border-radius: 12px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
-            margin-left: auto;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            flex-shrink: 0;
         }
 
         .delete-btn:hover {
-            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
         }
 
         .delete-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Add Form */
-        .add-form {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: var(--shadow-lg);
-            border: 2px solid var(--primary);
-        }
-
-        .form-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: var(--primary);
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-dark);
-        }
-
-        .form-input,
-        .form-select,
-        .form-textarea {
-            width: 100%;
-            padding: 16px;
-            font-size: 18px;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            font-family: inherit;
-            transition: all 0.2s ease;
-        }
-
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 80px;
+            transform: translateY(0);
         }
 
         /* Buttons */
         .btn {
             width: 100%;
-            padding: 18px;
+            padding: 20px;
             font-size: 20px;
             font-weight: 700;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            min-height: 64px;
+            gap: 10px;
+            min-height: 68px;
+            box-shadow: var(--shadow-lg);
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
             color: white;
         }
 
         .btn-primary:hover {
-            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
         }
 
         .btn-primary:active {
-            transform: scale(0.98);
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-dark);
+            border: 2px solid var(--border);
+            box-shadow: var(--shadow);
         }
 
         /* Member Cards */
         .members-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 16px;
         }
 
         .member-card {
             background: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
+            border-radius: 20px;
+            padding: 32px 24px;
             text-align: center;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-lg);
             border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: cardSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .member-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
         }
 
         .member-avatar {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            font-weight: 700;
+            font-size: 40px;
+            font-weight: 800;
             color: white;
-            margin: 0 auto 16px;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+        }
+
+        .member-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: inherit;
+            z-index: -1;
+            opacity: 0.3;
+            filter: blur(8px);
         }
 
         .avatar-john {
@@ -347,14 +569,25 @@
         }
 
         .member-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 4px;
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: var(--text-dark);
         }
 
         .member-role {
-            color: var(--text-light);
-            font-size: 16px;
+            color: var(--text-medium);
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .member-stats {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px solid var(--border);
+            font-size: 14px;
+            color: var(--text-medium);
+            font-weight: 600;
         }
 
         /* Navigation */
@@ -367,9 +600,10 @@
             border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-around;
-            padding: 8px;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            padding: 12px 8px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .nav-btn {
@@ -377,25 +611,30 @@
             padding: 12px;
             border: none;
             background: none;
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
             color: var(--text-light);
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             transition: all 0.2s ease;
-            border-radius: 8px;
+            border-radius: 12px;
+            position: relative;
         }
 
         .nav-btn .emoji {
-            font-size: 28px;
+            font-size: 32px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .nav-btn.active {
             color: var(--primary);
-            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-btn.active .emoji {
+            transform: scale(1.15);
         }
 
         .nav-btn:active {
@@ -410,11 +649,18 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             z-index: 1000;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            backdrop-filter: blur(4px);
+            animation: modalFadeIn 0.2s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal.active {
@@ -423,24 +669,43 @@
 
         .modal-content {
             background: white;
-            border-radius: 16px;
-            padding: 32px;
-            max-width: 400px;
+            border-radius: 24px;
+            padding: 36px;
+            max-width: 420px;
             width: 100%;
             text-align: center;
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .modal-title {
-            font-size: 24px;
-            font-weight: 700;
+        @keyframes modalSlideIn {
+            from {
+                transform: scale(0.9) translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-icon {
+            font-size: 64px;
             margin-bottom: 16px;
         }
 
+        .modal-title {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--text-dark);
+        }
+
         .modal-text {
-            font-size: 18px;
-            color: var(--text-light);
-            margin-bottom: 24px;
+            font-size: 17px;
+            color: var(--text-medium);
+            margin-bottom: 28px;
+            line-height: 1.5;
         }
 
         .modal-buttons {
@@ -450,22 +715,23 @@
 
         .modal-btn {
             flex: 1;
-            padding: 16px;
+            padding: 18px;
             font-size: 18px;
-            font-weight: 600;
+            font-weight: 700;
             border: none;
-            border-radius: 8px;
+            border-radius: 14px;
             cursor: pointer;
             transition: all 0.2s ease;
+            min-height: 60px;
         }
 
         .modal-btn-cancel {
             background: var(--background);
-            color: var(--text-dark);
+            color: white;
         }
 
         .modal-btn-confirm {
-            background: var(--danger);
+            background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
             color: white;
         }
 
@@ -473,117 +739,195 @@
             transform: scale(0.95);
         }
 
+        /* Success Toast */
+        .toast {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+            color: white;
+            padding: 18px 32px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: var(--text-light);
+            padding: 80px 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .empty-state .emoji {
-            font-size: 64px;
-            margin-bottom: 16px;
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
         }
 
         .empty-state-text {
             font-size: 20px;
+            color: var(--text-light);
+            font-weight: 600;
         }
 
         /* Responsive */
         @media (max-width: 640px) {
             .container {
-                padding: 16px;
+                padding: 20px 16px;
             }
 
             .members-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
+
+            .item-content {
+                gap: 12px;
+            }
+
+            .delete-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .stat-value {
+                font-size: 28px;
+            }
+        }
+
+        /* Loading Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🏠 Home Manager</h1>
+        <div class="header-subtitle">Keep your household organized</div>
     </div>
 
     <div class="container">
         <!-- Shopping List Page -->
         <div id="shopping-page" class="page active">
-            <h2 class="section-title">Shopping List</h2>
+            <div class="stats-grid" id="shopping-stats"></div>
 
-            <div class="add-form">
-                <div class="form-title">➕ Add New Item</div>
-                <form id="add-shopping-form">
-                    <div class="form-group">
-                        <label class="form-label">Item Name</label>
-                        <input type="text" class="form-input" id="shopping-item-name" placeholder="e.g., Milk" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select class="form-select" id="shopping-category" required>
-                            <option value="food">🍎 Food</option>
-                            <option value="cleaning">🧹 Cleaning</option>
-                            <option value="pet">🐾 Pet Supplies</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Notes (Optional)</label>
-                        <textarea class="form-textarea" id="shopping-notes" placeholder="e.g., Get the blue one"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <span>Add to List</span>
-                    </button>
-                </form>
+            <div class="section-header">
+                <h2 class="section-title">Shopping List</h2>
+                <button class="filter-toggle" onclick="toggleShoppingFilter()">
+                    <span id="shopping-filter-text">All Items</span>
+                </button>
             </div>
 
-            <div id="shopping-list"></div>
+            <div class="add-form-container">
+                <button class="add-form-toggle" onclick="toggleForm('shopping')">
+                    <span>➕</span>
+                    <span>Add New Item</span>
+                </button>
+                <div class="add-form" id="shopping-form">
+                    <div class="form-title">✨ New Shopping Item</div>
+                    <form id="add-shopping-form">
+                        <div class="form-group">
+                            <label class="form-label">Item Name</label>
+                            <input type="text" class="form-input" id="shopping-item-name" placeholder="e.g., Fresh milk" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="shopping-category" required>
+                                <option value="food">🍎 Food & Groceries</option>
+                                <option value="cleaning">🧹 Cleaning Supplies</option>
+                                <option value="pet">🐾 Pet Supplies</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Special Notes (Optional)</label>
+                            <textarea class="form-textarea" id="shopping-notes" placeholder="e.g., Get the organic version, blue packaging only"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span>✓</span>
+                            <span>Add to Shopping List</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="items-list" id="shopping-list"></div>
         </div>
 
         <!-- Tasks Page -->
         <div id="tasks-page" class="page">
-            <h2 class="section-title">Task List</h2>
+            <div class="stats-grid" id="tasks-stats"></div>
 
-            <div class="add-form">
-                <div class="form-title">➕ Add New Task</div>
-                <form id="add-task-form">
-                    <div class="form-group">
-                        <label class="form-label">Task Name</label>
-                        <input type="text" class="form-input" id="task-name" placeholder="e.g., Water plants" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Assign To</label>
-                        <select class="form-select" id="task-member" required>
-                            <option value="john">John</option>
-                            <option value="sarah">Sarah</option>
-                            <option value="mary">Mary</option>
-                            <option value="tom">Tom</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Recurring</label>
-                        <select class="form-select" id="task-recurring">
-                            <option value="">None</option>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Notes (Optional)</label>
-                        <textarea class="form-textarea" id="task-notes" placeholder="e.g., Check list first"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <span>Add Task</span>
-                    </button>
-                </form>
+            <div class="section-header">
+                <h2 class="section-title">Task List</h2>
+                <button class="filter-toggle" onclick="toggleTasksFilter()">
+                    <span id="tasks-filter-text">All Tasks</span>
+                </button>
             </div>
 
-            <div id="task-list"></div>
+            <div class="add-form-container">
+                <button class="add-form-toggle" onclick="toggleForm('task')">
+                    <span>➕</span>
+                    <span>Add New Task</span>
+                </button>
+                <div class="add-form" id="task-form">
+                    <div class="form-title">✨ New Task</div>
+                    <form id="add-task-form">
+                        <div class="form-group">
+                            <label class="form-label">Task Name</label>
+                            <input type="text" class="form-input" id="task-name" placeholder="e.g., Water the garden" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Assign To</label>
+                            <select class="form-select" id="task-member" required>
+                                <option value="john">👨 John</option>
+                                <option value="sarah">👩 Sarah</option>
+                                <option value="mary">👩‍🦱 Mary</option>
+                                <option value="tom">👨‍🌾 Tom</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Recurring Schedule</label>
+                            <select class="form-select" id="task-recurring">
+                                <option value="">One-time task</option>
+                                <option value="daily">📅 Every Day</option>
+                                <option value="weekly">📆 Every Week</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Task Details (Optional)</label>
+                            <textarea class="form-textarea" id="task-notes" placeholder="e.g., Remember to check the shed for supplies first"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span>✓</span>
+                            <span>Create Task</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="items-list" id="task-list"></div>
         </div>
 
         <!-- Members Page -->
         <div id="members-page" class="page">
             <h2 class="section-title">Household Members</h2>
-
             <div class="members-grid" id="members-list"></div>
         </div>
     </div>
@@ -607,8 +951,9 @@
     <!-- Delete Confirmation Modal -->
     <div id="delete-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-title">⚠️ Delete Item?</div>
-            <div class="modal-text">Are you sure you want to delete this item? This cannot be undone.</div>
+            <div class="modal-icon">⚠️</div>
+            <div class="modal-title">Delete This Item?</div>
+            <div class="modal-text">This action cannot be undone. Are you sure you want to permanently delete this item?</div>
             <div class="modal-buttons">
                 <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
                 <button class="modal-btn modal-btn-confirm" onclick="confirmDelete()">Delete</button>
@@ -616,23 +961,30 @@
         </div>
     </div>
 
+    <!-- Success Toast -->
+    <div id="toast" class="toast">
+        <span id="toast-message"></span>
+    </div>
+
     <script>
         // Mock Data
         let shoppingItems = [
-            { id: 1, name: 'Milk', category: 'food', notes: 'Get full cream milk', completed: false },
-            { id: 2, name: 'Bread', category: 'food', notes: '', completed: false },
-            { id: 3, name: 'Eggs', category: 'food', notes: 'Free range if possible', completed: false },
-            { id: 4, name: 'Soap', category: 'cleaning', notes: '', completed: false },
-            { id: 5, name: 'Bleach', category: 'cleaning', notes: 'Only from Woolworths', completed: false },
-            { id: 6, name: 'Dog food', category: 'pet', notes: 'Get the blue bag', completed: true }
+            { id: 1, name: 'Full cream milk', category: 'food', notes: 'Get the red label, 2 litres', completed: false },
+            { id: 2, name: 'Whole wheat bread', category: 'food', notes: 'Albany brand preferred', completed: false },
+            { id: 3, name: 'Free range eggs', category: 'food', notes: 'Large size, dozen pack', completed: false },
+            { id: 4, name: 'Dish soap', category: 'cleaning', notes: 'Lemon scent', completed: false },
+            { id: 5, name: 'Bleach', category: 'cleaning', notes: 'Only from Woolworths, thick formula', completed: false },
+            { id: 6, name: 'Premium dog food', category: 'pet', notes: 'Get the blue 5kg bag, chicken flavor', completed: true },
+            { id: 7, name: 'Fresh vegetables', category: 'food', notes: 'Carrots, broccoli, spinach', completed: false }
         ];
 
         let tasks = [
-            { id: 1, name: 'Feed dogs', member: 'sarah', recurring: 'daily', notes: '', completed: false },
-            { id: 2, name: 'Water garden', member: 'john', recurring: 'weekly', notes: 'Early morning is best', completed: false },
-            { id: 3, name: 'Buy groceries', member: 'mary', recurring: '', notes: 'Check list first', completed: false },
-            { id: 4, name: 'Clean pool', member: 'tom', recurring: 'weekly', notes: '', completed: false },
-            { id: 5, name: 'Take out trash', member: 'john', recurring: 'daily', notes: '', completed: true }
+            { id: 1, name: 'Feed the dogs', member: 'sarah', recurring: 'daily', notes: 'Morning and evening portions', completed: false },
+            { id: 2, name: 'Water the garden', member: 'john', recurring: 'weekly', notes: 'Early morning is best, before 8am', completed: false },
+            { id: 3, name: 'Weekly grocery shopping', member: 'mary', recurring: '', notes: 'Check shopping list first, go to Woolworths', completed: false },
+            { id: 4, name: 'Clean the pool', member: 'tom', recurring: 'weekly', notes: 'Test pH levels, add chemicals if needed', completed: false },
+            { id: 5, name: 'Take out trash bins', member: 'john', recurring: 'daily', notes: 'Separate recycling from general waste', completed: true },
+            { id: 6, name: 'Vacuum living room', member: 'mary', recurring: 'weekly', notes: 'Move furniture to get under everything', completed: false }
         ];
 
         const members = [
@@ -643,46 +995,102 @@
         ];
 
         let deleteTarget = null;
+        let shoppingFilter = 'all';
+        let tasksFilter = 'all';
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Form toggle
+        function toggleForm(type) {
+            const form = document.getElementById(`${type}-form`);
+            form.classList.toggle('open');
+        }
+
+        // Filter functions
+        function toggleShoppingFilter() {
+            shoppingFilter = shoppingFilter === 'all' ? 'active' : 'all';
+            document.getElementById('shopping-filter-text').textContent =
+                shoppingFilter === 'all' ? 'All Items' : 'Active Only';
+            document.querySelector('#shopping-page .filter-toggle').classList.toggle('active');
+            renderShoppingList();
+        }
+
+        function toggleTasksFilter() {
+            tasksFilter = tasksFilter === 'all' ? 'active' : 'all';
+            document.getElementById('tasks-filter-text').textContent =
+                tasksFilter === 'all' ? 'All Tasks' : 'Active Only';
+            document.querySelector('#tasks-page .filter-toggle').classList.toggle('active');
+            renderTaskList();
+        }
 
         // Navigation
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const pageId = btn.dataset.page;
-
-                // Update active nav button
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-
-                // Update active page
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 document.getElementById(pageId).classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         });
+
+        // Shopping Stats
+        function renderShoppingStats() {
+            const total = shoppingItems.length;
+            const completed = shoppingItems.filter(i => i.completed).length;
+            const active = total - completed;
+
+            document.getElementById('shopping-stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${total}</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${active}</div>
+                    <div class="stat-label">To Buy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${completed}</div>
+                    <div class="stat-label">Purchased</div>
+                </div>
+            `;
+        }
 
         // Shopping List Functions
         function renderShoppingList() {
             const container = document.getElementById('shopping-list');
 
-            if (shoppingItems.length === 0) {
+            let filteredItems = shoppingFilter === 'all'
+                ? shoppingItems
+                : shoppingItems.filter(i => !i.completed);
+
+            if (filteredItems.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="emoji">🛒</div>
-                        <div class="empty-state-text">No items in your shopping list</div>
+                        <div class="emoji">🎉</div>
+                        <div class="empty-state-text">All shopping done! Enjoy your day.</div>
                     </div>
                 `;
                 return;
             }
 
             const categories = {
-                food: { emoji: '🍎', label: 'Food', class: 'category-food' },
+                food: { emoji: '🍎', label: 'Food & Groceries', class: 'category-food' },
                 cleaning: { emoji: '🧹', label: 'Cleaning', class: 'category-cleaning' },
                 pet: { emoji: '🐾', label: 'Pet Supplies', class: 'category-pet' }
             };
 
-            container.innerHTML = shoppingItems.map(item => {
+            container.innerHTML = filteredItems.map((item, index) => {
                 const cat = categories[item.category];
                 return `
-                    <div class="card">
+                    <div class="card ${item.completed ? 'completed' : ''}" style="animation-delay: ${index * 0.05}s">
                         <div class="category-badge ${cat.class}">${cat.emoji} ${cat.label}</div>
                         <div class="item-content">
                             <div class="checkbox-wrapper">
@@ -693,17 +1101,20 @@
                                 <div class="item-name ${item.completed ? 'completed' : ''}">${item.name}</div>
                                 ${item.notes ? `<div class="item-note">📝 ${item.notes}</div>` : ''}
                             </div>
-                            <button class="delete-btn" onclick="deleteShoppingItem(${item.id})">🗑️</button>
+                            <button class="delete-btn" onclick="deleteShoppingItem(${item.id})">🗑️ Delete</button>
                         </div>
                     </div>
                 `;
             }).join('');
+
+            renderShoppingStats();
         }
 
         function toggleShoppingItem(id) {
             const item = shoppingItems.find(i => i.id === id);
             if (item) {
                 item.completed = !item.completed;
+                showToast(item.completed ? '✓ Item marked as purchased!' : 'Item unmarked');
                 renderShoppingList();
             }
         }
@@ -720,32 +1131,56 @@
             const category = document.getElementById('shopping-category').value;
             const notes = document.getElementById('shopping-notes').value;
 
-            const newItem = {
+            shoppingItems.unshift({
                 id: Date.now(),
                 name,
                 category,
                 notes,
                 completed: false
-            };
+            });
 
-            shoppingItems.unshift(newItem);
             renderShoppingList();
-
             e.target.reset();
-
-            // Scroll to see new item
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toggleForm('shopping');
+            showToast('✓ Item added to shopping list!');
+            window.scrollTo({ top: 300, behavior: 'smooth' });
         });
+
+        // Task Stats
+        function renderTaskStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const active = total - completed;
+
+            document.getElementById('tasks-stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${total}</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${active}</div>
+                    <div class="stat-label">To Do</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${completed}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            `;
+        }
 
         // Task List Functions
         function renderTaskList() {
             const container = document.getElementById('task-list');
 
-            if (tasks.length === 0) {
+            let filteredTasks = tasksFilter === 'all'
+                ? tasks
+                : tasks.filter(t => !t.completed);
+
+            if (filteredTasks.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="emoji">✓</div>
-                        <div class="empty-state-text">No tasks in your list</div>
+                        <div class="emoji">🎉</div>
+                        <div class="empty-state-text">All tasks complete! Great work.</div>
                     </div>
                 `;
                 return;
@@ -756,12 +1191,12 @@
                 weekly: { emoji: '📆', label: 'Weekly' }
             };
 
-            container.innerHTML = tasks.map(task => {
+            container.innerHTML = filteredTasks.map((task, index) => {
                 const member = members.find(m => m.id === task.member);
                 const recurring = recurringLabels[task.recurring];
 
                 return `
-                    <div class="card">
+                    <div class="card ${task.completed ? 'completed' : ''}" style="animation-delay: ${index * 0.05}s">
                         <div class="item-content">
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''}
@@ -775,17 +1210,20 @@
                                     ${recurring ? `<span class="badge badge-recurring">${recurring.emoji} ${recurring.label}</span>` : ''}
                                 </div>
                             </div>
-                            <button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button>
+                            <button class="delete-btn" onclick="deleteTask(${task.id})">🗑️ Delete</button>
                         </div>
                     </div>
                 `;
             }).join('');
+
+            renderTaskStats();
         }
 
         function toggleTask(id) {
             const task = tasks.find(t => t.id === id);
             if (task) {
                 task.completed = !task.completed;
+                showToast(task.completed ? '✓ Task completed! Well done!' : 'Task unmarked');
                 renderTaskList();
             }
         }
@@ -803,35 +1241,40 @@
             const recurring = document.getElementById('task-recurring').value;
             const notes = document.getElementById('task-notes').value;
 
-            const newTask = {
+            tasks.unshift({
                 id: Date.now(),
                 name,
                 member,
                 recurring,
                 notes,
                 completed: false
-            };
+            });
 
-            tasks.unshift(newTask);
             renderTaskList();
-
             e.target.reset();
-
-            // Scroll to see new item
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toggleForm('task');
+            showToast('✓ Task created successfully!');
+            window.scrollTo({ top: 300, behavior: 'smooth' });
         });
 
         // Members Functions
         function renderMembers() {
             const container = document.getElementById('members-list');
 
-            container.innerHTML = members.map(member => `
-                <div class="member-card">
-                    <div class="member-avatar ${member.color}">${member.initials}</div>
-                    <div class="member-name">${member.name}</div>
-                    <div class="member-role">${member.role}</div>
-                </div>
-            `).join('');
+            container.innerHTML = members.map((member, index) => {
+                const memberTasks = tasks.filter(t => t.member === member.id);
+                const completedTasks = memberTasks.filter(t => t.completed).length;
+                const totalTasks = memberTasks.length;
+
+                return `
+                    <div class="member-card" style="animation-delay: ${index * 0.1}s">
+                        <div class="member-avatar ${member.color}">${member.initials}</div>
+                        <div class="member-name">${member.name}</div>
+                        <div class="member-role">${member.role}</div>
+                        <div class="member-stats">${completedTasks} / ${totalTasks} tasks done</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Delete Modal Functions
@@ -846,15 +1289,17 @@
             if (deleteTarget.type === 'shopping') {
                 shoppingItems = shoppingItems.filter(i => i.id !== deleteTarget.id);
                 renderShoppingList();
+                showToast('Item deleted from shopping list');
             } else if (deleteTarget.type === 'task') {
                 tasks = tasks.filter(t => t.id !== deleteTarget.id);
                 renderTaskList();
+                renderMembers();
+                showToast('Task deleted successfully');
             }
 
             closeDeleteModal();
         }
 
-        // Close modal on background click
         document.getElementById('delete-modal').addEventListener('click', (e) => {
             if (e.target.id === 'delete-modal') {
                 closeDeleteModal();
