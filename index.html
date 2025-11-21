@@ -891,6 +891,66 @@
         }
 
         /* ========================================
+           DASHBOARD UPCOMING
+           ======================================== */
+        .dashboard-upcoming {
+            margin-bottom: 20px;
+        }
+
+        .dashboard-upcoming h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upcoming-item {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .upcoming-item .upcoming-icon {
+            font-size: 1.2rem;
+        }
+
+        .upcoming-item .upcoming-content {
+            flex: 1;
+        }
+
+        .upcoming-item .upcoming-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .upcoming-item .upcoming-meta {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .upcoming-item .upcoming-due {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .upcoming-item .upcoming-due.overdue {
+            color: var(--danger);
+        }
+
+        .upcoming-item .upcoming-due.today {
+            color: #c2410c;
+        }
+
+        /* ========================================
            EMPTY STATE
            ======================================== */
         .empty-state {
@@ -941,6 +1001,14 @@
             <h2 style="margin-bottom: 16px;">Overview</h2>
             <div class="stats-grid" id="dashboard-stats">
                 <!-- Stats populated by JS -->
+            </div>
+
+            <div id="dashboard-upcoming-tasks" class="dashboard-upcoming">
+                <!-- Upcoming tasks populated by JS -->
+            </div>
+
+            <div id="dashboard-upcoming-clifford" class="dashboard-upcoming">
+                <!-- Upcoming Clifford tasks populated by JS -->
             </div>
         </section>
 
@@ -1331,13 +1399,13 @@
         // RENDER FUNCTIONS
         // ========================================
         function renderDashboard() {
-            const container = document.getElementById('dashboard-stats');
-            const shoppingActive = state.shopping.filter(function(i) { return !i.completed; }).length;
-            const shoppingDone = state.shopping.filter(function(i) { return i.completed; }).length;
-            const tasksActive = state.tasks.filter(function(t) { return !t.completed; }).length;
-            const tasksDone = state.tasks.filter(function(t) { return t.completed; }).length;
-            const cliffordActive = state.clifford.filter(function(t) { return !t.completed; }).length;
-            const cliffordDone = state.clifford.filter(function(t) { return t.completed; }).length;
+            var container = document.getElementById('dashboard-stats');
+            var shoppingActive = state.shopping.filter(function(i) { return !i.completed; }).length;
+            var shoppingDone = state.shopping.filter(function(i) { return i.completed; }).length;
+            var tasksActive = state.tasks.filter(function(t) { return !t.completed; }).length;
+            var tasksDone = state.tasks.filter(function(t) { return t.completed; }).length;
+            var cliffordActive = state.clifford.filter(function(t) { return !t.completed; }).length;
+            var cliffordDone = state.clifford.filter(function(t) { return t.completed; }).length;
 
             container.innerHTML =
                 '<div class="stat-card">' +
@@ -1394,6 +1462,75 @@
                         '</div>' +
                     '</div>' +
                 '</div>';
+
+            // Render upcoming tasks
+            renderUpcomingTasks();
+            renderUpcomingClifford();
+        }
+
+        function renderUpcomingItem(item, type) {
+            var member = state.members.find(function(m) { return m.id === item.assignee; });
+            var dueText = formatDate(item.due);
+            var dueClass = getDateClass(item.due);
+
+            return '<div class="upcoming-item">' +
+                '<div class="upcoming-icon">' + (type === 'tasks' ? '✓' : '👶') + '</div>' +
+                '<div class="upcoming-content">' +
+                    '<div class="upcoming-name">' + item.name + '</div>' +
+                    '<div class="upcoming-meta">' +
+                        (member ? '<span>👤 ' + member.name + '</span>' : '') +
+                        (dueText ? '<span class="upcoming-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }
+
+        function renderUpcomingTasks() {
+            var container = document.getElementById('dashboard-upcoming-tasks');
+            var upcoming = state.tasks
+                .filter(function(t) { return !t.completed; })
+                .sort(function(a, b) {
+                    if (!a.due && !b.due) return 0;
+                    if (!a.due) return 1;
+                    if (!b.due) return -1;
+                    return new Date(a.due) - new Date(b.due);
+                })
+                .slice(0, 5);
+
+            if (upcoming.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            var html = '<h3>✓ Upcoming Tasks</h3>';
+            upcoming.forEach(function(item) {
+                html += renderUpcomingItem(item, 'tasks');
+            });
+            container.innerHTML = html;
+        }
+
+        function renderUpcomingClifford() {
+            var container = document.getElementById('dashboard-upcoming-clifford');
+            var upcoming = state.clifford
+                .filter(function(t) { return !t.completed; })
+                .sort(function(a, b) {
+                    if (!a.due && !b.due) return 0;
+                    if (!a.due) return 1;
+                    if (!b.due) return -1;
+                    return new Date(a.due) - new Date(b.due);
+                })
+                .slice(0, 5);
+
+            if (upcoming.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            var html = '<h3>👶 Upcoming for Clifford</h3>';
+            upcoming.forEach(function(item) {
+                html += renderUpcomingItem(item, 'clifford');
+            });
+            container.innerHTML = html;
         }
 
         function renderShoppingItem(item) {
