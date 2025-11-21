@@ -2,444 +2,645 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#10b981">
+    <meta name="description" content="House of Irish - Home Management App">
+    <title>House of Irish</title>
     <style>
-        * {
+        /* ========================================
+           CSS RESET & BASE STYLES
+           ======================================== */
+        *, *::before, *::after {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
-        :root {
-            --primary: #22c55e;
-            --primary-dark: #16a34a;
-            --primary-light: #4ade80;
-            --secondary: #22c55e;
-            --secondary-dark: #16a34a;
-            --accent: #22c55e;
-            --text-dark: #22c55e;
-            --text-medium: #86efac;
-            --text-light: #4ade80;
-            --background: linear-gradient(135deg, #166534 0%, #14532d 100%);
-            --card-bg: #0a0a0a;
-            --border: #1a1a1a;
-            --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.4);
+        html {
+            font-size: 18px;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #000000;
-            color: var(--text-dark);
-            font-size: 16px;
-            line-height: 1.4;
-            padding-bottom: 70px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
             min-height: 100vh;
+            padding-bottom: 80px;
+            overflow-x: hidden;
         }
 
-        /* Header */
-        .header {
-            background: var(--background);
-            color: white;
-            padding: 12px;
-            box-shadow: var(--shadow-lg);
+        /* ========================================
+           COLOR VARIABLES (CSS Custom Properties)
+           ======================================== */
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #64748b;
+            --accent: #3b82f6;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --danger-soft: #fecaca;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 6px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        /* ========================================
+           TYPOGRAPHY
+           ======================================== */
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.25rem; }
+        h3 { font-size: 1.1rem; }
+
+        /* ========================================
+           LAYOUT COMPONENTS
+           ======================================== */
+        .app-header {
+            background: var(--card);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 100;
+        }
+
+        .app-header h1 {
+            color: var(--primary);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 8px;
         }
 
-        .header-left h1 {
-            font-size: 20px;
-            font-weight: 700;
+        main {
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        .lang-toggle {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
+        .page {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========================================
+           BOTTOM NAVIGATION
+           ======================================== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 4px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 4px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 0.65rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            min-height: 60px;
         }
 
-        .lang-toggle:active {
+        .nav-btn:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .nav-btn .icon {
+            font-size: 1.4rem;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .nav-btn:active {
             transform: scale(0.95);
         }
 
-        /* Container */
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 8px;
+        /* ========================================
+           CARDS
+           ======================================== */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+            margin-bottom: 12px;
         }
 
-        /* Stats */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        /* ========================================
+           STAT CARDS (Dashboard)
+           ======================================== */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            margin-bottom: 8px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
         .stat-card {
-            background: var(--card-bg);
-            border-radius: 6px;
-            padding: 8px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
             text-align: center;
-            box-shadow: var(--shadow);
-            border-left: 3px solid var(--primary);
         }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary);
-            line-height: 1;
-        }
-
-        .stat-label {
-            font-size: 10px;
-            color: var(--text-medium);
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
-
-        /* Section */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            padding: 0 2px;
-        }
-
-        .section-title {
-            font-size: 17px;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .toggle-btn {
-            background: #0a0a0a;
-            border: 1px solid #1a1a1a;
-            padding: 4px 10px;
-            border-radius: 5px;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-medium);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .toggle-btn:active {
-            transform: scale(0.95);
-        }
-
-        .toggle-btn.active {
-            background: #052e16;
-            color: #4ade80;
-            border-color: #166534;
-        }
-
-        /* Add Form */
-        .add-form-container {
+        .stat-card .stat-icon {
+            font-size: 2rem;
             margin-bottom: 8px;
         }
 
-        .add-form-toggle {
-            background: var(--background);
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
+        .stat-card .stat-title {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-numbers {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            box-shadow: var(--shadow);
-            transition: all 0.2s;
+            justify-content: space-around;
+            gap: 8px;
         }
 
-        .add-form-toggle:active {
-            transform: scale(0.98);
+        .stat-card .stat-item {
+            display: flex;
+            flex-direction: column;
         }
 
+        .stat-card .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-light);
+        }
+
+        .stat-value.active { color: var(--warning); }
+        .stat-value.done { color: var(--primary); }
+
+        /* ========================================
+           FORMS
+           ======================================== */
         .add-form {
-            background: var(--card-bg);
-            border-radius: 6px;
-            padding: 12px;
-            margin-top: 6px;
+            background: var(--card);
+            border-radius: var(--radius);
             box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: all 0.3s;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: none;
         }
 
         .add-form.open {
-            max-height: 600px;
-            opacity: 1;
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .form-group {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
-        .form-label {
+        .form-group label {
             display: block;
-            font-size: 13px;
+            font-size: 0.85rem;
             font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--text-dark);
+            color: var(--text);
+            margin-bottom: 6px;
         }
 
-        .form-input,
-        .form-select,
-        .form-textarea {
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
-            padding: 8px;
-            font-size: 14px;
-            border: 1px solid #1a1a1a;
-            border-radius: 5px;
-            font-family: inherit;
-            background: #000;
-            color: #4ade80;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.2s ease;
         }
 
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
             outline: none;
-            border-color: #166534;
-            background: #050505;
+            border-color: var(--accent);
         }
 
-        .form-textarea {
+        .form-group textarea {
             resize: vertical;
-            min-height: 50px;
+            min-height: 60px;
         }
 
-        .btn-primary {
-            width: 100%;
-            padding: 10px;
-            font-size: 15px;
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* ========================================
+           BUTTONS
+           ======================================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 20px;
+            font-size: 1rem;
             font-weight: 600;
             border: none;
-            border-radius: 5px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            background: var(--background);
-            color: white;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            min-height: 60px;
         }
 
-        .btn-primary:active {
+        .btn:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .btn:active {
             transform: scale(0.98);
         }
 
-        /* List Items */
-        .items-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
 
-        .list-separator {
-            margin: 10px 0 6px;
-            padding: 6px 4px 2px;
-            border-top: 1px solid var(--border);
+        .btn-primary:hover {
+            background: var(--primary-dark);
         }
 
-        .separator-title {
-            font-size: 11px;
-            font-weight: 600;
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-ghost {
+            background: transparent;
             color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            padding: 8px;
+            min-height: 44px;
         }
 
-        .card {
-            background: var(--card-bg);
-            border-radius: 6px;
-            padding: 8px 10px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+        .btn-ghost:hover {
+            background: var(--border);
+        }
+
+        .btn-add {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            min-height: 44px;
+        }
+
+        .form-actions {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.2s;
+            gap: 12px;
+            margin-top: 16px;
         }
 
-        .card:active {
-            transform: scale(0.99);
-        }
-
-        .card.completed {
-            opacity: 0.5;
-            background: #050505;
-        }
-
-        .checkbox {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            accent-color: #22c55e;
-            flex-shrink: 0;
-        }
-
-        .item-details {
+        .form-actions .btn {
             flex: 1;
-            min-width: 0;
         }
 
-        .item-header {
+        /* ========================================
+           LIST ITEMS
+           ======================================== */
+        .list-section {
+            margin-bottom: 24px;
+        }
+
+        .list-section h3 {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+
+        .list-item {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 14px;
+            margin-bottom: 10px;
             display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-start;
+            transition: all 0.2s ease;
         }
 
-        .category-badge {
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: 600;
-            flex-shrink: 0;
+        .list-item.completed {
+            opacity: 0.6;
         }
 
-        .category-food { background: #052e16; color: #4ade80; border: 1px solid #166534; }
-        .category-cleaning { background: #052e16; color: #86efac; border: 1px solid #166534; }
-        .category-pet { background: #052e16; color: #22c55e; border: 1px solid #166534; }
-
-        .item-name {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .item-name.completed {
+        .list-item.completed .item-name {
             text-decoration: line-through;
             color: var(--text-light);
         }
 
-        .item-name-xh {
-            font-size: 13px;
-            color: var(--text-medium);
-            font-weight: 500;
-            margin-top: 1px;
+        .item-checkbox {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            background: var(--card);
         }
 
-        .item-note {
-            font-size: 13px;
-            color: var(--text-medium);
-            margin-top: 2px;
+        .item-checkbox:hover {
+            border-color: var(--primary);
+        }
+
+        .item-checkbox.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .item-checkbox:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            word-break: break-word;
         }
 
         .item-meta {
             display: flex;
-            gap: 4px;
-            margin-top: 3px;
             flex-wrap: wrap;
-        }
-
-        .badge {
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: 600;
-        }
-
-        .badge-member { background: #052e16; color: #4ade80; border: 1px solid #166534; }
-        .badge-recurring { background: #052e16; color: #86efac; border: 1px solid #166534; }
-
-        .delete-btn {
-            background: #0a0a0a;
-            color: #ef4444;
-            border: 1px solid #7f1d1d;
-            padding: 6px 10px;
-            border-radius: 5px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: all 0.2s;
-        }
-
-        .delete-btn:active {
-            transform: scale(0.95);
-            background: #7f1d1d;
-        }
-
-        /* Standard Items */
-        .standard-items {
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 2px dashed var(--border);
-        }
-
-        .standard-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-medium);
-            margin-bottom: 8px;
-            padding: 0 2px;
-        }
-
-        .quick-add-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
             gap: 6px;
+            margin-bottom: 6px;
         }
 
-        .quick-add-btn {
-            background: #0a0a0a;
-            border: 1px solid #1a1a1a;
+        .item-notes {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 6px;
             padding: 8px;
-            border-radius: 5px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #4ade80;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-delete {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            min-height: unset;
+            border-radius: 50%;
+            color: var(--danger);
+            background: var(--danger-soft);
+        }
+
+        /* ========================================
+           BADGES
+           ======================================== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .badge-store {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-store.woolworths {
+            background: #fce7f3;
+            color: #9d174d;
+        }
+
+        .badge-store.checkers {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-member {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .badge-due {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-due.overdue {
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .badge-due.today {
+            background: #fed7aa;
+            color: #c2410c;
+        }
+
+        .badge-recurring {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-ordered {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-delivered {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* ========================================
+           ORDERED/DELIVERED CHECKBOXES
+           ======================================== */
+        .order-status {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .status-check {
             display: flex;
             align-items: center;
             gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            cursor: pointer;
         }
 
-        .quick-add-btn:active {
-            transform: scale(0.98);
-            background: #052e16;
-            color: #22c55e;
-            border-color: #166534;
+        .status-check input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
-        /* Members */
+        .status-check.checked {
+            color: var(--primary);
+        }
+
+        /* ========================================
+           QUICK ADD BUTTONS
+           ======================================== */
+        .quick-add {
+            margin-top: 24px;
+        }
+
+        .quick-add h4 {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 12px;
+        }
+
+        .quick-add-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .quick-btn {
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 44px;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .quick-btn:active {
+            transform: scale(0.95);
+        }
+
+        .quick-btn:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .manage-btn {
+            font-size: 0.8rem;
+            color: var(--accent);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 0;
+            text-decoration: underline;
+        }
+
+        /* ========================================
+           MEMBER CARDS (Settings)
+           ======================================== */
         .members-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         .member-card {
-            background: var(--card-bg);
-            border-radius: 6px;
-            padding: 12px;
-            text-align: center;
+            background: var(--card);
+            border-radius: var(--radius);
             box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+            padding: 16px;
+            text-align: center;
         }
 
         .member-avatar {
@@ -449,980 +650,1291 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            font-weight: 700;
-            color: white;
             margin: 0 auto 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
         }
 
-        .avatar-john { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
-        .avatar-sarah { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-        .avatar-mary { background: linear-gradient(135deg, #86efac 0%, #4ade80 100%); }
-        .avatar-tom { background: linear-gradient(135deg, #166534 0%, #14532d 100%); }
+        .member-avatar.john { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .member-avatar.sarah { background: linear-gradient(135deg, #ec4899, #be185d); }
+        .member-avatar.mary { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+        .member-avatar.tom { background: linear-gradient(135deg, #10b981, #059669); }
 
         .member-name {
-            font-size: 15px;
             font-weight: 700;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
 
         .member-role {
-            font-size: 12px;
-            color: var(--text-medium);
-            margin-bottom: 6px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
         }
 
         .member-stats {
-            font-size: 11px;
-            color: var(--text-light);
-            font-weight: 600;
-        }
-
-        /* Navigation */
-        .nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #0a0a0a;
-            border-top: 1px solid #1a1a1a;
-            display: flex;
-            padding: 6px;
-            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
-            z-index: 100;
-        }
-
-        .nav-btn {
-            flex: 1;
-            padding: 6px;
-            border: none;
-            background: none;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-light);
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            border-radius: 5px;
-        }
-
-        .nav-btn .emoji {
-            font-size: 22px;
-        }
-
-        .nav-btn.active {
+            font-size: 0.75rem;
             color: var(--primary);
-            background: #052e16;
+            font-weight: 600;
         }
 
-        .nav-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
+        /* ========================================
+           MODAL
+           ======================================== */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            background: rgba(0,0,0,0.5);
+            display: none;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            z-index: 2000;
         }
 
-        .modal.active {
+        .modal-overlay.open {
             display: flex;
         }
 
-        .modal-content {
-            background: #0a0a0a;
-            border: 1px solid #1a1a1a;
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 340px;
+        .modal {
+            background: var(--card);
+            border-radius: var(--radius);
             width: 100%;
-            text-align: center;
-            box-shadow: var(--shadow-lg);
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalIn 0.2s ease;
         }
 
-        .modal-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
 
-        .modal-title {
-            font-size: 17px;
-            font-weight: 700;
-            margin-bottom: 6px;
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .modal-text {
-            font-size: 14px;
-            color: var(--text-medium);
+        .modal-header h3 {
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .modal-actions {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* ========================================
+           MANAGE ITEMS LIST
+           ======================================== */
+        .manage-list {
             margin-bottom: 16px;
         }
 
-        .modal-buttons {
+        .manage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+        }
+
+        .manage-item span {
+            font-weight: 500;
+        }
+
+        .manage-item button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .add-standard-form {
             display: flex;
             gap: 8px;
         }
 
-        .modal-btn {
+        .add-standard-form input {
             flex: 1;
             padding: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
         }
 
-        .modal-btn-cancel {
-            background: #1a1a1a;
-            color: var(--text-dark);
-            border: 1px solid #333;
-        }
-
-        .modal-btn-confirm {
-            background: #7f1d1d;
-            color: #fca5a5;
-            border: 1px solid #991b1b;
-        }
-
-        /* Toast */
-        .toast {
+        /* ========================================
+           TOAST NOTIFICATIONS
+           ======================================== */
+        .toast-container {
             position: fixed;
-            top: 70px;
+            top: 20px;
             left: 50%;
-            transform: translateX(-50%) translateY(-50px);
-            background: #052e16;
-            color: #4ade80;
-            border: 1px solid #166534;
-            padding: 10px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 13px;
+            transform: translateX(-50%);
+            z-index: 3000;
+        }
+
+        .toast {
+            background: var(--text);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: toastIn 0.3s ease;
             box-shadow: var(--shadow-lg);
-            z-index: 1000;
-            opacity: 0;
-            transition: all 0.3s;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
+        .toast.success {
+            background: var(--primary);
         }
 
-        /* Page */
-        .page {
-            display: none;
+        .toast.hiding {
+            animation: toastOut 0.3s ease forwards;
         }
 
-        .page.active {
-            display: block;
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Empty State */
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+
+        /* ========================================
+           SETTINGS SECTIONS
+           ======================================== */
+        .settings-section {
+            margin-bottom: 24px;
+        }
+
+        .settings-section h2 {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .settings-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--card);
+            border: none;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            font-size: 1rem;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .settings-btn:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .settings-btn span {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-btn .arrow {
+            color: var(--text-light);
+        }
+
+        /* ========================================
+           EMPTY STATE
+           ======================================== */
         .empty-state {
             text-align: center;
-            padding: 30px 20px;
+            padding: 40px 20px;
+            color: var(--text-light);
         }
 
-        .empty-state .emoji {
-            font-size: 40px;
-            margin-bottom: 10px;
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
             opacity: 0.5;
         }
 
-        .empty-state-text {
-            font-size: 14px;
-            color: var(--text-light);
+        /* ========================================
+           UTILITY CLASSES
+           ======================================== */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
         }
+
+        .text-center { text-align: center; }
+        .mb-0 { margin-bottom: 0; }
+        .mt-16 { margin-top: 16px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-left">
-            <h1>🏠 <span id="header-title">Home Manager</span></h1>
-        </div>
-        <button class="lang-toggle" onclick="toggleLanguage()">
-            <span id="lang-text">EN</span>
-        </button>
-    </div>
+    <!-- ========================================
+         HEADER
+         ======================================== -->
+    <header class="app-header">
+        <h1>🏠 House of Irish</h1>
+    </header>
 
-    <div class="container">
-        <!-- Shopping List Page -->
-        <div id="shopping-page" class="page active">
-            <div class="stats-grid" id="shopping-stats"></div>
-
-            <div class="section-header">
-                <h2 class="section-title" id="shopping-title">Shopping List</h2>
-                <button class="toggle-btn" id="hide-completed-shopping" onclick="toggleHideCompletedShopping()">
-                    <span id="hide-shopping-text">Hide Done</span>
-                </button>
+    <!-- ========================================
+         MAIN CONTENT
+         ======================================== -->
+    <main>
+        <!-- Dashboard Page -->
+        <section id="page-dashboard" class="page active" aria-label="Dashboard">
+            <h2 style="margin-bottom: 16px;">Overview</h2>
+            <div class="stats-grid" id="dashboard-stats">
+                <!-- Stats populated by JS -->
             </div>
+        </section>
 
-            <div class="add-form-container">
-                <button class="add-form-toggle" onclick="toggleForm('shopping')">
-                    <span>➕</span>
-                    <span id="add-shopping-btn">Add Item</span>
-                </button>
-                <div class="add-form" id="shopping-form">
-                    <form id="add-shopping-form">
-                        <div class="form-group">
-                            <label class="form-label" id="item-name-label">Item Name</label>
-                            <input type="text" class="form-input" id="shopping-item-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" id="category-label">Category</label>
-                            <select class="form-select" id="shopping-category" required>
-                                <option value="food">🍎 Food</option>
-                                <option value="cleaning">🧹 Cleaning</option>
-                                <option value="pet">🐾 Pet Supplies</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" id="recurring-shopping-label">Recurring</label>
-                            <select class="form-select" id="shopping-recurring">
-                                <option value="">None</option>
-                                <option value="weekly" id="weekly-shopping-option">Weekly</option>
-                                <option value="monthly" id="monthly-shopping-option">Monthly</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" id="notes-label">Notes (Optional)</label>
-                            <textarea class="form-textarea" id="shopping-notes"></textarea>
-                        </div>
-                        <button type="submit" class="btn-primary" id="add-item-btn">Add to List</button>
-                    </form>
+        <!-- Shopping Page -->
+        <section id="page-shopping" class="page" aria-label="Shopping List">
+            <button class="btn btn-primary btn-add" id="btn-add-shopping" aria-expanded="false">
+                + Add Item
+            </button>
+
+            <form class="add-form" id="form-shopping" aria-label="Add shopping item">
+                <div class="form-group">
+                    <label for="shopping-name">Item Name *</label>
+                    <input type="text" id="shopping-name" required placeholder="e.g., Full cream milk">
                 </div>
-            </div>
-
-            <div class="items-list" id="shopping-list"></div>
-
-            <div class="standard-items">
-                <div class="standard-title" id="quick-add-title">Quick Add Common Items</div>
-                <div class="quick-add-grid">
-                    <button class="quick-add-btn" onclick="quickAddShopping('Milk', 'food')">🥛 <span id="q-milk">Milk</span></button>
-                    <button class="quick-add-btn" onclick="quickAddShopping('Bread', 'food')">🍞 <span id="q-bread">Bread</span></button>
-                    <button class="quick-add-btn" onclick="quickAddShopping('Eggs', 'food')">🥚 <span id="q-eggs">Eggs</span></button>
-                    <button class="quick-add-btn" onclick="quickAddShopping('Soap', 'cleaning')">🧼 <span id="q-soap">Soap</span></button>
-                    <button class="quick-add-btn" onclick="quickAddShopping('Toilet paper', 'cleaning')">🧻 <span id="q-toilet">Toilet Paper</span></button>
-                    <button class="quick-add-btn" onclick="quickAddShopping('Dog food', 'pet')">🐕 <span id="q-dogfood">Dog Food</span></button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shopping-store">Store</label>
+                        <select id="shopping-store">
+                            <option value="woolworths">Woolworths</option>
+                            <option value="checkers">Checkers</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="shopping-recurring">Recurring</label>
+                        <select id="shopping-recurring">
+                            <option value="none">None</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
                 </div>
+                <div class="form-group">
+                    <label for="shopping-notes">Notes (optional)</label>
+                    <textarea id="shopping-notes" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-shopping">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                </div>
+            </form>
+
+            <div id="shopping-list">
+                <!-- Items populated by JS -->
             </div>
-        </div>
+
+            <div class="quick-add">
+                <h4>Quick Add</h4>
+                <div class="quick-add-grid" id="shopping-quick-btns">
+                    <!-- Quick buttons populated by JS -->
+                </div>
+                <button class="manage-btn" id="manage-shopping-standards">Manage Standard Items</button>
+            </div>
+        </section>
 
         <!-- Tasks Page -->
-        <div id="tasks-page" class="page">
-            <div class="stats-grid" id="tasks-stats"></div>
+        <section id="page-tasks" class="page" aria-label="Household Tasks">
+            <button class="btn btn-primary btn-add" id="btn-add-task" aria-expanded="false">
+                + Add Task
+            </button>
 
-            <div class="section-header">
-                <h2 class="section-title" id="tasks-title">Task List</h2>
-                <button class="toggle-btn" id="hide-completed-tasks" onclick="toggleHideCompletedTasks()">
-                    <span id="hide-tasks-text">Hide Done</span>
-                </button>
+            <form class="add-form" id="form-task" aria-label="Add task">
+                <div class="form-group">
+                    <label for="task-name">Task Name *</label>
+                    <input type="text" id="task-name" required placeholder="e.g., Water the garden">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-assignee">Assign To</label>
+                        <select id="task-assignee">
+                            <option value="john">John</option>
+                            <option value="sarah">Sarah</option>
+                            <option value="mary">Mary</option>
+                            <option value="tom">Tom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-due">Due Date</label>
+                        <input type="date" id="task-due">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="task-recurring">Recurring</label>
+                    <select id="task-recurring">
+                        <option value="none">None</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-notes">Notes (optional)</label>
+                    <textarea id="task-notes" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-task">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Task</button>
+                </div>
+            </form>
+
+            <div id="tasks-list">
+                <!-- Tasks populated by JS -->
             </div>
 
-            <div class="add-form-container">
-                <button class="add-form-toggle" onclick="toggleForm('task')">
-                    <span>➕</span>
-                    <span id="add-task-btn">Add Task</span>
-                </button>
-                <div class="add-form" id="task-form">
-                    <form id="add-task-form">
-                        <div class="form-group">
-                            <label class="form-label" id="task-name-label">Task Name</label>
-                            <input type="text" class="form-input" id="task-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" id="assign-label">Assign To</label>
-                            <select class="form-select" id="task-member" required>
-                                <option value="john">John</option>
-                                <option value="sarah">Sarah</option>
-                                <option value="mary">Mary</option>
-                                <option value="tom">Tom</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" id="recurring-label">Recurring</label>
-                            <select class="form-select" id="task-recurring">
-                                <option value="">None</option>
-                                <option value="daily" id="daily-option">Daily</option>
-                                <option value="weekly" id="weekly-option">Weekly</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" id="task-notes-label">Notes (Optional)</label>
-                            <textarea class="form-textarea" id="task-notes"></textarea>
-                        </div>
-                        <button type="submit" class="btn-primary" id="create-task-btn">Create Task</button>
-                    </form>
+            <div class="quick-add">
+                <h4>Quick Add</h4>
+                <div class="quick-add-grid" id="tasks-quick-btns">
+                    <!-- Quick buttons populated by JS -->
+                </div>
+                <button class="manage-btn" id="manage-tasks-standards">Manage Standard Items</button>
+            </div>
+        </section>
+
+        <!-- Clifford Page -->
+        <section id="page-clifford" class="page" aria-label="Clifford's Tasks">
+            <button class="btn btn-primary btn-add" id="btn-add-clifford" aria-expanded="false">
+                + Add Task
+            </button>
+
+            <form class="add-form" id="form-clifford" aria-label="Add Clifford task">
+                <div class="form-group">
+                    <label for="clifford-name">Task Name *</label>
+                    <input type="text" id="clifford-name" required placeholder="e.g., Buy nappies">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clifford-assignee">Assign To</label>
+                        <select id="clifford-assignee">
+                            <option value="john">John</option>
+                            <option value="sarah">Sarah</option>
+                            <option value="mary">Mary</option>
+                            <option value="tom">Tom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="clifford-due">Due Date</label>
+                        <input type="date" id="clifford-due">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="clifford-recurring">Recurring</label>
+                    <select id="clifford-recurring">
+                        <option value="none">None</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="clifford-notes">Notes (optional)</label>
+                    <textarea id="clifford-notes" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-clifford">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Task</button>
+                </div>
+            </form>
+
+            <div id="clifford-list">
+                <!-- Clifford tasks populated by JS -->
+            </div>
+
+            <div class="quick-add">
+                <h4>Quick Add</h4>
+                <div class="quick-add-grid" id="clifford-quick-btns">
+                    <!-- Quick buttons populated by JS -->
+                </div>
+                <button class="manage-btn" id="manage-clifford-standards">Manage Standard Items</button>
+            </div>
+        </section>
+
+        <!-- Settings Page -->
+        <section id="page-settings" class="page" aria-label="Settings">
+            <div class="settings-section">
+                <h2>Household Members</h2>
+                <div class="members-grid" id="members-grid">
+                    <!-- Members populated by JS -->
                 </div>
             </div>
 
-            <div class="items-list" id="task-list"></div>
-
-            <div class="standard-items">
-                <div class="standard-title" id="quick-tasks-title">Quick Add Common Tasks</div>
-                <div class="quick-add-grid">
-                    <button class="quick-add-btn" onclick="quickAddTask('Feed dogs', 'daily')">🐕 <span id="qt-feed">Feed Dogs</span></button>
-                    <button class="quick-add-btn" onclick="quickAddTask('Water garden', 'weekly')">💧 <span id="qt-water">Water Garden</span></button>
-                    <button class="quick-add-btn" onclick="quickAddTask('Take out trash', 'daily')">🗑️ <span id="qt-trash">Take Out Trash</span></button>
-                    <button class="quick-add-btn" onclick="quickAddTask('Clean house', 'weekly')">🧹 <span id="qt-clean">Clean House</span></button>
-                    <button class="quick-add-btn" onclick="quickAddTask('Do laundry', 'weekly')">👕 <span id="qt-laundry">Do Laundry</span></button>
-                    <button class="quick-add-btn" onclick="quickAddTask('Buy groceries', '')">🛒 <span id="qt-groceries">Buy Groceries</span></button>
+            <div class="settings-section">
+                <h2>Manage Standard Items</h2>
+                <div class="settings-buttons">
+                    <button class="settings-btn" id="settings-shopping-standards">
+                        <span>🛒 Shopping Quick Add</span>
+                        <span class="arrow">→</span>
+                    </button>
+                    <button class="settings-btn" id="settings-tasks-standards">
+                        <span>✓ Tasks Quick Add</span>
+                        <span class="arrow">→</span>
+                    </button>
+                    <button class="settings-btn" id="settings-clifford-standards">
+                        <span>👶 Clifford Quick Add</span>
+                        <span class="arrow">→</span>
+                    </button>
                 </div>
             </div>
-        </div>
+        </section>
+    </main>
 
-        <!-- Members Page -->
-        <div id="members-page" class="page">
-            <h2 class="section-title" id="members-title" style="margin-bottom: 8px; padding: 0 2px;">Household Members</h2>
-            <div class="members-grid" id="members-list"></div>
-        </div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="nav">
-        <button class="nav-btn active" data-page="shopping-page">
-            <span class="emoji">🛒</span>
-            <span id="nav-shopping">Shopping</span>
+    <!-- ========================================
+         BOTTOM NAVIGATION
+         ======================================== -->
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <button class="nav-btn active" data-page="dashboard" aria-current="page">
+            <span class="icon">🏠</span>
+            <span>Dashboard</span>
         </button>
-        <button class="nav-btn" data-page="tasks-page">
-            <span class="emoji">✓</span>
-            <span id="nav-tasks">Tasks</span>
+        <button class="nav-btn" data-page="shopping">
+            <span class="icon">🛒</span>
+            <span>Shopping</span>
         </button>
-        <button class="nav-btn" data-page="members-page">
-            <span class="emoji">👥</span>
-            <span id="nav-members">Members</span>
+        <button class="nav-btn" data-page="tasks">
+            <span class="icon">✓</span>
+            <span>Tasks</span>
+        </button>
+        <button class="nav-btn" data-page="clifford">
+            <span class="icon">👶</span>
+            <span>Clifford</span>
+        </button>
+        <button class="nav-btn" data-page="settings">
+            <span class="icon">⚙️</span>
+            <span>Settings</span>
         </button>
     </nav>
 
-    <!-- Delete Modal -->
-    <div id="delete-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-icon">⚠️</div>
-            <div class="modal-title" id="modal-title">Delete Item?</div>
-            <div class="modal-text" id="modal-text">Are you sure?</div>
-            <div class="modal-buttons">
-                <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()" id="modal-cancel">Cancel</button>
-                <button class="modal-btn modal-btn-confirm" onclick="confirmDelete()" id="modal-confirm">Delete</button>
+    <!-- ========================================
+         MODAL (Delete Confirmation)
+         ======================================== -->
+    <div class="modal-overlay" id="modal-delete" aria-hidden="true">
+        <div class="modal" role="dialog" aria-labelledby="modal-delete-title">
+            <div class="modal-header">
+                <h3 id="modal-delete-title">Delete Item?</h3>
+                <button class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete "<span id="delete-item-name"></span>"? This action cannot be undone.</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="btn-cancel-delete">Cancel</button>
+                <button class="btn btn-danger" id="btn-confirm-delete">Delete</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast -->
-    <div id="toast" class="toast">
-        <span id="toast-message"></span>
+    <!-- ========================================
+         MODAL (Manage Standard Items)
+         ======================================== -->
+    <div class="modal-overlay" id="modal-manage" aria-hidden="true">
+        <div class="modal" role="dialog" aria-labelledby="modal-manage-title">
+            <div class="modal-header">
+                <h3 id="modal-manage-title">Manage Standard Items</h3>
+                <button class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="manage-list" id="manage-list">
+                    <!-- Items populated by JS -->
+                </div>
+                <div class="add-standard-form">
+                    <input type="text" id="new-standard-name" placeholder="New item name">
+                    <button class="btn btn-primary btn-sm" id="btn-add-standard">Add</button>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- ========================================
+         TOAST CONTAINER
+         ======================================== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========================================
+         JAVASCRIPT
+         ======================================== -->
     <script>
-        // Common item translations
-        const itemTranslations = {
-            // Shopping items
-            'Milk': 'Ubisi',
-            'Bread': 'Isonka',
-            'Eggs': 'Amaqanda',
-            'Soap': 'Isepha',
-            'Toilet paper': 'Iphepha lasethoyilethi',
-            'Dog food': 'Ukutya kwenja',
-            'Full cream milk': 'Ubisi olutyebileyo',
-            'Whole wheat bread': 'Isonka sengqolowa',
-            'Free range eggs': 'Amaqanda asimahla',
-            'Dish soap': 'Isepha sezitya',
-            'Bleach': 'I-bleach',
-            'Premium dog food': 'Ukutya kwenja okuphezulu',
-            'Fresh vegetables': 'Imifuno emitsha',
-            // Tasks
-            'Feed dogs': 'Ondla izinja',
-            'Water garden': 'Nkcenkceshela igadi',
-            'Take out trash': 'Khulula inkunkuma',
-            'Clean house': 'Coca indlu',
-            'Do laundry': 'Hlamba iimpahla',
-            'Buy groceries': 'Thenga ukutya',
-            'Feed the dogs': 'Ondla izinja',
-            'Water the garden': 'Nkcenkceshela igadi',
-            'Weekly grocery shopping': 'Ukuthenga ukutya ngeveki',
-            'Clean the pool': 'Coca ichibi',
-            'Take out trash bins': 'Khulula iingqosha zenkunkuma',
-            'Vacuum living room': 'Vala igumbi lokuhlala'
-        };
-
-        // Language translations
-        const translations = {
-            en: {
-                headerTitle: 'Home Manager',
-                shoppingTitle: 'Shopping List',
-                tasksTitle: 'Task List',
-                membersTitle: 'Household Members',
-                addShoppingBtn: 'Add Item',
-                addTaskBtn: 'Add Task',
-                itemNameLabel: 'Item Name',
-                categoryLabel: 'Category',
-                recurringShoppingLabel: 'Recurring',
-                notesLabel: 'Notes (Optional)',
-                addItemBtn: 'Add to List',
-                taskNameLabel: 'Task Name',
-                assignLabel: 'Assign To',
-                recurringLabel: 'Recurring',
-                taskNotesLabel: 'Notes (Optional)',
-                createTaskBtn: 'Create Task',
-                dailyOption: 'Daily',
-                weeklyOption: 'Weekly',
-                weeklyShoppingOption: 'Weekly',
-                monthlyShoppingOption: 'Monthly',
-                hideShoppingText: 'Hide Done',
-                hideTasksText: 'Hide Done',
-                showShoppingText: 'Show Done',
-                showTasksText: 'Show Done',
-                quickAddTitle: 'Quick Add Common Items',
-                quickTasksTitle: 'Quick Add Common Tasks',
-                navShopping: 'Shopping',
-                navTasks: 'Tasks',
-                navMembers: 'Members',
-                modalTitle: 'Delete Item?',
-                modalText: 'Are you sure?',
-                modalCancel: 'Cancel',
-                modalConfirm: 'Delete',
-                statTotal: 'Total',
-                statActive: 'To Do',
-                statDone: 'Done',
-                completedItems: 'Completed Items',
-                qMilk: 'Milk',
-                qBread: 'Bread',
-                qEggs: 'Eggs',
-                qSoap: 'Soap',
-                qToilet: 'Toilet Paper',
-                qDogFood: 'Dog Food',
-                qtFeed: 'Feed Dogs',
-                qtWater: 'Water Garden',
-                qtTrash: 'Take Out Trash',
-                qtClean: 'Clean House',
-                qtLaundry: 'Do Laundry',
-                qtGroceries: 'Buy Groceries'
+        // ========================================
+        // APPLICATION STATE
+        // ========================================
+        const state = {
+            shopping: [],
+            tasks: [],
+            clifford: [],
+            members: [
+                { id: 'john', name: 'John', initials: 'JH', role: 'Husband' },
+                { id: 'sarah', name: 'Sarah', initials: 'SW', role: 'Wife' },
+                { id: 'mary', name: 'Mary', initials: 'MM', role: 'Nanny' },
+                { id: 'tom', name: 'Tom', initials: 'TG', role: 'Gardener' }
+            ],
+            quickAdd: {
+                shopping: ['🥛 Milk', '🍞 Bread', '🥚 Eggs', '🧴 Soap', '🧻 Toilet Paper', '🐕 Dog Food'],
+                tasks: ['🐕 Feed Dogs', '🌱 Water Garden', '🗑️ Take Out Trash', '🧹 Clean House', '👕 Do Laundry', '🛒 Buy Groceries'],
+                clifford: ['💉 Vaccines due', '🍼 Buy formula', '👶 Buy nappies', '🥄 Buy baby food', '👨‍⚕️ Doctor appointment', '🛁 Bath supplies', '🧸 Toys/activities', '📏 Milestone check']
             },
-            xh: {
-                headerTitle: 'Umlawuli Wekhaya',
-                shoppingTitle: 'Uluhlu Lokuthenga',
-                tasksTitle: 'Uluhlu Lwemisebenzi',
-                membersTitle: 'Amalungu Ekhaya',
-                addShoppingBtn: 'Yongeza Into',
-                addTaskBtn: 'Yongeza Umsebenzi',
-                itemNameLabel: 'Igama Lento',
-                categoryLabel: 'Udidi',
-                recurringShoppingLabel: 'Iyaphindaphinda',
-                notesLabel: 'Amanqaku (Kunganyanzelekanga)',
-                addItemBtn: 'Yongeza Kuluhlu',
-                taskNameLabel: 'Igama Lomsebenzi',
-                assignLabel: 'Yabela Ku',
-                recurringLabel: 'Iyaphindaphinda',
-                taskNotesLabel: 'Amanqaku (Kunganyanzelekanga)',
-                createTaskBtn: 'Yenza Umsebenzi',
-                dailyOption: 'Yonke Imihla',
-                weeklyOption: 'Yonke Iveki',
-                weeklyShoppingOption: 'Yonke Iveki',
-                monthlyShoppingOption: 'Yonke Inyanga',
-                hideShoppingText: 'Fihla Ezenziwayo',
-                hideTasksText: 'Fihla Ezenziwayo',
-                showShoppingText: 'Bonisa Ezenziwayo',
-                showTasksText: 'Bonisa Ezenziwayo',
-                quickAddTitle: 'Yongeza Ngokukhawuleza',
-                quickTasksTitle: 'Yongeza Imisebenzi Eqhelekileyo',
-                navShopping: 'Ukuthenga',
-                navTasks: 'Imisebenzi',
-                navMembers: 'Amalungu',
-                modalTitle: 'Cima Into?',
-                modalText: 'Uqinisekile?',
-                modalCancel: 'Rhoxisa',
-                modalConfirm: 'Cima',
-                statTotal: 'Konke',
-                statActive: 'Ukwenza',
-                statDone: 'Kwenziwe',
-                completedItems: 'Izinto Ezigqityiweyo',
-                qMilk: 'Ubisi',
-                qBread: 'Isonka',
-                qEggs: 'Amaqanda',
-                qSoap: 'Isepha',
-                qToilet: 'Iphepha Lasethoyilethi',
-                qDogFood: 'Ukutya Kwenja',
-                qtFeed: 'Ondla Izinja',
-                qtWater: 'Nkcenkceshela Igadi',
-                qtTrash: 'Khulula Inkunkuma',
-                qtClean: 'Coca Indlu',
-                qtLaundry: 'Hlamba Iimpahla',
-                qtGroceries: 'Thenga Ukutya'
-            }
+            currentDeleteItem: null,
+            currentDeleteType: null,
+            currentManageType: null
         };
 
-        let currentLang = 'en';
-        let hideCompletedShopping = false;
-        let hideCompletedTasks = false;
-
-        // Mock Data
-        let shoppingItems = [
-            { id: 1, name: 'Full cream milk', category: 'food', recurring: '', notes: 'Get the red label, 2 litres', completed: false },
-            { id: 2, name: 'Whole wheat bread', category: 'food', recurring: 'weekly', notes: 'Albany brand', completed: false },
-            { id: 3, name: 'Free range eggs', category: 'food', recurring: '', notes: 'Large size', completed: false },
-            { id: 4, name: 'Dish soap', category: 'cleaning', recurring: 'monthly', notes: 'Lemon scent', completed: false },
-            { id: 5, name: 'Bleach', category: 'cleaning', recurring: '', notes: 'Thick formula', completed: false },
-            { id: 6, name: 'Premium dog food', category: 'pet', recurring: 'weekly', notes: 'Blue 5kg bag', completed: true },
-            { id: 7, name: 'Fresh vegetables', category: 'food', recurring: '', notes: '', completed: false }
-        ];
-
-        let tasks = [
-            { id: 1, name: 'Feed the dogs', member: 'sarah', recurring: 'daily', notes: 'Morning and evening', completed: false },
-            { id: 2, name: 'Water the garden', member: 'john', recurring: 'weekly', notes: 'Early morning', completed: false },
-            { id: 3, name: 'Weekly grocery shopping', member: 'mary', recurring: '', notes: 'Check list first', completed: false },
-            { id: 4, name: 'Clean the pool', member: 'tom', recurring: 'weekly', notes: 'Test pH levels', completed: false },
-            { id: 5, name: 'Take out trash bins', member: 'john', recurring: 'daily', notes: 'Separate recycling', completed: true },
-            { id: 6, name: 'Vacuum living room', member: 'mary', recurring: 'weekly', notes: '', completed: false }
-        ];
-
-        const members = [
-            { id: 'john', name: 'John', role: 'Husband', initials: 'JH', color: 'avatar-john' },
-            { id: 'sarah', name: 'Sarah', role: 'Wife', initials: 'SW', color: 'avatar-sarah' },
-            { id: 'mary', name: 'Mary', role: 'Maid', initials: 'MM', color: 'avatar-mary' },
-            { id: 'tom', name: 'Tom', role: 'Gardener', initials: 'TG', color: 'avatar-tom' }
-        ];
-
-        let deleteTarget = null;
-
-        // Get translation for item name
-        function getItemTranslation(name) {
-            return itemTranslations[name] || name;
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
 
-        // Language toggle
-        function toggleLanguage() {
-            currentLang = currentLang === 'en' ? 'xh' : 'en';
-            document.getElementById('lang-text').textContent = currentLang.toUpperCase();
-            updateLanguage();
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const itemDate = new Date(dateStr);
+            itemDate.setHours(0, 0, 0, 0);
+
+            if (itemDate.getTime() === today.getTime()) return 'Today';
+            if (itemDate.getTime() === tomorrow.getTime()) return 'Tomorrow';
+            if (itemDate < today) return 'Overdue';
+
+            const diff = Math.ceil((itemDate - today) / (1000 * 60 * 60 * 24));
+            if (diff <= 7) return 'In ' + diff + ' days';
+
+            return itemDate.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
         }
 
-        function updateLanguage() {
-            const t = translations[currentLang];
-            document.getElementById('header-title').textContent = t.headerTitle;
-            document.getElementById('shopping-title').textContent = t.shoppingTitle;
-            document.getElementById('tasks-title').textContent = t.tasksTitle;
-            document.getElementById('members-title').textContent = t.membersTitle;
-            document.getElementById('add-shopping-btn').textContent = t.addShoppingBtn;
-            document.getElementById('add-task-btn').textContent = t.addTaskBtn;
-            document.getElementById('item-name-label').textContent = t.itemNameLabel;
-            document.getElementById('category-label').textContent = t.categoryLabel;
-            document.getElementById('recurring-shopping-label').textContent = t.recurringShoppingLabel;
-            document.getElementById('notes-label').textContent = t.notesLabel;
-            document.getElementById('add-item-btn').textContent = t.addItemBtn;
-            document.getElementById('task-name-label').textContent = t.taskNameLabel;
-            document.getElementById('assign-label').textContent = t.assignLabel;
-            document.getElementById('recurring-label').textContent = t.recurringLabel;
-            document.getElementById('task-notes-label').textContent = t.taskNotesLabel;
-            document.getElementById('create-task-btn').textContent = t.createTaskBtn;
-            document.getElementById('daily-option').textContent = t.dailyOption;
-            document.getElementById('weekly-option').textContent = t.weeklyOption;
-            document.getElementById('weekly-shopping-option').textContent = t.weeklyShoppingOption;
-            document.getElementById('monthly-shopping-option').textContent = t.monthlyShoppingOption;
-            document.getElementById('hide-shopping-text').textContent = hideCompletedShopping ? t.showShoppingText : t.hideShoppingText;
-            document.getElementById('hide-tasks-text').textContent = hideCompletedTasks ? t.showTasksText : t.hideTasksText;
-            document.getElementById('quick-add-title').textContent = t.quickAddTitle;
-            document.getElementById('quick-tasks-title').textContent = t.quickTasksTitle;
-            document.getElementById('nav-shopping').textContent = t.navShopping;
-            document.getElementById('nav-tasks').textContent = t.navTasks;
-            document.getElementById('nav-members').textContent = t.navMembers;
-            document.getElementById('modal-title').textContent = t.modalTitle;
-            document.getElementById('modal-text').textContent = t.modalText;
-            document.getElementById('modal-cancel').textContent = t.modalCancel;
-            document.getElementById('modal-confirm').textContent = t.modalConfirm;
+        function getDateClass(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const itemDate = new Date(dateStr);
+            itemDate.setHours(0, 0, 0, 0);
 
-            // Quick add buttons
-            document.getElementById('q-milk').textContent = t.qMilk;
-            document.getElementById('q-bread').textContent = t.qBread;
-            document.getElementById('q-eggs').textContent = t.qEggs;
-            document.getElementById('q-soap').textContent = t.qSoap;
-            document.getElementById('q-toilet').textContent = t.qToilet;
-            document.getElementById('q-dogfood').textContent = t.qDogFood;
-            document.getElementById('qt-feed').textContent = t.qtFeed;
-            document.getElementById('qt-water').textContent = t.qtWater;
-            document.getElementById('qt-trash').textContent = t.qtTrash;
-            document.getElementById('qt-clean').textContent = t.qtClean;
-            document.getElementById('qt-laundry').textContent = t.qtLaundry;
-            document.getElementById('qt-groceries').textContent = t.qtGroceries;
-
-            renderShoppingList();
-            renderTaskList();
+            if (itemDate < today) return 'overdue';
+            if (itemDate.getTime() === today.getTime()) return 'today';
+            return '';
         }
 
-        // Toast
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
+        function showToast(message, type) {
+            type = type || 'success';
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '✓ ' + message;
+            container.appendChild(toast);
+
+            setTimeout(function() {
+                toast.classList.add('hiding');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 2000);
         }
 
-        // Form toggle
-        function toggleForm(type) {
-            document.getElementById(`${type}-form`).classList.toggle('open');
+        function getRelativeDate(daysFromNow) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysFromNow);
+            return date.toISOString().split('T')[0];
         }
 
-        // Hide completed toggles
-        function toggleHideCompletedShopping() {
-            hideCompletedShopping = !hideCompletedShopping;
-            const btn = document.getElementById('hide-completed-shopping');
-            const t = translations[currentLang];
-            btn.classList.toggle('active');
-            document.getElementById('hide-shopping-text').textContent = hideCompletedShopping ? t.showShoppingText : t.hideShoppingText;
-            renderShoppingList();
+        // ========================================
+        // MOCK DATA INITIALIZATION
+        // ========================================
+        function initMockData() {
+            state.shopping = [
+                { id: generateId(), name: 'Full cream milk', store: 'woolworths', recurring: 'weekly', notes: 'Get 2 litres red label', completed: false, ordered: false, delivered: false },
+                { id: generateId(), name: 'Whole wheat bread', store: 'checkers', recurring: 'weekly', notes: 'Albany brand', completed: false, ordered: false, delivered: false },
+                { id: generateId(), name: 'Free range eggs', store: 'woolworths', recurring: 'none', notes: 'Large size', completed: false, ordered: false, delivered: false },
+                { id: generateId(), name: 'Dish soap', store: 'checkers', recurring: 'monthly', notes: '', completed: false, ordered: true, delivered: false },
+                { id: generateId(), name: 'Fresh vegetables', store: 'woolworths', recurring: 'none', notes: '', completed: false, ordered: true, delivered: true }
+            ];
+
+            state.tasks = [
+                { id: generateId(), name: 'Feed the dogs', assignee: 'sarah', due: getRelativeDate(0), recurring: 'daily', notes: 'Morning and evening', completed: false },
+                { id: generateId(), name: 'Water the garden', assignee: 'john', due: getRelativeDate(2), recurring: 'weekly', notes: 'Early morning', completed: false },
+                { id: generateId(), name: 'Weekly grocery shopping', assignee: 'mary', due: getRelativeDate(1), recurring: 'none', notes: 'Check list first', completed: false },
+                { id: generateId(), name: 'Clean the pool', assignee: 'tom', due: getRelativeDate(3), recurring: 'weekly', notes: '', completed: false },
+                { id: generateId(), name: 'Take out trash', assignee: 'john', due: getRelativeDate(0), recurring: 'daily', notes: '', completed: true }
+            ];
+
+            state.clifford = [
+                { id: generateId(), name: 'Vaccines due', assignee: 'sarah', due: getRelativeDate(5), recurring: 'none', notes: '6-month checkup', completed: false },
+                { id: generateId(), name: 'Buy nappies', assignee: 'mary', due: getRelativeDate(1), recurring: 'weekly', notes: 'Size 4 Pampers', completed: false },
+                { id: generateId(), name: 'Doctor appointment', assignee: 'john', due: getRelativeDate(7), recurring: 'none', notes: 'Pediatrician - 10am', completed: false },
+                { id: generateId(), name: 'Buy formula', assignee: 'sarah', due: getRelativeDate(3), recurring: 'weekly', notes: '', completed: true }
+            ];
         }
 
-        function toggleHideCompletedTasks() {
-            hideCompletedTasks = !hideCompletedTasks;
-            const btn = document.getElementById('hide-completed-tasks');
-            const t = translations[currentLang];
-            btn.classList.toggle('active');
-            document.getElementById('hide-tasks-text').textContent = hideCompletedTasks ? t.showTasksText : t.hideTasksText;
-            renderTaskList();
+        // ========================================
+        // RENDER FUNCTIONS
+        // ========================================
+        function renderDashboard() {
+            const container = document.getElementById('dashboard-stats');
+            const shoppingActive = state.shopping.filter(function(i) { return !i.completed; }).length;
+            const shoppingDone = state.shopping.filter(function(i) { return i.completed; }).length;
+            const tasksActive = state.tasks.filter(function(t) { return !t.completed; }).length;
+            const tasksDone = state.tasks.filter(function(t) { return t.completed; }).length;
+            const cliffordActive = state.clifford.filter(function(t) { return !t.completed; }).length;
+            const cliffordDone = state.clifford.filter(function(t) { return t.completed; }).length;
+
+            container.innerHTML =
+                '<div class="stat-card">' +
+                    '<div class="stat-icon">🛒</div>' +
+                    '<div class="stat-title">Shopping</div>' +
+                    '<div class="stat-numbers">' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value">' + state.shopping.length + '</span>' +
+                            '<span class="stat-label">Total</span>' +
+                        '</div>' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value active">' + shoppingActive + '</span>' +
+                            '<span class="stat-label">To Buy</span>' +
+                        '</div>' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value done">' + shoppingDone + '</span>' +
+                            '<span class="stat-label">Done</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="stat-card">' +
+                    '<div class="stat-icon">✓</div>' +
+                    '<div class="stat-title">Tasks</div>' +
+                    '<div class="stat-numbers">' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value">' + state.tasks.length + '</span>' +
+                            '<span class="stat-label">Total</span>' +
+                        '</div>' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value active">' + tasksActive + '</span>' +
+                            '<span class="stat-label">Active</span>' +
+                        '</div>' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value done">' + tasksDone + '</span>' +
+                            '<span class="stat-label">Done</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="stat-card">' +
+                    '<div class="stat-icon">👶</div>' +
+                    '<div class="stat-title">Clifford</div>' +
+                    '<div class="stat-numbers">' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value">' + state.clifford.length + '</span>' +
+                            '<span class="stat-label">Total</span>' +
+                        '</div>' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value active">' + cliffordActive + '</span>' +
+                            '<span class="stat-label">Active</span>' +
+                        '</div>' +
+                        '<div class="stat-item">' +
+                            '<span class="stat-value done">' + cliffordDone + '</span>' +
+                            '<span class="stat-label">Done</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
         }
 
-        // Navigation
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const pageId = btn.dataset.page;
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById(pageId).classList.add('active');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        });
+        function renderShoppingItem(item) {
+            var storeClass = item.store === 'woolworths' ? 'woolworths' : 'checkers';
+            var storeName = item.store === 'woolworths' ? 'Woolworths' : 'Checkers';
 
-        // Shopping Stats
-        function renderShoppingStats() {
-            const total = shoppingItems.length;
-            const completed = shoppingItems.filter(i => i.completed).length;
-            const active = total - completed;
-            const t = translations[currentLang];
-
-            document.getElementById('shopping-stats').innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-value">${total}</div>
-                    <div class="stat-label">${t.statTotal}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${active}</div>
-                    <div class="stat-label">${t.statActive}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${completed}</div>
-                    <div class="stat-label">${t.statDone}</div>
-                </div>
-            `;
+            return '<div class="list-item ' + (item.completed ? 'completed' : '') + '" data-id="' + item.id + '">' +
+                '<button class="item-checkbox ' + (item.completed ? 'checked' : '') + '" ' +
+                        'onclick="toggleShopping(\'' + item.id + '\')" ' +
+                        'aria-label="' + (item.completed ? 'Mark as not purchased' : 'Mark as purchased') + '">' +
+                    (item.completed ? '✓' : '') +
+                '</button>' +
+                '<div class="item-content">' +
+                    '<div class="item-name">' + item.name + '</div>' +
+                    '<div class="item-meta">' +
+                        '<span class="badge badge-store ' + storeClass + '">' + storeName + '</span>' +
+                        (item.recurring !== 'none' ? '<span class="badge badge-recurring">🔄 ' + item.recurring + '</span>' : '') +
+                        (item.ordered ? '<span class="badge badge-ordered">📦 Ordered</span>' : '') +
+                        (item.delivered ? '<span class="badge badge-delivered">✓ Delivered</span>' : '') +
+                    '</div>' +
+                    (item.notes ? '<div class="item-notes">' + item.notes + '</div>' : '') +
+                    '<div class="order-status">' +
+                        '<label class="status-check ' + (item.ordered ? 'checked' : '') + '">' +
+                            '<input type="checkbox" ' + (item.ordered ? 'checked' : '') + ' ' +
+                                   'onchange="updateOrderStatus(\'' + item.id + '\', \'ordered\', this.checked)">' +
+                            'Ordered' +
+                        '</label>' +
+                        '<label class="status-check ' + (item.delivered ? 'checked' : '') + '">' +
+                            '<input type="checkbox" ' + (item.delivered ? 'checked' : '') + ' ' +
+                                   'onchange="updateOrderStatus(\'' + item.id + '\', \'delivered\', this.checked)">' +
+                            'Delivered' +
+                        '</label>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="item-actions">' +
+                    '<button class="btn btn-ghost btn-delete" onclick="confirmDelete(\'' + item.id + '\', \'shopping\')" aria-label="Delete item">' +
+                        '🗑️' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
         }
 
-        // Shopping List
-        function renderShoppingList() {
-            const container = document.getElementById('shopping-list');
-            const t = translations[currentLang];
+        function renderShopping() {
+            var container = document.getElementById('shopping-list');
+            var active = state.shopping.filter(function(i) { return !i.completed; });
+            var completed = state.shopping.filter(function(i) { return i.completed; });
 
-            // Sort: uncompleted first, completed last
-            const sortedItems = [...shoppingItems].sort((a, b) => a.completed - b.completed);
+            var html = '';
 
-            // Filter if needed
-            let filteredItems = hideCompletedShopping
-                ? sortedItems.filter(i => !i.completed)
-                : sortedItems;
-
-            if (filteredItems.length === 0) {
-                container.innerHTML = `<div class="empty-state"><div class="emoji">🎉</div><div class="empty-state-text">All done!</div></div>`;
-                renderShoppingStats();
-                return;
+            if (active.length > 0) {
+                html += '<div class="list-section"><h3>To Buy (' + active.length + ')</h3>';
+                active.forEach(function(item) { html += renderShoppingItem(item); });
+                html += '</div>';
             }
 
-            const categories = {
-                food: { emoji: '🍎', label: 'Food', class: 'category-food' },
-                cleaning: { emoji: '🧹', label: 'Cleaning', class: 'category-cleaning' },
-                pet: { emoji: '🐾', label: 'Pet', class: 'category-pet' }
-            };
+            if (completed.length > 0) {
+                html += '<div class="list-section"><h3>Purchased (' + completed.length + ')</h3>';
+                completed.forEach(function(item) { html += renderShoppingItem(item); });
+                html += '</div>';
+            }
 
-            const recurringLabels = {
-                weekly: { emoji: '📆', label: currentLang === 'en' ? 'Weekly' : 'Yonke Iveki' },
-                monthly: { emoji: '📅', label: currentLang === 'en' ? 'Monthly' : 'Yonke Inyanga' }
-            };
-
-            let html = '';
-            let inCompleted = false;
-
-            filteredItems.forEach(item => {
-                if (item.completed && !inCompleted && !hideCompletedShopping) {
-                    html += `<div class="list-separator"><div class="separator-title">${t.completedItems}</div></div>`;
-                    inCompleted = true;
-                }
-
-                const cat = categories[item.category];
-                const recurring = recurringLabels[item.recurring];
-                const xhosaName = getItemTranslation(item.name);
-                const showBilingual = currentLang === 'xh' && xhosaName !== item.name;
-
-                html += `
-                    <div class="card ${item.completed ? 'completed' : ''}">
-                        <input type="checkbox" class="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleShoppingItem(${item.id})">
-                        <div class="item-details">
-                            <div class="item-header">
-                                <span class="category-badge ${cat.class}">${cat.emoji} ${cat.label}</span>
-                                <span class="item-name ${item.completed ? 'completed' : ''}">${currentLang === 'xh' && showBilingual ? xhosaName : item.name}</span>
-                                ${recurring ? `<span class="badge badge-recurring">${recurring.emoji} ${recurring.label}</span>` : ''}
-                            </div>
-                            ${showBilingual ? `<div class="item-name-xh">${item.name}</div>` : ''}
-                            ${item.notes ? `<div class="item-note">${item.notes}</div>` : ''}
-                        </div>
-                        <button class="delete-btn" onclick="deleteShoppingItem(${item.id})">🗑️</button>
-                    </div>
-                `;
-            });
+            if (state.shopping.length === 0) {
+                html = '<div class="empty-state"><div class="icon">🛒</div><p>No shopping items yet</p></div>';
+            }
 
             container.innerHTML = html;
-            renderShoppingStats();
+            renderQuickButtons('shopping');
         }
 
-        function toggleShoppingItem(id) {
-            const item = shoppingItems.find(i => i.id === id);
-            if (item) {
-                item.completed = !item.completed;
-                showToast(item.completed ? '✓ Done!' : '↩ Unmarked');
-                renderShoppingList();
-            }
+        function renderTaskItem(item, type) {
+            var member = state.members.find(function(m) { return m.id === item.assignee; });
+            var dueText = formatDate(item.due);
+            var dueClass = getDateClass(item.due);
+
+            return '<div class="list-item ' + (item.completed ? 'completed' : '') + '" data-id="' + item.id + '">' +
+                '<button class="item-checkbox ' + (item.completed ? 'checked' : '') + '" ' +
+                        'onclick="toggleTask(\'' + item.id + '\', \'' + type + '\')" ' +
+                        'aria-label="' + (item.completed ? 'Mark as incomplete' : 'Mark as complete') + '">' +
+                    (item.completed ? '✓' : '') +
+                '</button>' +
+                '<div class="item-content">' +
+                    '<div class="item-name">' + item.name + '</div>' +
+                    '<div class="item-meta">' +
+                        (member ? '<span class="badge badge-member">👤 ' + member.name + '</span>' : '') +
+                        (dueText ? '<span class="badge badge-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
+                        (item.recurring !== 'none' ? '<span class="badge badge-recurring">🔄 ' + item.recurring + '</span>' : '') +
+                    '</div>' +
+                    (item.notes ? '<div class="item-notes">' + item.notes + '</div>' : '') +
+                '</div>' +
+                '<div class="item-actions">' +
+                    '<button class="btn btn-ghost btn-delete" onclick="confirmDelete(\'' + item.id + '\', \'' + type + '\')" aria-label="Delete task">' +
+                        '🗑️' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
         }
 
-        function deleteShoppingItem(id) {
-            deleteTarget = { type: 'shopping', id };
-            document.getElementById('delete-modal').classList.add('active');
-        }
-
-        function quickAddShopping(name, category) {
-            shoppingItems.unshift({
-                id: Date.now(),
-                name,
-                category,
-                recurring: '',
-                notes: '',
-                completed: false
+        function sortTasks(tasks) {
+            return tasks.slice().sort(function(a, b) {
+                if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                if (!a.due && !b.due) return 0;
+                if (!a.due) return 1;
+                if (!b.due) return -1;
+                return new Date(a.due) - new Date(b.due);
             });
-            renderShoppingList();
-            showToast(`✓ ${name} added!`);
         }
 
-        document.getElementById('add-shopping-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('shopping-item-name').value;
-            const category = document.getElementById('shopping-category').value;
-            const recurring = document.getElementById('shopping-recurring').value;
-            const notes = document.getElementById('shopping-notes').value;
+        function renderTasks() {
+            var container = document.getElementById('tasks-list');
+            var sorted = sortTasks(state.tasks);
+            var active = sorted.filter(function(t) { return !t.completed; });
+            var completed = sorted.filter(function(t) { return t.completed; });
 
-            shoppingItems.unshift({
-                id: Date.now(),
-                name,
-                category,
-                recurring,
-                notes,
-                completed: false
-            });
+            var html = '';
 
-            renderShoppingList();
-            e.target.reset();
-            toggleForm('shopping');
-            showToast('✓ Item added!');
-        });
-
-        // Task Stats
-        function renderTaskStats() {
-            const total = tasks.length;
-            const completed = tasks.filter(t => t.completed).length;
-            const active = total - completed;
-            const t = translations[currentLang];
-
-            document.getElementById('tasks-stats').innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-value">${total}</div>
-                    <div class="stat-label">${t.statTotal}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${active}</div>
-                    <div class="stat-label">${t.statActive}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${completed}</div>
-                    <div class="stat-label">${t.statDone}</div>
-                </div>
-            `;
-        }
-
-        // Task List
-        function renderTaskList() {
-            const container = document.getElementById('task-list');
-            const t = translations[currentLang];
-
-            // Sort: uncompleted first, completed last
-            const sortedTasks = [...tasks].sort((a, b) => a.completed - b.completed);
-
-            // Filter if needed
-            let filteredTasks = hideCompletedTasks
-                ? sortedTasks.filter(t => !t.completed)
-                : sortedTasks;
-
-            if (filteredTasks.length === 0) {
-                container.innerHTML = `<div class="empty-state"><div class="emoji">🎉</div><div class="empty-state-text">All done!</div></div>`;
-                renderTaskStats();
-                return;
+            if (active.length > 0) {
+                html += '<div class="list-section"><h3>Active Tasks (' + active.length + ')</h3>';
+                active.forEach(function(item) { html += renderTaskItem(item, 'tasks'); });
+                html += '</div>';
             }
 
-            const recurringLabels = {
-                daily: { emoji: '📅', label: currentLang === 'en' ? 'Daily' : 'Yonke Imihla' },
-                weekly: { emoji: '📆', label: currentLang === 'en' ? 'Weekly' : 'Yonke Iveki' }
-            };
+            if (completed.length > 0) {
+                html += '<div class="list-section"><h3>Completed (' + completed.length + ')</h3>';
+                completed.forEach(function(item) { html += renderTaskItem(item, 'tasks'); });
+                html += '</div>';
+            }
 
-            let html = '';
-            let inCompleted = false;
-
-            filteredTasks.forEach(task => {
-                if (task.completed && !inCompleted && !hideCompletedTasks) {
-                    html += `<div class="list-separator"><div class="separator-title">${t.completedItems}</div></div>`;
-                    inCompleted = true;
-                }
-
-                const member = members.find(m => m.id === task.member);
-                const recurring = recurringLabels[task.recurring];
-                const xhosaName = getItemTranslation(task.name);
-                const showBilingual = currentLang === 'xh' && xhosaName !== task.name;
-
-                html += `
-                    <div class="card ${task.completed ? 'completed' : ''}">
-                        <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
-                        <div class="item-details">
-                            <div class="item-name ${task.completed ? 'completed' : ''}">${currentLang === 'xh' && showBilingual ? xhosaName : task.name}</div>
-                            ${showBilingual ? `<div class="item-name-xh">${task.name}</div>` : ''}
-                            ${task.notes ? `<div class="item-note">${task.notes}</div>` : ''}
-                            <div class="item-meta">
-                                <span class="badge badge-member">👤 ${member.name}</span>
-                                ${recurring ? `<span class="badge badge-recurring">${recurring.emoji} ${recurring.label}</span>` : ''}
-                            </div>
-                        </div>
-                        <button class="delete-btn" onclick="deleteTask(${task.id})">🗑️</button>
-                    </div>
-                `;
-            });
+            if (state.tasks.length === 0) {
+                html = '<div class="empty-state"><div class="icon">✓</div><p>No tasks yet</p></div>';
+            }
 
             container.innerHTML = html;
-            renderTaskStats();
+            renderQuickButtons('tasks');
         }
 
-        function toggleTask(id) {
-            const task = tasks.find(t => t.id === id);
-            if (task) {
-                task.completed = !task.completed;
-                showToast(task.completed ? '✓ Done!' : '↩ Unmarked');
-                renderTaskList();
-                renderMembers();
+        function renderClifford() {
+            var container = document.getElementById('clifford-list');
+            var sorted = sortTasks(state.clifford);
+            var active = sorted.filter(function(t) { return !t.completed; });
+            var completed = sorted.filter(function(t) { return t.completed; });
+
+            var html = '';
+
+            if (active.length > 0) {
+                html += '<div class="list-section"><h3>Active Tasks (' + active.length + ')</h3>';
+                active.forEach(function(item) { html += renderTaskItem(item, 'clifford'); });
+                html += '</div>';
             }
+
+            if (completed.length > 0) {
+                html += '<div class="list-section"><h3>Completed (' + completed.length + ')</h3>';
+                completed.forEach(function(item) { html += renderTaskItem(item, 'clifford'); });
+                html += '</div>';
+            }
+
+            if (state.clifford.length === 0) {
+                html = '<div class="empty-state"><div class="icon">👶</div><p>No tasks for Clifford yet</p></div>';
+            }
+
+            container.innerHTML = html;
+            renderQuickButtons('clifford');
         }
 
-        function deleteTask(id) {
-            deleteTarget = { type: 'task', id };
-            document.getElementById('delete-modal').classList.add('active');
-        }
-
-        function quickAddTask(name, recurring) {
-            tasks.unshift({
-                id: Date.now(),
-                name,
-                member: 'john',
-                recurring,
-                notes: '',
-                completed: false
-            });
-            renderTaskList();
-            showToast(`✓ ${name} added!`);
-        }
-
-        document.getElementById('add-task-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('task-name').value;
-            const member = document.getElementById('task-member').value;
-            const recurring = document.getElementById('task-recurring').value;
-            const notes = document.getElementById('task-notes').value;
-
-            tasks.unshift({
-                id: Date.now(),
-                name,
-                member,
-                recurring,
-                notes,
-                completed: false
-            });
-
-            renderTaskList();
-            e.target.reset();
-            toggleForm('task');
-            showToast('✓ Task created!');
-        });
-
-        // Members
         function renderMembers() {
-            const container = document.getElementById('members-list');
+            var container = document.getElementById('members-grid');
 
-            container.innerHTML = members.map(member => {
-                const memberTasks = tasks.filter(t => t.member === member.id);
-                const completedTasks = memberTasks.filter(t => t.completed).length;
-                const totalTasks = memberTasks.length;
+            container.innerHTML = state.members.map(function(member) {
+                var taskCount = state.tasks.filter(function(t) { return t.assignee === member.id && t.completed; }).length;
+                var cliffordCount = state.clifford.filter(function(t) { return t.assignee === member.id && t.completed; }).length;
+                var total = taskCount + cliffordCount;
 
-                return `
-                    <div class="member-card">
-                        <div class="member-avatar ${member.color}">${member.initials}</div>
-                        <div class="member-name">${member.name}</div>
-                        <div class="member-role">${member.role}</div>
-                        <div class="member-stats">${completedTasks} / ${totalTasks} tasks done</div>
-                    </div>
-                `;
+                return '<div class="member-card">' +
+                    '<div class="member-avatar ' + member.id + '">' + member.initials + '</div>' +
+                    '<div class="member-name">' + member.name + '</div>' +
+                    '<div class="member-role">' + member.role + '</div>' +
+                    '<div class="member-stats">' + total + ' tasks completed</div>' +
+                '</div>';
             }).join('');
         }
 
-        // Delete Modal
-        function closeDeleteModal() {
-            document.getElementById('delete-modal').classList.remove('active');
-            deleteTarget = null;
+        function renderQuickButtons(type) {
+            var container = document.getElementById(type + '-quick-btns');
+            container.innerHTML = state.quickAdd[type].map(function(item) {
+                return '<button class="quick-btn" onclick="quickAdd(\'' + type + '\', \'' + item.replace(/'/g, "\\'") + '\')">' + item + '</button>';
+            }).join('');
         }
 
-        function confirmDelete() {
-            if (!deleteTarget) return;
+        function renderManageList() {
+            var container = document.getElementById('manage-list');
+            var items = state.quickAdd[state.currentManageType];
 
-            if (deleteTarget.type === 'shopping') {
-                shoppingItems = shoppingItems.filter(i => i.id !== deleteTarget.id);
-                renderShoppingList();
-            } else if (deleteTarget.type === 'task') {
-                tasks = tasks.filter(t => t.id !== deleteTarget.id);
-                renderTaskList();
+            container.innerHTML = items.map(function(item, index) {
+                return '<div class="manage-item">' +
+                    '<span>' + item + '</span>' +
+                    '<button onclick="removeStandardItem(' + index + ')" aria-label="Remove ' + item + '">✕</button>' +
+                '</div>';
+            }).join('');
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderShopping();
+            renderTasks();
+            renderClifford();
+            renderMembers();
+        }
+
+        // ========================================
+        // ACTION HANDLERS
+        // ========================================
+        function toggleShopping(id) {
+            var item = state.shopping.find(function(i) { return i.id === id; });
+            if (item) {
+                item.completed = !item.completed;
+                renderShopping();
+                renderDashboard();
+                showToast(item.completed ? 'Marked as purchased!' : 'Marked as not purchased');
+            }
+        }
+
+        function toggleTask(id, type) {
+            var list = state[type];
+            var item = list.find(function(t) { return t.id === id; });
+            if (item) {
+                item.completed = !item.completed;
+                if (type === 'tasks') renderTasks();
+                else renderClifford();
+                renderDashboard();
                 renderMembers();
+                showToast(item.completed ? 'Task completed!' : 'Task marked as incomplete');
             }
-
-            closeDeleteModal();
-            showToast('✓ Deleted');
         }
 
-        document.getElementById('delete-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'delete-modal') {
-                closeDeleteModal();
+        function updateOrderStatus(id, field, value) {
+            var item = state.shopping.find(function(i) { return i.id === id; });
+            if (item) {
+                item[field] = value;
+                renderShopping();
             }
-        });
+        }
 
-        // Initialize
-        renderShoppingList();
-        renderTaskList();
-        renderMembers();
+        function confirmDelete(id, type) {
+            state.currentDeleteItem = id;
+            state.currentDeleteType = type;
+
+            var list = state[type];
+            var item = list.find(function(i) { return i.id === id; });
+            document.getElementById('delete-item-name').textContent = item.name;
+            document.getElementById('modal-delete').classList.add('open');
+            document.getElementById('modal-delete').setAttribute('aria-hidden', 'false');
+        }
+
+        function deleteItem() {
+            var id = state.currentDeleteItem;
+            var type = state.currentDeleteType;
+            state[type] = state[type].filter(function(i) { return i.id !== id; });
+
+            closeModal('modal-delete');
+            renderAll();
+            showToast('Item deleted');
+        }
+
+        function quickAdd(type, itemText) {
+            var name = itemText.replace(/^[^\s]+\s/, ''); // Remove emoji prefix
+
+            if (type === 'shopping') {
+                state.shopping.unshift({
+                    id: generateId(),
+                    name: name,
+                    store: 'woolworths',
+                    recurring: 'none',
+                    notes: '',
+                    completed: false,
+                    ordered: false,
+                    delivered: false
+                });
+                renderShopping();
+            } else {
+                var list = type === 'tasks' ? state.tasks : state.clifford;
+                list.unshift({
+                    id: generateId(),
+                    name: name,
+                    assignee: 'sarah',
+                    due: '',
+                    recurring: 'none',
+                    notes: '',
+                    completed: false
+                });
+                if (type === 'tasks') renderTasks();
+                else renderClifford();
+            }
+
+            renderDashboard();
+            showToast(name + ' added!');
+        }
+
+        function openManageModal(type) {
+            state.currentManageType = type;
+            var titles = {
+                shopping: 'Shopping Quick Add',
+                tasks: 'Tasks Quick Add',
+                clifford: 'Clifford Quick Add'
+            };
+            document.getElementById('modal-manage-title').textContent = titles[type];
+            document.getElementById('new-standard-name').value = '';
+            renderManageList();
+            document.getElementById('modal-manage').classList.add('open');
+            document.getElementById('modal-manage').setAttribute('aria-hidden', 'false');
+        }
+
+        function addStandardItem() {
+            var input = document.getElementById('new-standard-name');
+            var name = input.value.trim();
+            if (name) {
+                state.quickAdd[state.currentManageType].push(name);
+                input.value = '';
+                renderManageList();
+                renderQuickButtons(state.currentManageType);
+            }
+        }
+
+        function removeStandardItem(index) {
+            state.quickAdd[state.currentManageType].splice(index, 1);
+            renderManageList();
+            renderQuickButtons(state.currentManageType);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('open');
+            document.getElementById(modalId).setAttribute('aria-hidden', 'true');
+        }
+
+        // ========================================
+        // FORM HANDLERS
+        // ========================================
+        function setupForms() {
+            // Shopping form
+            var btnAddShopping = document.getElementById('btn-add-shopping');
+            var formShopping = document.getElementById('form-shopping');
+            var btnCancelShopping = document.getElementById('btn-cancel-shopping');
+
+            btnAddShopping.addEventListener('click', function() {
+                formShopping.classList.toggle('open');
+                btnAddShopping.setAttribute('aria-expanded', formShopping.classList.contains('open'));
+            });
+
+            btnCancelShopping.addEventListener('click', function() {
+                formShopping.classList.remove('open');
+                formShopping.reset();
+                btnAddShopping.setAttribute('aria-expanded', 'false');
+            });
+
+            formShopping.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name = document.getElementById('shopping-name').value.trim();
+                if (!name) return;
+
+                state.shopping.unshift({
+                    id: generateId(),
+                    name: name,
+                    store: document.getElementById('shopping-store').value,
+                    recurring: document.getElementById('shopping-recurring').value,
+                    notes: document.getElementById('shopping-notes').value.trim(),
+                    completed: false,
+                    ordered: false,
+                    delivered: false
+                });
+
+                formShopping.reset();
+                formShopping.classList.remove('open');
+                btnAddShopping.setAttribute('aria-expanded', 'false');
+                renderShopping();
+                renderDashboard();
+                showToast('Item added!');
+            });
+
+            // Tasks form
+            var btnAddTask = document.getElementById('btn-add-task');
+            var formTask = document.getElementById('form-task');
+            var btnCancelTask = document.getElementById('btn-cancel-task');
+
+            btnAddTask.addEventListener('click', function() {
+                formTask.classList.toggle('open');
+                btnAddTask.setAttribute('aria-expanded', formTask.classList.contains('open'));
+            });
+
+            btnCancelTask.addEventListener('click', function() {
+                formTask.classList.remove('open');
+                formTask.reset();
+                btnAddTask.setAttribute('aria-expanded', 'false');
+            });
+
+            formTask.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name = document.getElementById('task-name').value.trim();
+                if (!name) return;
+
+                state.tasks.unshift({
+                    id: generateId(),
+                    name: name,
+                    assignee: document.getElementById('task-assignee').value,
+                    due: document.getElementById('task-due').value,
+                    recurring: document.getElementById('task-recurring').value,
+                    notes: document.getElementById('task-notes').value.trim(),
+                    completed: false
+                });
+
+                formTask.reset();
+                formTask.classList.remove('open');
+                btnAddTask.setAttribute('aria-expanded', 'false');
+                renderTasks();
+                renderDashboard();
+                showToast('Task added!');
+            });
+
+            // Clifford form
+            var btnAddClifford = document.getElementById('btn-add-clifford');
+            var formClifford = document.getElementById('form-clifford');
+            var btnCancelClifford = document.getElementById('btn-cancel-clifford');
+
+            btnAddClifford.addEventListener('click', function() {
+                formClifford.classList.toggle('open');
+                btnAddClifford.setAttribute('aria-expanded', formClifford.classList.contains('open'));
+            });
+
+            btnCancelClifford.addEventListener('click', function() {
+                formClifford.classList.remove('open');
+                formClifford.reset();
+                btnAddClifford.setAttribute('aria-expanded', 'false');
+            });
+
+            formClifford.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name = document.getElementById('clifford-name').value.trim();
+                if (!name) return;
+
+                state.clifford.unshift({
+                    id: generateId(),
+                    name: name,
+                    assignee: document.getElementById('clifford-assignee').value,
+                    due: document.getElementById('clifford-due').value,
+                    recurring: document.getElementById('clifford-recurring').value,
+                    notes: document.getElementById('clifford-notes').value.trim(),
+                    completed: false
+                });
+
+                formClifford.reset();
+                formClifford.classList.remove('open');
+                btnAddClifford.setAttribute('aria-expanded', 'false');
+                renderClifford();
+                renderDashboard();
+                showToast('Task added!');
+            });
+        }
+
+        // ========================================
+        // NAVIGATION
+        // ========================================
+        function setupNavigation() {
+            var navBtns = document.querySelectorAll('.nav-btn');
+            var pages = document.querySelectorAll('.page');
+
+            navBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var pageName = btn.dataset.page;
+
+                    // Update nav buttons
+                    navBtns.forEach(function(b) {
+                        b.classList.remove('active');
+                        b.removeAttribute('aria-current');
+                    });
+                    btn.classList.add('active');
+                    btn.setAttribute('aria-current', 'page');
+
+                    // Update pages
+                    pages.forEach(function(p) { p.classList.remove('active'); });
+                    document.getElementById('page-' + pageName).classList.add('active');
+
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                });
+            });
+        }
+
+        // ========================================
+        // MODAL HANDLERS
+        // ========================================
+        function setupModals() {
+            // Delete modal
+            document.getElementById('btn-cancel-delete').addEventListener('click', function() { closeModal('modal-delete'); });
+            document.getElementById('btn-confirm-delete').addEventListener('click', deleteItem);
+            document.querySelector('#modal-delete .modal-close').addEventListener('click', function() { closeModal('modal-delete'); });
+
+            // Manage modal
+            document.querySelector('#modal-manage .modal-close').addEventListener('click', function() { closeModal('modal-manage'); });
+            document.getElementById('btn-add-standard').addEventListener('click', addStandardItem);
+            document.getElementById('new-standard-name').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addStandardItem();
+            });
+
+            // Manage buttons
+            document.getElementById('manage-shopping-standards').addEventListener('click', function() { openManageModal('shopping'); });
+            document.getElementById('manage-tasks-standards').addEventListener('click', function() { openManageModal('tasks'); });
+            document.getElementById('manage-clifford-standards').addEventListener('click', function() { openManageModal('clifford'); });
+
+            // Settings page manage buttons
+            document.getElementById('settings-shopping-standards').addEventListener('click', function() { openManageModal('shopping'); });
+            document.getElementById('settings-tasks-standards').addEventListener('click', function() { openManageModal('tasks'); });
+            document.getElementById('settings-clifford-standards').addEventListener('click', function() { openManageModal('clifford'); });
+
+            // Close modals on overlay click
+            document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('open');
+                        overlay.setAttribute('aria-hidden', 'true');
+                    }
+                });
+            });
+
+            // Close modals on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay.open').forEach(function(modal) {
+                        modal.classList.remove('open');
+                        modal.setAttribute('aria-hidden', 'true');
+                    });
+                }
+            });
+        }
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            initMockData();
+            renderAll();
+            setupNavigation();
+            setupForms();
+            setupModals();
+        });
     </script>
 </body>
 </html>
