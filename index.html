@@ -180,34 +180,34 @@
            ======================================== */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
             margin-bottom: 16px;
         }
 
         .stat-card {
             background: var(--card);
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
-            padding: 16px;
+            padding: 10px 8px;
             text-align: center;
         }
 
         .stat-card .stat-icon {
-            font-size: 2rem;
-            margin-bottom: 8px;
+            font-size: 1.2rem;
+            margin-bottom: 4px;
         }
 
         .stat-card .stat-title {
-            font-size: 0.85rem;
+            font-size: 0.65rem;
             color: var(--text-light);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .stat-card .stat-numbers {
             display: flex;
             justify-content: space-around;
-            gap: 8px;
+            gap: 4px;
         }
 
         .stat-card .stat-item {
@@ -216,13 +216,13 @@
         }
 
         .stat-card .stat-value {
-            font-size: 1.25rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: var(--text);
         }
 
         .stat-card .stat-label {
-            font-size: 0.65rem;
+            font-size: 0.5rem;
             color: var(--text-light);
         }
 
