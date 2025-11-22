@@ -921,47 +921,65 @@
         /* ========================================
            DASHBOARD UPCOMING
            ======================================== */
-        .dashboard-upcoming {
+        .upcoming-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-bottom: 20px;
         }
 
+        @media (max-width: 480px) {
+            .upcoming-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dashboard-upcoming {
+            margin-bottom: 0;
+        }
+
         .dashboard-upcoming h3 {
-            font-size: 1rem;
-            margin-bottom: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .upcoming-item {
             background: var(--card);
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
-            padding: 12px 14px;
-            margin-bottom: 8px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .upcoming-item .upcoming-icon {
-            font-size: 1.2rem;
+            font-size: 1rem;
         }
 
         .upcoming-item .upcoming-content {
             flex: 1;
+            min-width: 0;
         }
 
         .upcoming-item .upcoming-name {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .upcoming-item .upcoming-meta {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-light);
             display: flex;
-            gap: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
             margin-top: 2px;
         }
 
@@ -1031,12 +1049,14 @@
                 <!-- Stats populated by JS -->
             </div>
 
-            <div id="dashboard-upcoming-tasks" class="dashboard-upcoming">
-                <!-- Upcoming tasks populated by JS -->
-            </div>
+            <div class="upcoming-grid">
+                <div id="dashboard-upcoming-tasks" class="dashboard-upcoming">
+                    <!-- Upcoming tasks populated by JS -->
+                </div>
 
-            <div id="dashboard-upcoming-clifford" class="dashboard-upcoming">
-                <!-- Upcoming Clifford tasks populated by JS -->
+                <div id="dashboard-upcoming-clifford" class="dashboard-upcoming">
+                    <!-- Upcoming Clifford tasks populated by JS -->
+                </div>
             </div>
         </section>
 
