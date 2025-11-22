@@ -747,6 +747,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--text);
+            transition: background 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--card);
+        }
+
+        .modal-close:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
         }
 
         .modal-body {
@@ -807,6 +818,13 @@
             border: 2px solid var(--border);
             border-radius: var(--radius-sm);
             font-size: 0.9rem;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .add-standard-form input:focus {
+            outline: none;
+            border-color: var(--accent);
         }
 
         /* ========================================
@@ -903,47 +921,65 @@
         /* ========================================
            DASHBOARD UPCOMING
            ======================================== */
-        .dashboard-upcoming {
+        .upcoming-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-bottom: 20px;
         }
 
+        @media (max-width: 480px) {
+            .upcoming-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dashboard-upcoming {
+            margin-bottom: 0;
+        }
+
         .dashboard-upcoming h3 {
-            font-size: 1rem;
-            margin-bottom: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .upcoming-item {
             background: var(--card);
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
-            padding: 12px 14px;
-            margin-bottom: 8px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .upcoming-item .upcoming-icon {
-            font-size: 1.2rem;
+            font-size: 1rem;
         }
 
         .upcoming-item .upcoming-content {
             flex: 1;
+            min-width: 0;
         }
 
         .upcoming-item .upcoming-name {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .upcoming-item .upcoming-meta {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-light);
             display: flex;
-            gap: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
             margin-top: 2px;
         }
 
@@ -1013,12 +1049,14 @@
                 <!-- Stats populated by JS -->
             </div>
 
-            <div id="dashboard-upcoming-tasks" class="dashboard-upcoming">
-                <!-- Upcoming tasks populated by JS -->
-            </div>
+            <div class="upcoming-grid">
+                <div id="dashboard-upcoming-tasks" class="dashboard-upcoming">
+                    <!-- Upcoming tasks populated by JS -->
+                </div>
 
-            <div id="dashboard-upcoming-clifford" class="dashboard-upcoming">
-                <!-- Upcoming Clifford tasks populated by JS -->
+                <div id="dashboard-upcoming-clifford" class="dashboard-upcoming">
+                    <!-- Upcoming Clifford tasks populated by JS -->
+                </div>
             </div>
         </section>
 
@@ -1061,7 +1099,7 @@
                 </div>
             </form>
 
-            <div id="shopping-list">
+            <div id="shopping-list" aria-live="polite" aria-relevant="additions removals">
                 <!-- Items populated by JS -->
             </div>
 
@@ -1119,7 +1157,7 @@
                 </div>
             </form>
 
-            <div id="tasks-list">
+            <div id="tasks-list" aria-live="polite" aria-relevant="additions removals">
                 <!-- Tasks populated by JS -->
             </div>
 
@@ -1177,7 +1215,7 @@
                 </div>
             </form>
 
-            <div id="clifford-list">
+            <div id="clifford-list" aria-live="polite" aria-relevant="additions removals">
                 <!-- Clifford tasks populated by JS -->
             </div>
 
@@ -1288,7 +1326,7 @@
     <!-- ========================================
          TOAST CONTAINER
          ======================================== -->
-    <div class="toast-container" id="toast-container"></div>
+    <div class="toast-container" id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- ========================================
          JAVASCRIPT
@@ -1321,7 +1359,19 @@
         // UTILITY FUNCTIONS
         // ========================================
         function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            return Date.now().toString(36) + Math.random().toString(36).substring(2);
+        }
+
+        /**
+         * Escapes HTML special characters to prevent XSS attacks
+         * @param {string} str - The string to escape
+         * @returns {string} The escaped string
+         */
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
 
         function formatDate(dateStr) {
@@ -1359,10 +1409,10 @@
 
         function showToast(message, type) {
             type = type || 'success';
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
+            var container = document.getElementById('toast-container');
+            var toast = document.createElement('div');
             toast.className = 'toast ' + type;
-            toast.innerHTML = '✓ ' + message;
+            toast.textContent = '✓ ' + message;
             container.appendChild(toast);
 
             setTimeout(function() {
@@ -1482,13 +1532,14 @@
             var member = state.members.find(function(m) { return m.id === item.assignee; });
             var dueText = formatDate(item.due);
             var dueClass = getDateClass(item.due);
+            var safeName = escapeHtml(item.name);
 
             return '<div class="upcoming-item">' +
                 '<div class="upcoming-icon">' + (type === 'tasks' ? '✓' : '👶') + '</div>' +
                 '<div class="upcoming-content">' +
-                    '<div class="upcoming-name">' + item.name + '</div>' +
+                    '<div class="upcoming-name">' + safeName + '</div>' +
                     '<div class="upcoming-meta">' +
-                        (member ? '<span>👤 ' + member.name + '</span>' : '') +
+                        (member ? '<span>👤 ' + escapeHtml(member.name) + '</span>' : '') +
                         (dueText ? '<span class="upcoming-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
                     '</div>' +
                 '</div>' +
@@ -1546,6 +1597,8 @@
         function renderShoppingItem(item) {
             var storeClass = item.store === 'woolworths' ? 'woolworths' : 'checkers';
             var storeName = item.store === 'woolworths' ? 'Woolworths' : 'Checkers';
+            var safeName = escapeHtml(item.name);
+            var safeNotes = escapeHtml(item.notes);
 
             return '<div class="list-item ' + (item.completed ? 'completed' : '') + '" data-id="' + item.id + '">' +
                 '<button class="item-checkbox ' + (item.completed ? 'checked' : '') + '" ' +
@@ -1554,14 +1607,14 @@
                     (item.completed ? '✓' : '') +
                 '</button>' +
                 '<div class="item-content">' +
-                    '<div class="item-name">' + item.name + '</div>' +
+                    '<div class="item-name">' + safeName + '</div>' +
                     '<div class="item-meta">' +
                         '<span class="badge badge-store ' + storeClass + '">' + storeName + '</span>' +
                         (item.recurring !== 'none' ? '<span class="badge badge-recurring">🔄 ' + item.recurring + '</span>' : '') +
                         (item.ordered ? '<span class="badge badge-ordered">📦 Ordered</span>' : '') +
                         (item.delivered ? '<span class="badge badge-delivered">✓ Delivered</span>' : '') +
                     '</div>' +
-                    (item.notes ? '<div class="item-notes">' + item.notes + '</div>' : '') +
+                    (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
                     '<div class="order-status">' +
                         '<label class="status-check ' + (item.ordered ? 'checked' : '') + '">' +
                             '<input type="checkbox" ' + (item.ordered ? 'checked' : '') + ' ' +
@@ -1614,6 +1667,8 @@
             var member = state.members.find(function(m) { return m.id === item.assignee; });
             var dueText = formatDate(item.due);
             var dueClass = getDateClass(item.due);
+            var safeName = escapeHtml(item.name);
+            var safeNotes = escapeHtml(item.notes);
 
             return '<div class="list-item ' + (item.completed ? 'completed' : '') + '" data-id="' + item.id + '">' +
                 '<button class="item-checkbox ' + (item.completed ? 'checked' : '') + '" ' +
@@ -1622,13 +1677,13 @@
                     (item.completed ? '✓' : '') +
                 '</button>' +
                 '<div class="item-content">' +
-                    '<div class="item-name">' + item.name + '</div>' +
+                    '<div class="item-name">' + safeName + '</div>' +
                     '<div class="item-meta">' +
-                        (member ? '<span class="badge badge-member">👤 ' + member.name + '</span>' : '') +
+                        (member ? '<span class="badge badge-member">👤 ' + escapeHtml(member.name) + '</span>' : '') +
                         (dueText ? '<span class="badge badge-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
                         (item.recurring !== 'none' ? '<span class="badge badge-recurring">🔄 ' + item.recurring + '</span>' : '') +
                     '</div>' +
-                    (item.notes ? '<div class="item-notes">' + item.notes + '</div>' : '') +
+                    (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
                 '</div>' +
                 '<div class="item-actions">' +
                     '<button class="btn btn-ghost btn-delete" onclick="confirmDelete(\'' + item.id + '\', \'' + type + '\')" aria-label="Delete task">' +
@@ -1724,7 +1779,8 @@
         function renderQuickButtons(type) {
             var container = document.getElementById(type + '-quick-btns');
             container.innerHTML = state.quickAdd[type].map(function(item) {
-                return '<button class="quick-btn" onclick="quickAdd(\'' + type + '\', \'' + item.replace(/'/g, "\\'") + '\')">' + item + '</button>';
+                var safeItem = escapeHtml(item);
+                return '<button class="quick-btn" onclick="quickAdd(\'' + type + '\', \'' + item.replace(/'/g, "\\'") + '\')">' + safeItem + '</button>';
             }).join('');
         }
 
@@ -1733,9 +1789,10 @@
             var items = state.quickAdd[state.currentManageType];
 
             container.innerHTML = items.map(function(item, index) {
+                var safeItem = escapeHtml(item);
                 return '<div class="manage-item">' +
-                    '<span>' + item + '</span>' +
-                    '<button onclick="removeStandardItem(' + index + ')" aria-label="Remove ' + item + '">✕</button>' +
+                    '<span>' + safeItem + '</span>' +
+                    '<button onclick="removeStandardItem(' + index + ')" aria-label="Remove ' + safeItem + '">✕</button>' +
                 '</div>';
             }).join('');
         }
@@ -1804,7 +1861,8 @@
         }
 
         function quickAdd(type, itemText) {
-            var name = itemText.replace(/^[^\s]+\s/, ''); // Remove emoji prefix
+            // Remove emoji prefix - handles both emoji+space and no emoji cases
+            var name = itemText.replace(/^[\p{Emoji}\p{Emoji_Presentation}\p{Extended_Pictographic}]+\s*/gu, '') || itemText;
 
             if (type === 'shopping') {
                 state.shopping.unshift({
