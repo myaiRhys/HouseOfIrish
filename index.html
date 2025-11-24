@@ -102,7 +102,7 @@
            ======================================== */
         .app-header {
             background: var(--card);
-            padding: 16px 20px;
+            padding: 8px 16px;
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
@@ -114,7 +114,8 @@
             color: var(--primary);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            font-size: 1.1rem;
         }
 
         main {
@@ -216,15 +217,15 @@
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 16px;
+            gap: 6px;
+            margin-bottom: 12px;
         }
 
         .stat-card {
             background: var(--card);
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
-            padding: 12px 8px;
+            padding: 8px 6px;
             text-align: center;
             transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
         }
@@ -233,14 +234,14 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 44px;
-            height: 44px;
-            font-size: 1.4rem;
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
             background: var(--border);
             border: none;
             border-radius: 50%;
             cursor: pointer;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             transition: all 0.2s ease;
         }
 
@@ -259,19 +260,19 @@
         }
 
         .stat-card .stat-title {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: var(--text-light);
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .stat-card .stat-value {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--warning);
         }
 
         .stat-card .stat-label {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             color: var(--text-light);
         }
 
@@ -1095,7 +1096,7 @@
     <main>
         <!-- Dashboard Page -->
         <section id="page-dashboard" class="page active" aria-label="Dashboard">
-            <h2 style="margin-bottom: 16px;" data-i18n="overview">Overview</h2>
+            <h2 style="margin-bottom: 8px; font-size: 1rem;" data-i18n="overview">Overview</h2>
             <div class="stats-grid" id="dashboard-stats">
                 <!-- Stats populated by JS -->
             </div>
