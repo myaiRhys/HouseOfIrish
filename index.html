@@ -23,18 +23,20 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: #000000;
-            color: #22c55e;
+            background: var(--bg);
+            color: var(--text);
             line-height: 1.6;
             min-height: 100vh;
             padding-bottom: 80px;
             overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* ========================================
-           COLOR VARIABLES (CSS Custom Properties)
+           THEME VARIABLES (CSS Custom Properties)
            ======================================== */
         :root {
+            /* Dark Theme (Default) */
             --primary: #22c55e;
             --primary-dark: #16a34a;
             --secondary: #4ade80;
@@ -51,6 +53,36 @@
             --shadow-lg: 0 4px 6px rgba(0,0,0,0.4);
             --radius: 12px;
             --radius-sm: 8px;
+            --badge-member-bg: #052e16;
+            --badge-member-color: #4ade80;
+            --badge-member-border: #166534;
+            --badge-due-bg: #78350f;
+            --badge-due-color: #fcd34d;
+            --badge-due-border: #92400e;
+        }
+
+        /* Light Theme */
+        [data-theme="light"] {
+            --primary: #16a34a;
+            --primary-dark: #15803d;
+            --secondary: #22c55e;
+            --accent: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --danger-soft: #fee2e2;
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 6px rgba(0,0,0,0.15);
+            --badge-member-bg: #dcfce7;
+            --badge-member-color: #166534;
+            --badge-member-border: #86efac;
+            --badge-due-bg: #fef3c7;
+            --badge-due-color: #92400e;
+            --badge-due-border: #fcd34d;
         }
 
         /* ========================================
@@ -75,6 +107,7 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .app-header h1 {
@@ -119,6 +152,7 @@
             padding: 8px 4px;
             padding-bottom: max(8px, env(safe-area-inset-bottom));
             z-index: 1000;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .nav-btn {
@@ -166,6 +200,7 @@
             box-shadow: var(--shadow);
             padding: 16px;
             margin-bottom: 12px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card-header {
@@ -189,45 +224,56 @@
             background: var(--card);
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
-            padding: 10px 8px;
+            padding: 12px 8px;
             text-align: center;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
         }
 
-        .stat-card .stat-icon {
-            font-size: 1.2rem;
-            margin-bottom: 4px;
+        .stat-icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            font-size: 1.4rem;
+            background: var(--border);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-icon-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .stat-icon-btn:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .stat-icon-btn:active {
+            transform: scale(0.95);
         }
 
         .stat-card .stat-title {
             font-size: 0.65rem;
             color: var(--text-light);
-            margin-bottom: 6px;
-        }
-
-        .stat-card .stat-numbers {
-            display: flex;
-            justify-content: space-around;
-            gap: 4px;
-        }
-
-        .stat-card .stat-item {
-            display: flex;
-            flex-direction: column;
+            margin-bottom: 4px;
         }
 
         .stat-card .stat-value {
-            font-size: 0.95rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            color: var(--text);
+            color: var(--warning);
         }
 
         .stat-card .stat-label {
-            font-size: 0.5rem;
+            font-size: 0.6rem;
             color: var(--text-light);
         }
-
-        .stat-value.active { color: var(--warning); }
-        .stat-value.done { color: var(--primary); }
 
         /* ========================================
            FORMS
@@ -239,6 +285,7 @@
             padding: 16px;
             margin-bottom: 16px;
             display: none;
+            transition: background-color 0.3s ease;
         }
 
         .add-form.open {
@@ -273,7 +320,7 @@
             border-radius: var(--radius-sm);
             background: var(--bg);
             color: var(--text);
-            transition: border-color 0.2s ease;
+            transition: border-color 0.2s ease, background-color 0.3s ease;
         }
 
         .form-group input:focus,
@@ -309,7 +356,7 @@
             border-radius: var(--radius-sm);
             cursor: pointer;
             transition: all 0.2s ease;
-            min-height: 60px;
+            min-height: 50px;
         }
 
         .btn:focus {
@@ -333,11 +380,6 @@
         .btn-secondary {
             background: var(--border);
             color: var(--text);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
         }
 
         .btn-ghost {
@@ -373,27 +415,27 @@
         }
 
         /* ========================================
-           LIST ITEMS
+           LIST ITEMS (Compact)
            ======================================== */
         .list-section {
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
 
         .list-section h3 {
             color: var(--text-light);
             font-size: 0.85rem;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             padding-left: 4px;
         }
 
         .list-item {
             background: var(--card);
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
-            padding: 14px;
-            margin-bottom: 10px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: flex-start;
             transition: all 0.2s ease;
         }
@@ -419,6 +461,7 @@
             flex-shrink: 0;
             transition: all 0.2s ease;
             background: var(--card);
+            min-width: 28px;
         }
 
         .item-checkbox:hover {
@@ -443,7 +486,7 @@
 
         .item-name {
             font-weight: 600;
-            margin-bottom: 6px;
+            font-size: 0.95rem;
             word-break: break-word;
         }
 
@@ -451,31 +494,16 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            margin-bottom: 6px;
+            margin-top: 4px;
         }
 
         .item-notes {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-light);
-            margin-top: 6px;
-            padding: 8px;
+            margin-top: 4px;
+            padding: 6px 8px;
             background: var(--bg);
             border-radius: var(--radius-sm);
-        }
-
-        .item-actions {
-            display: flex;
-            gap: 4px;
-        }
-
-        .btn-delete {
-            width: 36px;
-            height: 36px;
-            padding: 0;
-            min-height: unset;
-            border-radius: 50%;
-            color: var(--danger);
-            background: var(--danger-soft);
         }
 
         /* ========================================
@@ -485,41 +513,23 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 4px 10px;
-            font-size: 0.7rem;
+            padding: 2px 8px;
+            font-size: 0.65rem;
             font-weight: 600;
             border-radius: 20px;
             white-space: nowrap;
         }
 
-        .badge-store {
-            background: #052e16;
-            color: #4ade80;
-            border: 1px solid #166534;
-        }
-
-        .badge-store.woolworths {
-            background: #831843;
-            color: #f9a8d4;
-            border: 1px solid #9d174d;
-        }
-
-        .badge-store.checkers {
-            background: #78350f;
-            color: #fcd34d;
-            border: 1px solid #92400e;
-        }
-
         .badge-member {
-            background: #052e16;
-            color: #4ade80;
-            border: 1px solid #166534;
+            background: var(--badge-member-bg);
+            color: var(--badge-member-color);
+            border: 1px solid var(--badge-member-border);
         }
 
         .badge-due {
-            background: #78350f;
-            color: #fcd34d;
-            border: 1px solid #92400e;
+            background: var(--badge-due-bg);
+            color: var(--badge-due-color);
+            border: 1px solid var(--badge-due-border);
         }
 
         .badge-due.overdue {
@@ -528,87 +538,107 @@
             border: 1px solid #991b1b;
         }
 
+        [data-theme="light"] .badge-due.overdue {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+
         .badge-due.today {
             background: #7c2d12;
             color: #fdba74;
             border: 1px solid #c2410c;
         }
 
-        .badge-recurring {
-            background: #052e16;
-            color: #86efac;
-            border: 1px solid #166534;
-        }
-
-        .badge-ordered {
-            background: #1e3a5f;
-            color: #93c5fd;
-            border: 1px solid #1d4ed8;
-        }
-
-        .badge-delivered {
-            background: #052e16;
-            color: #86efac;
-            border: 1px solid #166534;
+        [data-theme="light"] .badge-due.today {
+            background: #ffedd5;
+            color: #c2410c;
+            border: 1px solid #fdba74;
         }
 
         /* ========================================
-           ORDERED/DELIVERED CHECKBOXES
+           COLLAPSIBLE SECTION
            ======================================== */
-        .order-status {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .status-check {
+        .collapsible-header {
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: background-color 0.2s ease;
+            min-height: 44px;
+        }
+
+        .collapsible-header:hover {
+            background: var(--card);
+        }
+
+        .collapsible-header:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .collapsible-header h3 {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .collapsible-toggle {
             font-size: 0.8rem;
-            color: var(--text-light);
-            cursor: pointer;
+            transition: transform 0.3s ease;
         }
 
-        .status-check input {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
+        .collapsible-header.expanded .collapsible-toggle {
+            transform: rotate(180deg);
         }
 
-        .status-check.checked {
-            color: var(--primary);
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.expanded {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
         }
 
         /* ========================================
            QUICK ADD BUTTONS
            ======================================== */
         .quick-add {
-            margin-top: 24px;
+            margin-top: 20px;
         }
 
         .quick-add h4 {
             font-size: 0.85rem;
             color: var(--text-light);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .quick-add-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 10px;
         }
 
         .quick-btn {
-            padding: 10px 14px;
-            font-size: 0.85rem;
+            padding: 8px 12px;
+            font-size: 0.8rem;
             background: var(--card);
             border: 2px solid var(--border);
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.2s ease;
             min-height: 44px;
+            color: var(--text);
         }
 
         .quick-btn:hover {
@@ -651,6 +681,7 @@
             box-shadow: var(--shadow);
             padding: 16px;
             text-align: center;
+            transition: background-color 0.3s ease;
         }
 
         .member-avatar {
@@ -717,6 +748,7 @@
             max-height: 80vh;
             overflow-y: auto;
             animation: modalIn 0.2s ease;
+            transition: background-color 0.3s ease;
         }
 
         @keyframes modalIn {
@@ -762,17 +794,6 @@
 
         .modal-body {
             padding: 16px;
-        }
-
-        .modal-actions {
-            padding: 16px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 12px;
-        }
-
-        .modal-actions .btn {
-            flex: 1;
         }
 
         /* ========================================
@@ -902,6 +923,7 @@
             font-size: 1rem;
             text-align: left;
             transition: all 0.2s ease;
+            color: var(--text);
         }
 
         .settings-btn:hover {
@@ -916,6 +938,41 @@
 
         .settings-btn .arrow {
             color: var(--text-light);
+        }
+
+        /* Settings Form Controls */
+        .settings-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 8px;
+        }
+
+        .settings-control label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-control select {
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        .settings-control select:focus {
+            outline: none;
+            border-color: var(--accent);
         }
 
         /* ========================================
@@ -950,11 +1007,11 @@
             background: var(--card);
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
-            padding: 10px 12px;
+            padding: 8px 10px;
             margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .upcoming-item .upcoming-icon {
@@ -968,14 +1025,14 @@
 
         .upcoming-item .upcoming-name {
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .upcoming-item .upcoming-meta {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--text-light);
             display: flex;
             flex-wrap: wrap;
@@ -1035,7 +1092,7 @@
          HEADER
          ======================================== -->
     <header class="app-header">
-        <h1>🏠 House of Irish</h1>
+        <h1>🏠 <span data-i18n="appName">House of Irish</span></h1>
     </header>
 
     <!-- ========================================
@@ -1044,7 +1101,7 @@
     <main>
         <!-- Dashboard Page -->
         <section id="page-dashboard" class="page active" aria-label="Dashboard">
-            <h2 style="margin-bottom: 16px;">Overview</h2>
+            <h2 style="margin-bottom: 16px;" data-i18n="overview">Overview</h2>
             <div class="stats-grid" id="dashboard-stats">
                 <!-- Stats populated by JS -->
             </div>
@@ -1063,39 +1120,21 @@
         <!-- Shopping Page -->
         <section id="page-shopping" class="page" aria-label="Shopping List">
             <button class="btn btn-primary btn-add" id="btn-add-shopping" aria-expanded="false">
-                + Add Item
+                + <span data-i18n="addItem">Add Item</span>
             </button>
 
             <form class="add-form" id="form-shopping" aria-label="Add shopping item">
                 <div class="form-group">
-                    <label for="shopping-name">Item Name *</label>
-                    <input type="text" id="shopping-name" required placeholder="e.g., Full cream milk">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="shopping-store">Store</label>
-                        <select id="shopping-store">
-                            <option value="woolworths">Woolworths</option>
-                            <option value="checkers">Checkers</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="shopping-recurring">Recurring</label>
-                        <select id="shopping-recurring">
-                            <option value="none">None</option>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                        </select>
-                    </div>
+                    <label for="shopping-name" data-i18n="itemName">Item Name *</label>
+                    <input type="text" id="shopping-name" required data-i18n-placeholder="itemNamePlaceholder" placeholder="e.g., Full cream milk">
                 </div>
                 <div class="form-group">
-                    <label for="shopping-notes">Notes (optional)</label>
-                    <textarea id="shopping-notes" placeholder="Any additional details..."></textarea>
+                    <label for="shopping-notes" data-i18n="notesOptional">Notes (optional)</label>
+                    <textarea id="shopping-notes" data-i18n-placeholder="notesPlaceholder" placeholder="Any additional details..."></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="btn-cancel-shopping">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Item</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-shopping" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="addItem">Add Item</button>
                 </div>
             </form>
 
@@ -1104,28 +1143,28 @@
             </div>
 
             <div class="quick-add">
-                <h4>Quick Add</h4>
+                <h4 data-i18n="quickAdd">Quick Add</h4>
                 <div class="quick-add-grid" id="shopping-quick-btns">
                     <!-- Quick buttons populated by JS -->
                 </div>
-                <button class="manage-btn" id="manage-shopping-standards">Manage Standard Items</button>
+                <button class="manage-btn" id="manage-shopping-standards" data-i18n="manageStandardItems">Manage Standard Items</button>
             </div>
         </section>
 
         <!-- Tasks Page -->
         <section id="page-tasks" class="page" aria-label="Household Tasks">
             <button class="btn btn-primary btn-add" id="btn-add-task" aria-expanded="false">
-                + Add Task
+                + <span data-i18n="addTask">Add Task</span>
             </button>
 
             <form class="add-form" id="form-task" aria-label="Add task">
                 <div class="form-group">
-                    <label for="task-name">Task Name *</label>
-                    <input type="text" id="task-name" required placeholder="e.g., Water the garden">
+                    <label for="task-name" data-i18n="taskName">Task Name *</label>
+                    <input type="text" id="task-name" required data-i18n-placeholder="taskNamePlaceholder" placeholder="e.g., Water the garden">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="task-assignee">Assign To</label>
+                        <label for="task-assignee" data-i18n="assignTo">Assign To</label>
                         <select id="task-assignee">
                             <option value="john">John</option>
                             <option value="sarah">Sarah</option>
@@ -1134,26 +1173,17 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="task-due">Due Date</label>
+                        <label for="task-due" data-i18n="dueDate">Due Date</label>
                         <input type="date" id="task-due">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="task-recurring">Recurring</label>
-                    <select id="task-recurring">
-                        <option value="none">None</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="task-notes">Notes (optional)</label>
-                    <textarea id="task-notes" placeholder="Any additional details..."></textarea>
+                    <label for="task-notes" data-i18n="notesOptional">Notes (optional)</label>
+                    <textarea id="task-notes" data-i18n-placeholder="notesPlaceholder" placeholder="Any additional details..."></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="btn-cancel-task">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Task</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-task" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="addTask">Add Task</button>
                 </div>
             </form>
 
@@ -1162,28 +1192,28 @@
             </div>
 
             <div class="quick-add">
-                <h4>Quick Add</h4>
+                <h4 data-i18n="quickAdd">Quick Add</h4>
                 <div class="quick-add-grid" id="tasks-quick-btns">
                     <!-- Quick buttons populated by JS -->
                 </div>
-                <button class="manage-btn" id="manage-tasks-standards">Manage Standard Items</button>
+                <button class="manage-btn" id="manage-tasks-standards" data-i18n="manageStandardItems">Manage Standard Items</button>
             </div>
         </section>
 
         <!-- Clifford Page -->
         <section id="page-clifford" class="page" aria-label="Clifford's Tasks">
             <button class="btn btn-primary btn-add" id="btn-add-clifford" aria-expanded="false">
-                + Add Task
+                + <span data-i18n="addTask">Add Task</span>
             </button>
 
             <form class="add-form" id="form-clifford" aria-label="Add Clifford task">
                 <div class="form-group">
-                    <label for="clifford-name">Task Name *</label>
-                    <input type="text" id="clifford-name" required placeholder="e.g., Buy nappies">
+                    <label for="clifford-name" data-i18n="taskName">Task Name *</label>
+                    <input type="text" id="clifford-name" required data-i18n-placeholder="cliffordTaskPlaceholder" placeholder="e.g., Buy nappies">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="clifford-assignee">Assign To</label>
+                        <label for="clifford-assignee" data-i18n="assignTo">Assign To</label>
                         <select id="clifford-assignee">
                             <option value="john">John</option>
                             <option value="sarah">Sarah</option>
@@ -1192,26 +1222,17 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="clifford-due">Due Date</label>
+                        <label for="clifford-due" data-i18n="dueDate">Due Date</label>
                         <input type="date" id="clifford-due">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="clifford-recurring">Recurring</label>
-                    <select id="clifford-recurring">
-                        <option value="none">None</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="clifford-notes">Notes (optional)</label>
-                    <textarea id="clifford-notes" placeholder="Any additional details..."></textarea>
+                    <label for="clifford-notes" data-i18n="notesOptional">Notes (optional)</label>
+                    <textarea id="clifford-notes" data-i18n-placeholder="notesPlaceholder" placeholder="Any additional details..."></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="btn-cancel-clifford">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Task</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-clifford" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="addTask">Add Task</button>
                 </div>
             </form>
 
@@ -1220,36 +1241,58 @@
             </div>
 
             <div class="quick-add">
-                <h4>Quick Add</h4>
+                <h4 data-i18n="quickAdd">Quick Add</h4>
                 <div class="quick-add-grid" id="clifford-quick-btns">
                     <!-- Quick buttons populated by JS -->
                 </div>
-                <button class="manage-btn" id="manage-clifford-standards">Manage Standard Items</button>
+                <button class="manage-btn" id="manage-clifford-standards" data-i18n="manageStandardItems">Manage Standard Items</button>
             </div>
         </section>
 
         <!-- Settings Page -->
         <section id="page-settings" class="page" aria-label="Settings">
             <div class="settings-section">
-                <h2>Household Members</h2>
+                <h2 data-i18n="languageSettings">Language Settings</h2>
+                <div class="settings-control">
+                    <label for="language-select">🌐 <span data-i18n="language">Language</span></label>
+                    <select id="language-select">
+                        <option value="en">English</option>
+                        <option value="af">Afrikaans</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2 data-i18n="appearanceSettings">Appearance Settings</h2>
+                <div class="settings-control">
+                    <label for="theme-select">🎨 <span data-i18n="theme">Theme</span></label>
+                    <select id="theme-select">
+                        <option value="dark" data-i18n="darkTheme">Dark</option>
+                        <option value="light" data-i18n="lightTheme">Light</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2 data-i18n="householdMembers">Household Members</h2>
                 <div class="members-grid" id="members-grid">
                     <!-- Members populated by JS -->
                 </div>
             </div>
 
             <div class="settings-section">
-                <h2>Manage Standard Items</h2>
+                <h2 data-i18n="manageStandardItems">Manage Standard Items</h2>
                 <div class="settings-buttons">
                     <button class="settings-btn" id="settings-shopping-standards">
-                        <span>🛒 Shopping Quick Add</span>
+                        <span>🛒 <span data-i18n="shoppingQuickAdd">Shopping Quick Add</span></span>
                         <span class="arrow">→</span>
                     </button>
                     <button class="settings-btn" id="settings-tasks-standards">
-                        <span>✓ Tasks Quick Add</span>
+                        <span>✓ <span data-i18n="tasksQuickAdd">Tasks Quick Add</span></span>
                         <span class="arrow">→</span>
                     </button>
                     <button class="settings-btn" id="settings-clifford-standards">
-                        <span>👶 Clifford Quick Add</span>
+                        <span>👶 <span data-i18n="cliffordQuickAdd">Clifford Quick Add</span></span>
                         <span class="arrow">→</span>
                     </button>
                 </div>
@@ -1263,44 +1306,25 @@
     <nav class="bottom-nav" aria-label="Main navigation">
         <button class="nav-btn active" data-page="dashboard" aria-current="page">
             <span class="icon">🏠</span>
-            <span>Dashboard</span>
+            <span data-i18n="dashboard">Dashboard</span>
         </button>
         <button class="nav-btn" data-page="shopping">
             <span class="icon">🛒</span>
-            <span>Shopping</span>
+            <span data-i18n="shopping">Shopping</span>
         </button>
         <button class="nav-btn" data-page="tasks">
             <span class="icon">✓</span>
-            <span>Tasks</span>
+            <span data-i18n="tasks">Tasks</span>
         </button>
         <button class="nav-btn" data-page="clifford">
             <span class="icon">👶</span>
-            <span>Clifford</span>
+            <span data-i18n="clifford">Clifford</span>
         </button>
         <button class="nav-btn" data-page="settings">
             <span class="icon">⚙️</span>
-            <span>Settings</span>
+            <span data-i18n="settings">Settings</span>
         </button>
     </nav>
-
-    <!-- ========================================
-         MODAL (Delete Confirmation)
-         ======================================== -->
-    <div class="modal-overlay" id="modal-delete" aria-hidden="true">
-        <div class="modal" role="dialog" aria-labelledby="modal-delete-title">
-            <div class="modal-header">
-                <h3 id="modal-delete-title">Delete Item?</h3>
-                <button class="modal-close" aria-label="Close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete "<span id="delete-item-name"></span>"? This action cannot be undone.</p>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" id="btn-cancel-delete">Cancel</button>
-                <button class="btn btn-danger" id="btn-confirm-delete">Delete</button>
-            </div>
-        </div>
-    </div>
 
     <!-- ========================================
          MODAL (Manage Standard Items)
@@ -1308,7 +1332,7 @@
     <div class="modal-overlay" id="modal-manage" aria-hidden="true">
         <div class="modal" role="dialog" aria-labelledby="modal-manage-title">
             <div class="modal-header">
-                <h3 id="modal-manage-title">Manage Standard Items</h3>
+                <h3 id="modal-manage-title" data-i18n="manageStandardItems">Manage Standard Items</h3>
                 <button class="modal-close" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
@@ -1316,8 +1340,8 @@
                     <!-- Items populated by JS -->
                 </div>
                 <div class="add-standard-form">
-                    <input type="text" id="new-standard-name" placeholder="New item name">
-                    <button class="btn btn-primary btn-sm" id="btn-add-standard">Add</button>
+                    <input type="text" id="new-standard-name" data-i18n-placeholder="newItemName" placeholder="New item name">
+                    <button class="btn btn-primary btn-sm" id="btn-add-standard" data-i18n="add">Add</button>
                 </div>
             </div>
         </div>
@@ -1332,6 +1356,160 @@
          JAVASCRIPT
          ======================================== -->
     <script>
+        // ========================================
+        // TRANSLATIONS
+        // ========================================
+        const translations = {
+            en: {
+                // App
+                appName: 'House of Irish',
+                overview: 'Overview',
+
+                // Navigation
+                dashboard: 'Dashboard',
+                shopping: 'Shopping',
+                tasks: 'Tasks',
+                clifford: 'Clifford',
+                settings: 'Settings',
+
+                // Dashboard
+                toBuy: 'To Buy',
+                active: 'Active',
+
+                // Forms
+                addItem: 'Add Item',
+                addTask: 'Add Task',
+                cancel: 'Cancel',
+                add: 'Add',
+                itemName: 'Item Name *',
+                taskName: 'Task Name *',
+                assignTo: 'Assign To',
+                dueDate: 'Due Date',
+                notesOptional: 'Notes (optional)',
+                itemNamePlaceholder: 'e.g., Full cream milk',
+                taskNamePlaceholder: 'e.g., Water the garden',
+                cliffordTaskPlaceholder: 'e.g., Buy nappies',
+                notesPlaceholder: 'Any additional details...',
+                newItemName: 'New item name',
+
+                // Lists
+                quickAdd: 'Quick Add',
+                manageStandardItems: 'Manage Standard Items',
+                purchased: 'Purchased',
+                completed: 'Completed',
+                activeTasks: 'Active Tasks',
+
+                // Settings
+                languageSettings: 'Language Settings',
+                appearanceSettings: 'Appearance Settings',
+                householdMembers: 'Household Members',
+                language: 'Language',
+                theme: 'Theme',
+                darkTheme: 'Dark',
+                lightTheme: 'Light',
+                shoppingQuickAdd: 'Shopping Quick Add',
+                tasksQuickAdd: 'Tasks Quick Add',
+                cliffordQuickAdd: 'Clifford Quick Add',
+                tasksCompleted: 'tasks completed',
+
+                // Date labels
+                today: 'Today',
+                tomorrow: 'Tomorrow',
+                overdue: 'Overdue',
+                inDays: 'In {days} days',
+
+                // Toast messages
+                itemAdded: '{name} added!',
+                markedPurchased: 'Marked as purchased!',
+                markedNotPurchased: 'Marked as not purchased',
+                taskCompleted: 'Task completed!',
+                taskIncomplete: 'Task marked as incomplete',
+
+                // Empty states
+                noShoppingItems: 'No shopping items yet',
+                noTasks: 'No tasks yet',
+                noCliffordTasks: 'No tasks for Clifford yet',
+
+                // Upcoming
+                upcomingTasks: 'Upcoming Tasks',
+                upcomingClifford: 'Upcoming for Clifford'
+            },
+            af: {
+                // App
+                appName: 'Huis van Irish',
+                overview: 'Oorsig',
+
+                // Navigation
+                dashboard: 'Paneelbord',
+                shopping: 'Inkopies',
+                tasks: 'Take',
+                clifford: 'Clifford',
+                settings: 'Instellings',
+
+                // Dashboard
+                toBuy: 'Te Koop',
+                active: 'Aktief',
+
+                // Forms
+                addItem: 'Voeg Item By',
+                addTask: 'Voeg Taak By',
+                cancel: 'Kanselleer',
+                add: 'Voeg By',
+                itemName: 'Item Naam *',
+                taskName: 'Taak Naam *',
+                assignTo: 'Ken Toe Aan',
+                dueDate: 'Sperdatum',
+                notesOptional: 'Notas (opsioneel)',
+                itemNamePlaceholder: 'bv. Volroom melk',
+                taskNamePlaceholder: 'bv. Nat die tuin',
+                cliffordTaskPlaceholder: 'bv. Koop doeke',
+                notesPlaceholder: 'Enige bykomende besonderhede...',
+                newItemName: 'Nuwe item naam',
+
+                // Lists
+                quickAdd: 'Vinnig Byvoeg',
+                manageStandardItems: 'Bestuur Standaard Items',
+                purchased: 'Gekoop',
+                completed: 'Voltooi',
+                activeTasks: 'Aktiewe Take',
+
+                // Settings
+                languageSettings: 'Taal Instellings',
+                appearanceSettings: 'Voorkoms Instellings',
+                householdMembers: 'Huishouding Lede',
+                language: 'Taal',
+                theme: 'Tema',
+                darkTheme: 'Donker',
+                lightTheme: 'Lig',
+                shoppingQuickAdd: 'Inkopies Vinnig Byvoeg',
+                tasksQuickAdd: 'Take Vinnig Byvoeg',
+                cliffordQuickAdd: 'Clifford Vinnig Byvoeg',
+                tasksCompleted: 'take voltooi',
+
+                // Date labels
+                today: 'Vandag',
+                tomorrow: 'Môre',
+                overdue: 'Agterstallig',
+                inDays: 'Oor {days} dae',
+
+                // Toast messages
+                itemAdded: '{name} bygevoeg!',
+                markedPurchased: 'Gemerk as gekoop!',
+                markedNotPurchased: 'Gemerk as nie gekoop nie',
+                taskCompleted: 'Taak voltooi!',
+                taskIncomplete: 'Taak gemerk as onvoltooi',
+
+                // Empty states
+                noShoppingItems: 'Geen inkopie items nog nie',
+                noTasks: 'Geen take nog nie',
+                noCliffordTasks: 'Geen take vir Clifford nog nie',
+
+                // Upcoming
+                upcomingTasks: 'Komende Take',
+                upcomingClifford: 'Komende vir Clifford'
+            }
+        };
+
         // ========================================
         // APPLICATION STATE
         // ========================================
@@ -1350,9 +1528,14 @@
                 tasks: ['🐕 Feed Dogs', '🌱 Water Garden', '🗑️ Take Out Trash', '🧹 Clean House', '👕 Do Laundry', '🛒 Buy Groceries'],
                 clifford: ['💉 Vaccines due', '🍼 Buy formula', '👶 Buy nappies', '🥄 Buy baby food', '👨‍⚕️ Doctor appointment', '🛁 Bath supplies', '🧸 Toys/activities', '📏 Milestone check']
             },
-            currentDeleteItem: null,
-            currentDeleteType: null,
-            currentManageType: null
+            currentManageType: null,
+            language: localStorage.getItem('hoi-language') || 'en',
+            theme: localStorage.getItem('hoi-theme') || 'dark',
+            collapsedSections: {
+                shopping: true,
+                tasks: true,
+                clifford: true
+            }
         };
 
         // ========================================
@@ -1362,11 +1545,6 @@
             return Date.now().toString(36) + Math.random().toString(36).substring(2);
         }
 
-        /**
-         * Escapes HTML special characters to prevent XSS attacks
-         * @param {string} str - The string to escape
-         * @returns {string} The escaped string
-         */
         function escapeHtml(str) {
             if (!str) return '';
             var div = document.createElement('div');
@@ -1374,32 +1552,40 @@
             return div.innerHTML;
         }
 
+        function t(key, replacements) {
+            var text = translations[state.language][key] || translations['en'][key] || key;
+            if (replacements) {
+                Object.keys(replacements).forEach(function(k) {
+                    text = text.replace('{' + k + '}', replacements[k]);
+                });
+            }
+            return text;
+        }
+
         function formatDate(dateStr) {
             if (!dateStr) return '';
-            const date = new Date(dateStr);
-            const today = new Date();
+            var today = new Date();
             today.setHours(0, 0, 0, 0);
-            const tomorrow = new Date(today);
+            var tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
-            const itemDate = new Date(dateStr);
+            var itemDate = new Date(dateStr);
             itemDate.setHours(0, 0, 0, 0);
 
-            if (itemDate.getTime() === today.getTime()) return 'Today';
-            if (itemDate.getTime() === tomorrow.getTime()) return 'Tomorrow';
-            if (itemDate < today) return 'Overdue';
+            if (itemDate.getTime() === today.getTime()) return t('today');
+            if (itemDate.getTime() === tomorrow.getTime()) return t('tomorrow');
+            if (itemDate < today) return t('overdue');
 
-            const diff = Math.ceil((itemDate - today) / (1000 * 60 * 60 * 24));
-            if (diff <= 7) return 'In ' + diff + ' days';
+            var diff = Math.ceil((itemDate - today) / (1000 * 60 * 60 * 24));
+            if (diff <= 7) return t('inDays', { days: diff });
 
-            return itemDate.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+            return itemDate.toLocaleDateString(state.language === 'af' ? 'af-ZA' : 'en-ZA', { day: 'numeric', month: 'short' });
         }
 
         function getDateClass(dateStr) {
             if (!dateStr) return '';
-            const date = new Date(dateStr);
-            const today = new Date();
+            var today = new Date();
             today.setHours(0, 0, 0, 0);
-            const itemDate = new Date(dateStr);
+            var itemDate = new Date(dateStr);
             itemDate.setHours(0, 0, 0, 0);
 
             if (itemDate < today) return 'overdue';
@@ -1422,9 +1608,45 @@
         }
 
         function getRelativeDate(daysFromNow) {
-            const date = new Date();
+            var date = new Date();
             date.setDate(date.getDate() + daysFromNow);
             return date.toISOString().split('T')[0];
+        }
+
+        // ========================================
+        // LANGUAGE & THEME
+        // ========================================
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(function(el) {
+                var key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+                var key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = t(key);
+            });
+            document.documentElement.lang = state.language;
+        }
+
+        function applyTheme() {
+            document.body.setAttribute('data-theme', state.theme);
+            var metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) {
+                metaTheme.content = state.theme === 'light' ? '#f5f5f5' : '#000000';
+            }
+        }
+
+        function setLanguage(lang) {
+            state.language = lang;
+            localStorage.setItem('hoi-language', lang);
+            applyLanguage();
+            renderAll();
+        }
+
+        function setTheme(theme) {
+            state.theme = theme;
+            localStorage.setItem('hoi-theme', theme);
+            applyTheme();
         }
 
         // ========================================
@@ -1432,27 +1654,48 @@
         // ========================================
         function initMockData() {
             state.shopping = [
-                { id: generateId(), name: 'Full cream milk', store: 'woolworths', recurring: 'weekly', notes: 'Get 2 litres red label', completed: false, ordered: false, delivered: false },
-                { id: generateId(), name: 'Whole wheat bread', store: 'checkers', recurring: 'weekly', notes: 'Albany brand', completed: false, ordered: false, delivered: false },
-                { id: generateId(), name: 'Free range eggs', store: 'woolworths', recurring: 'none', notes: 'Large size', completed: false, ordered: false, delivered: false },
-                { id: generateId(), name: 'Dish soap', store: 'checkers', recurring: 'monthly', notes: '', completed: false, ordered: true, delivered: false },
-                { id: generateId(), name: 'Fresh vegetables', store: 'woolworths', recurring: 'none', notes: '', completed: false, ordered: true, delivered: true }
+                { id: generateId(), name: 'Full cream milk', notes: 'Get 2 litres red label', completed: false },
+                { id: generateId(), name: 'Whole wheat bread', notes: 'Albany brand', completed: false },
+                { id: generateId(), name: 'Free range eggs', notes: 'Large size', completed: false },
+                { id: generateId(), name: 'Dish soap', notes: '', completed: false },
+                { id: generateId(), name: 'Fresh vegetables', notes: '', completed: true }
             ];
 
             state.tasks = [
-                { id: generateId(), name: 'Feed the dogs', assignee: 'sarah', due: getRelativeDate(0), recurring: 'daily', notes: 'Morning and evening', completed: false },
-                { id: generateId(), name: 'Water the garden', assignee: 'john', due: getRelativeDate(2), recurring: 'weekly', notes: 'Early morning', completed: false },
-                { id: generateId(), name: 'Weekly grocery shopping', assignee: 'mary', due: getRelativeDate(1), recurring: 'none', notes: 'Check list first', completed: false },
-                { id: generateId(), name: 'Clean the pool', assignee: 'tom', due: getRelativeDate(3), recurring: 'weekly', notes: '', completed: false },
-                { id: generateId(), name: 'Take out trash', assignee: 'john', due: getRelativeDate(0), recurring: 'daily', notes: '', completed: true }
+                { id: generateId(), name: 'Feed the dogs', assignee: 'sarah', due: getRelativeDate(0), notes: 'Morning and evening', completed: false },
+                { id: generateId(), name: 'Water the garden', assignee: 'john', due: getRelativeDate(2), notes: 'Early morning', completed: false },
+                { id: generateId(), name: 'Weekly grocery shopping', assignee: 'mary', due: getRelativeDate(1), notes: 'Check list first', completed: false },
+                { id: generateId(), name: 'Clean the pool', assignee: 'tom', due: getRelativeDate(3), notes: '', completed: false },
+                { id: generateId(), name: 'Take out trash', assignee: 'john', due: getRelativeDate(0), notes: '', completed: true }
             ];
 
             state.clifford = [
-                { id: generateId(), name: 'Vaccines due', assignee: 'sarah', due: getRelativeDate(5), recurring: 'none', notes: '6-month checkup', completed: false },
-                { id: generateId(), name: 'Buy nappies', assignee: 'mary', due: getRelativeDate(1), recurring: 'weekly', notes: 'Size 4 Pampers', completed: false },
-                { id: generateId(), name: 'Doctor appointment', assignee: 'john', due: getRelativeDate(7), recurring: 'none', notes: 'Pediatrician - 10am', completed: false },
-                { id: generateId(), name: 'Buy formula', assignee: 'sarah', due: getRelativeDate(3), recurring: 'weekly', notes: '', completed: true }
+                { id: generateId(), name: 'Vaccines due', assignee: 'sarah', due: getRelativeDate(5), notes: '6-month checkup', completed: false },
+                { id: generateId(), name: 'Buy nappies', assignee: 'mary', due: getRelativeDate(1), notes: 'Size 4 Pampers', completed: false },
+                { id: generateId(), name: 'Doctor appointment', assignee: 'john', due: getRelativeDate(7), notes: 'Pediatrician - 10am', completed: false },
+                { id: generateId(), name: 'Buy formula', assignee: 'sarah', due: getRelativeDate(3), notes: '', completed: true }
             ];
+        }
+
+        // ========================================
+        // NAVIGATION FUNCTIONS
+        // ========================================
+        function navigateToPage(pageName) {
+            var navBtns = document.querySelectorAll('.nav-btn');
+            var pages = document.querySelectorAll('.page');
+
+            navBtns.forEach(function(b) {
+                b.classList.remove('active');
+                b.removeAttribute('aria-current');
+                if (b.dataset.page === pageName) {
+                    b.classList.add('active');
+                    b.setAttribute('aria-current', 'page');
+                }
+            });
+
+            pages.forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('page-' + pageName).classList.add('active');
+            window.scrollTo(0, 0);
         }
 
         // ========================================
@@ -1461,69 +1704,35 @@
         function renderDashboard() {
             var container = document.getElementById('dashboard-stats');
             var shoppingActive = state.shopping.filter(function(i) { return !i.completed; }).length;
-            var shoppingDone = state.shopping.filter(function(i) { return i.completed; }).length;
             var tasksActive = state.tasks.filter(function(t) { return !t.completed; }).length;
-            var tasksDone = state.tasks.filter(function(t) { return t.completed; }).length;
             var cliffordActive = state.clifford.filter(function(t) { return !t.completed; }).length;
-            var cliffordDone = state.clifford.filter(function(t) { return t.completed; }).length;
 
             container.innerHTML =
                 '<div class="stat-card">' +
-                    '<div class="stat-icon">🛒</div>' +
-                    '<div class="stat-title">Shopping</div>' +
-                    '<div class="stat-numbers">' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value">' + state.shopping.length + '</span>' +
-                            '<span class="stat-label">Total</span>' +
-                        '</div>' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value active">' + shoppingActive + '</span>' +
-                            '<span class="stat-label">To Buy</span>' +
-                        '</div>' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value done">' + shoppingDone + '</span>' +
-                            '<span class="stat-label">Done</span>' +
-                        '</div>' +
-                    '</div>' +
+                    '<button class="stat-icon-btn" onclick="navigateToPage(\'shopping\')" aria-label="' + t('shopping') + '">' +
+                        '🛒' +
+                    '</button>' +
+                    '<div class="stat-title">' + t('shopping') + '</div>' +
+                    '<div class="stat-value">' + shoppingActive + '</div>' +
+                    '<div class="stat-label">' + t('toBuy') + '</div>' +
                 '</div>' +
                 '<div class="stat-card">' +
-                    '<div class="stat-icon">✓</div>' +
-                    '<div class="stat-title">Tasks</div>' +
-                    '<div class="stat-numbers">' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value">' + state.tasks.length + '</span>' +
-                            '<span class="stat-label">Total</span>' +
-                        '</div>' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value active">' + tasksActive + '</span>' +
-                            '<span class="stat-label">Active</span>' +
-                        '</div>' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value done">' + tasksDone + '</span>' +
-                            '<span class="stat-label">Done</span>' +
-                        '</div>' +
-                    '</div>' +
+                    '<button class="stat-icon-btn" onclick="navigateToPage(\'tasks\')" aria-label="' + t('tasks') + '">' +
+                        '✓' +
+                    '</button>' +
+                    '<div class="stat-title">' + t('tasks') + '</div>' +
+                    '<div class="stat-value">' + tasksActive + '</div>' +
+                    '<div class="stat-label">' + t('active') + '</div>' +
                 '</div>' +
                 '<div class="stat-card">' +
-                    '<div class="stat-icon">👶</div>' +
-                    '<div class="stat-title">Clifford</div>' +
-                    '<div class="stat-numbers">' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value">' + state.clifford.length + '</span>' +
-                            '<span class="stat-label">Total</span>' +
-                        '</div>' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value active">' + cliffordActive + '</span>' +
-                            '<span class="stat-label">Active</span>' +
-                        '</div>' +
-                        '<div class="stat-item">' +
-                            '<span class="stat-value done">' + cliffordDone + '</span>' +
-                            '<span class="stat-label">Done</span>' +
-                        '</div>' +
-                    '</div>' +
+                    '<button class="stat-icon-btn" onclick="navigateToPage(\'clifford\')" aria-label="' + t('clifford') + '">' +
+                        '👶' +
+                    '</button>' +
+                    '<div class="stat-title">' + t('clifford') + '</div>' +
+                    '<div class="stat-value">' + cliffordActive + '</div>' +
+                    '<div class="stat-label">' + t('active') + '</div>' +
                 '</div>';
 
-            // Render upcoming tasks
             renderUpcomingTasks();
             renderUpcomingClifford();
         }
@@ -1563,7 +1772,7 @@
                 return;
             }
 
-            var html = '<h3>✓ Upcoming Tasks</h3>';
+            var html = '<h3>✓ ' + t('upcomingTasks') + '</h3>';
             upcoming.forEach(function(item) {
                 html += renderUpcomingItem(item, 'tasks');
             });
@@ -1587,7 +1796,7 @@
                 return;
             }
 
-            var html = '<h3>👶 Upcoming for Clifford</h3>';
+            var html = '<h3>👶 ' + t('upcomingClifford') + '</h3>';
             upcoming.forEach(function(item) {
                 html += renderUpcomingItem(item, 'clifford');
             });
@@ -1595,43 +1804,18 @@
         }
 
         function renderShoppingItem(item) {
-            var storeClass = item.store === 'woolworths' ? 'woolworths' : 'checkers';
-            var storeName = item.store === 'woolworths' ? 'Woolworths' : 'Checkers';
             var safeName = escapeHtml(item.name);
             var safeNotes = escapeHtml(item.notes);
 
             return '<div class="list-item ' + (item.completed ? 'completed' : '') + '" data-id="' + item.id + '">' +
                 '<button class="item-checkbox ' + (item.completed ? 'checked' : '') + '" ' +
                         'onclick="toggleShopping(\'' + item.id + '\')" ' +
-                        'aria-label="' + (item.completed ? 'Mark as not purchased' : 'Mark as purchased') + '">' +
+                        'aria-label="' + (item.completed ? t('markedNotPurchased') : t('markedPurchased')) + '">' +
                     (item.completed ? '✓' : '') +
                 '</button>' +
                 '<div class="item-content">' +
                     '<div class="item-name">' + safeName + '</div>' +
-                    '<div class="item-meta">' +
-                        '<span class="badge badge-store ' + storeClass + '">' + storeName + '</span>' +
-                        (item.recurring !== 'none' ? '<span class="badge badge-recurring">🔄 ' + item.recurring + '</span>' : '') +
-                        (item.ordered ? '<span class="badge badge-ordered">📦 Ordered</span>' : '') +
-                        (item.delivered ? '<span class="badge badge-delivered">✓ Delivered</span>' : '') +
-                    '</div>' +
                     (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
-                    '<div class="order-status">' +
-                        '<label class="status-check ' + (item.ordered ? 'checked' : '') + '">' +
-                            '<input type="checkbox" ' + (item.ordered ? 'checked' : '') + ' ' +
-                                   'onchange="updateOrderStatus(\'' + item.id + '\', \'ordered\', this.checked)">' +
-                            'Ordered' +
-                        '</label>' +
-                        '<label class="status-check ' + (item.delivered ? 'checked' : '') + '">' +
-                            '<input type="checkbox" ' + (item.delivered ? 'checked' : '') + ' ' +
-                                   'onchange="updateOrderStatus(\'' + item.id + '\', \'delivered\', this.checked)">' +
-                            'Delivered' +
-                        '</label>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="item-actions">' +
-                    '<button class="btn btn-ghost btn-delete" onclick="confirmDelete(\'' + item.id + '\', \'shopping\')" aria-label="Delete item">' +
-                        '🗑️' +
-                    '</button>' +
                 '</div>' +
             '</div>';
         }
@@ -1644,19 +1828,27 @@
             var html = '';
 
             if (active.length > 0) {
-                html += '<div class="list-section"><h3>To Buy (' + active.length + ')</h3>';
+                html += '<div class="list-section"><h3>' + t('toBuy') + ' (' + active.length + ')</h3>';
                 active.forEach(function(item) { html += renderShoppingItem(item); });
                 html += '</div>';
             }
 
             if (completed.length > 0) {
-                html += '<div class="list-section"><h3>Purchased (' + completed.length + ')</h3>';
+                var isExpanded = !state.collapsedSections.shopping;
+                html += '<div class="list-section">';
+                html += '<button class="collapsible-header ' + (isExpanded ? 'expanded' : '') + '" ' +
+                        'onclick="toggleCollapsedSection(\'shopping\')" ' +
+                        'aria-expanded="' + isExpanded + '" aria-controls="shopping-completed">' +
+                    '<h3>' + t('purchased') + ' (' + completed.length + ')</h3>' +
+                    '<span class="collapsible-toggle">▼</span>' +
+                '</button>';
+                html += '<div id="shopping-completed" class="collapsible-content ' + (isExpanded ? 'expanded' : '') + '">';
                 completed.forEach(function(item) { html += renderShoppingItem(item); });
-                html += '</div>';
+                html += '</div></div>';
             }
 
             if (state.shopping.length === 0) {
-                html = '<div class="empty-state"><div class="icon">🛒</div><p>No shopping items yet</p></div>';
+                html = '<div class="empty-state"><div class="icon">🛒</div><p>' + t('noShoppingItems') + '</p></div>';
             }
 
             container.innerHTML = html;
@@ -1673,7 +1865,7 @@
             return '<div class="list-item ' + (item.completed ? 'completed' : '') + '" data-id="' + item.id + '">' +
                 '<button class="item-checkbox ' + (item.completed ? 'checked' : '') + '" ' +
                         'onclick="toggleTask(\'' + item.id + '\', \'' + type + '\')" ' +
-                        'aria-label="' + (item.completed ? 'Mark as incomplete' : 'Mark as complete') + '">' +
+                        'aria-label="' + (item.completed ? t('taskIncomplete') : t('taskCompleted')) + '">' +
                     (item.completed ? '✓' : '') +
                 '</button>' +
                 '<div class="item-content">' +
@@ -1681,14 +1873,8 @@
                     '<div class="item-meta">' +
                         (member ? '<span class="badge badge-member">👤 ' + escapeHtml(member.name) + '</span>' : '') +
                         (dueText ? '<span class="badge badge-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
-                        (item.recurring !== 'none' ? '<span class="badge badge-recurring">🔄 ' + item.recurring + '</span>' : '') +
                     '</div>' +
                     (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
-                '</div>' +
-                '<div class="item-actions">' +
-                    '<button class="btn btn-ghost btn-delete" onclick="confirmDelete(\'' + item.id + '\', \'' + type + '\')" aria-label="Delete task">' +
-                        '🗑️' +
-                    '</button>' +
                 '</div>' +
             '</div>';
         }
@@ -1712,19 +1898,27 @@
             var html = '';
 
             if (active.length > 0) {
-                html += '<div class="list-section"><h3>Active Tasks (' + active.length + ')</h3>';
+                html += '<div class="list-section"><h3>' + t('activeTasks') + ' (' + active.length + ')</h3>';
                 active.forEach(function(item) { html += renderTaskItem(item, 'tasks'); });
                 html += '</div>';
             }
 
             if (completed.length > 0) {
-                html += '<div class="list-section"><h3>Completed (' + completed.length + ')</h3>';
+                var isExpanded = !state.collapsedSections.tasks;
+                html += '<div class="list-section">';
+                html += '<button class="collapsible-header ' + (isExpanded ? 'expanded' : '') + '" ' +
+                        'onclick="toggleCollapsedSection(\'tasks\')" ' +
+                        'aria-expanded="' + isExpanded + '" aria-controls="tasks-completed">' +
+                    '<h3>' + t('completed') + ' (' + completed.length + ')</h3>' +
+                    '<span class="collapsible-toggle">▼</span>' +
+                '</button>';
+                html += '<div id="tasks-completed" class="collapsible-content ' + (isExpanded ? 'expanded' : '') + '">';
                 completed.forEach(function(item) { html += renderTaskItem(item, 'tasks'); });
-                html += '</div>';
+                html += '</div></div>';
             }
 
             if (state.tasks.length === 0) {
-                html = '<div class="empty-state"><div class="icon">✓</div><p>No tasks yet</p></div>';
+                html = '<div class="empty-state"><div class="icon">✓</div><p>' + t('noTasks') + '</p></div>';
             }
 
             container.innerHTML = html;
@@ -1740,19 +1934,27 @@
             var html = '';
 
             if (active.length > 0) {
-                html += '<div class="list-section"><h3>Active Tasks (' + active.length + ')</h3>';
+                html += '<div class="list-section"><h3>' + t('activeTasks') + ' (' + active.length + ')</h3>';
                 active.forEach(function(item) { html += renderTaskItem(item, 'clifford'); });
                 html += '</div>';
             }
 
             if (completed.length > 0) {
-                html += '<div class="list-section"><h3>Completed (' + completed.length + ')</h3>';
+                var isExpanded = !state.collapsedSections.clifford;
+                html += '<div class="list-section">';
+                html += '<button class="collapsible-header ' + (isExpanded ? 'expanded' : '') + '" ' +
+                        'onclick="toggleCollapsedSection(\'clifford\')" ' +
+                        'aria-expanded="' + isExpanded + '" aria-controls="clifford-completed">' +
+                    '<h3>' + t('completed') + ' (' + completed.length + ')</h3>' +
+                    '<span class="collapsible-toggle">▼</span>' +
+                '</button>';
+                html += '<div id="clifford-completed" class="collapsible-content ' + (isExpanded ? 'expanded' : '') + '">';
                 completed.forEach(function(item) { html += renderTaskItem(item, 'clifford'); });
-                html += '</div>';
+                html += '</div></div>';
             }
 
             if (state.clifford.length === 0) {
-                html = '<div class="empty-state"><div class="icon">👶</div><p>No tasks for Clifford yet</p></div>';
+                html = '<div class="empty-state"><div class="icon">👶</div><p>' + t('noCliffordTasks') + '</p></div>';
             }
 
             container.innerHTML = html;
@@ -1771,7 +1973,7 @@
                     '<div class="member-avatar ' + member.id + '">' + member.initials + '</div>' +
                     '<div class="member-name">' + member.name + '</div>' +
                     '<div class="member-role">' + member.role + '</div>' +
-                    '<div class="member-stats">' + total + ' tasks completed</div>' +
+                    '<div class="member-stats">' + total + ' ' + t('tasksCompleted') + '</div>' +
                 '</div>';
             }).join('');
         }
@@ -1814,7 +2016,7 @@
                 item.completed = !item.completed;
                 renderShopping();
                 renderDashboard();
-                showToast(item.completed ? 'Marked as purchased!' : 'Marked as not purchased');
+                showToast(item.completed ? t('markedPurchased') : t('markedNotPurchased'));
             }
         }
 
@@ -1827,53 +2029,26 @@
                 else renderClifford();
                 renderDashboard();
                 renderMembers();
-                showToast(item.completed ? 'Task completed!' : 'Task marked as incomplete');
+                showToast(item.completed ? t('taskCompleted') : t('taskIncomplete'));
             }
         }
 
-        function updateOrderStatus(id, field, value) {
-            var item = state.shopping.find(function(i) { return i.id === id; });
-            if (item) {
-                item[field] = value;
-                renderShopping();
-            }
-        }
-
-        function confirmDelete(id, type) {
-            state.currentDeleteItem = id;
-            state.currentDeleteType = type;
-
-            var list = state[type];
-            var item = list.find(function(i) { return i.id === id; });
-            document.getElementById('delete-item-name').textContent = item.name;
-            document.getElementById('modal-delete').classList.add('open');
-            document.getElementById('modal-delete').setAttribute('aria-hidden', 'false');
-        }
-
-        function deleteItem() {
-            var id = state.currentDeleteItem;
-            var type = state.currentDeleteType;
-            state[type] = state[type].filter(function(i) { return i.id !== id; });
-
-            closeModal('modal-delete');
-            renderAll();
-            showToast('Item deleted');
+        function toggleCollapsedSection(type) {
+            state.collapsedSections[type] = !state.collapsedSections[type];
+            if (type === 'shopping') renderShopping();
+            else if (type === 'tasks') renderTasks();
+            else if (type === 'clifford') renderClifford();
         }
 
         function quickAdd(type, itemText) {
-            // Remove emoji prefix - handles both emoji+space and no emoji cases
             var name = itemText.replace(/^[\p{Emoji}\p{Emoji_Presentation}\p{Extended_Pictographic}]+\s*/gu, '') || itemText;
 
             if (type === 'shopping') {
                 state.shopping.unshift({
                     id: generateId(),
                     name: name,
-                    store: 'woolworths',
-                    recurring: 'none',
                     notes: '',
-                    completed: false,
-                    ordered: false,
-                    delivered: false
+                    completed: false
                 });
                 renderShopping();
             } else {
@@ -1883,7 +2058,6 @@
                     name: name,
                     assignee: 'sarah',
                     due: '',
-                    recurring: 'none',
                     notes: '',
                     completed: false
                 });
@@ -1892,15 +2066,15 @@
             }
 
             renderDashboard();
-            showToast(name + ' added!');
+            showToast(t('itemAdded', { name: name }));
         }
 
         function openManageModal(type) {
             state.currentManageType = type;
             var titles = {
-                shopping: 'Shopping Quick Add',
-                tasks: 'Tasks Quick Add',
-                clifford: 'Clifford Quick Add'
+                shopping: t('shoppingQuickAdd'),
+                tasks: t('tasksQuickAdd'),
+                clifford: t('cliffordQuickAdd')
             };
             document.getElementById('modal-manage-title').textContent = titles[type];
             document.getElementById('new-standard-name').value = '';
@@ -1959,12 +2133,8 @@
                 state.shopping.unshift({
                     id: generateId(),
                     name: name,
-                    store: document.getElementById('shopping-store').value,
-                    recurring: document.getElementById('shopping-recurring').value,
                     notes: document.getElementById('shopping-notes').value.trim(),
-                    completed: false,
-                    ordered: false,
-                    delivered: false
+                    completed: false
                 });
 
                 formShopping.reset();
@@ -1972,7 +2142,7 @@
                 btnAddShopping.setAttribute('aria-expanded', 'false');
                 renderShopping();
                 renderDashboard();
-                showToast('Item added!');
+                showToast(t('itemAdded', { name: name }));
             });
 
             // Tasks form
@@ -2001,7 +2171,6 @@
                     name: name,
                     assignee: document.getElementById('task-assignee').value,
                     due: document.getElementById('task-due').value,
-                    recurring: document.getElementById('task-recurring').value,
                     notes: document.getElementById('task-notes').value.trim(),
                     completed: false
                 });
@@ -2011,7 +2180,7 @@
                 btnAddTask.setAttribute('aria-expanded', 'false');
                 renderTasks();
                 renderDashboard();
-                showToast('Task added!');
+                showToast(t('itemAdded', { name: name }));
             });
 
             // Clifford form
@@ -2040,7 +2209,6 @@
                     name: name,
                     assignee: document.getElementById('clifford-assignee').value,
                     due: document.getElementById('clifford-due').value,
-                    recurring: document.getElementById('clifford-recurring').value,
                     notes: document.getElementById('clifford-notes').value.trim(),
                     completed: false
                 });
@@ -2050,7 +2218,7 @@
                 btnAddClifford.setAttribute('aria-expanded', 'false');
                 renderClifford();
                 renderDashboard();
-                showToast('Task added!');
+                showToast(t('itemAdded', { name: name }));
             });
         }
 
@@ -2059,27 +2227,30 @@
         // ========================================
         function setupNavigation() {
             var navBtns = document.querySelectorAll('.nav-btn');
-            var pages = document.querySelectorAll('.page');
 
             navBtns.forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    var pageName = btn.dataset.page;
-
-                    // Update nav buttons
-                    navBtns.forEach(function(b) {
-                        b.classList.remove('active');
-                        b.removeAttribute('aria-current');
-                    });
-                    btn.classList.add('active');
-                    btn.setAttribute('aria-current', 'page');
-
-                    // Update pages
-                    pages.forEach(function(p) { p.classList.remove('active'); });
-                    document.getElementById('page-' + pageName).classList.add('active');
-
-                    // Scroll to top
-                    window.scrollTo(0, 0);
+                    navigateToPage(btn.dataset.page);
                 });
+            });
+        }
+
+        // ========================================
+        // SETTINGS HANDLERS
+        // ========================================
+        function setupSettings() {
+            var languageSelect = document.getElementById('language-select');
+            var themeSelect = document.getElementById('theme-select');
+
+            languageSelect.value = state.language;
+            themeSelect.value = state.theme;
+
+            languageSelect.addEventListener('change', function() {
+                setLanguage(this.value);
+            });
+
+            themeSelect.addEventListener('change', function() {
+                setTheme(this.value);
             });
         }
 
@@ -2087,11 +2258,6 @@
         // MODAL HANDLERS
         // ========================================
         function setupModals() {
-            // Delete modal
-            document.getElementById('btn-cancel-delete').addEventListener('click', function() { closeModal('modal-delete'); });
-            document.getElementById('btn-confirm-delete').addEventListener('click', deleteItem);
-            document.querySelector('#modal-delete .modal-close').addEventListener('click', function() { closeModal('modal-delete'); });
-
             // Manage modal
             document.querySelector('#modal-manage .modal-close').addEventListener('click', function() { closeModal('modal-manage'); });
             document.getElementById('btn-add-standard').addEventListener('click', addStandardItem);
@@ -2134,11 +2300,14 @@
         // INITIALIZATION
         // ========================================
         document.addEventListener('DOMContentLoaded', function() {
+            applyTheme();
+            applyLanguage();
             initMockData();
             renderAll();
             setupNavigation();
             setupForms();
             setupModals();
+            setupSettings();
         });
     </script>
 </body>
