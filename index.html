@@ -452,7 +452,7 @@
         .item-checkbox {
             width: 28px;
             height: 28px;
-            border: 2px solid var(--border);
+            border: 2px solid var(--primary);
             border-radius: 50%;
             cursor: pointer;
             display: flex;
@@ -460,12 +460,13 @@
             justify-content: center;
             flex-shrink: 0;
             transition: all 0.2s ease;
-            background: var(--card);
+            background: transparent;
             min-width: 28px;
+            color: transparent;
         }
 
         .item-checkbox:hover {
-            border-color: var(--primary);
+            background: rgba(34, 197, 94, 0.1);
         }
 
         .item-checkbox.checked {
@@ -710,13 +711,6 @@
         .member-role {
             font-size: 0.8rem;
             color: var(--text-light);
-            margin-bottom: 10px;
-        }
-
-        .member-stats {
-            font-size: 0.75rem;
-            color: var(--primary);
-            font-weight: 600;
         }
 
         /* ========================================
@@ -1965,15 +1959,10 @@
             var container = document.getElementById('members-grid');
 
             container.innerHTML = state.members.map(function(member) {
-                var taskCount = state.tasks.filter(function(t) { return t.assignee === member.id && t.completed; }).length;
-                var cliffordCount = state.clifford.filter(function(t) { return t.assignee === member.id && t.completed; }).length;
-                var total = taskCount + cliffordCount;
-
                 return '<div class="member-card">' +
                     '<div class="member-avatar ' + member.id + '">' + member.initials + '</div>' +
                     '<div class="member-name">' + member.name + '</div>' +
                     '<div class="member-role">' + member.role + '</div>' +
-                    '<div class="member-stats">' + total + ' ' + t('tasksCompleted') + '</div>' +
                 '</div>';
             }).join('');
         }
