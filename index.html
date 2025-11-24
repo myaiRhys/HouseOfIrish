@@ -1246,8 +1246,9 @@
 
         <!-- Settings Page -->
         <section id="page-settings" class="page" aria-label="Settings">
+            <!-- Language & Theme Settings -->
             <div class="settings-section">
-                <h2 data-i18n="languageSettings">Language Settings</h2>
+                <h2>⚙️ <span data-i18n="settings">Settings</span></h2>
                 <div class="settings-control">
                     <label for="language-select">🌐 <span data-i18n="language">Language</span></label>
                     <select id="language-select">
@@ -1255,10 +1256,6 @@
                         <option value="af">Afrikaans</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="settings-section">
-                <h2 data-i18n="appearanceSettings">Appearance Settings</h2>
                 <div class="settings-control">
                     <label for="theme-select">🎨 <span data-i18n="theme">Theme</span></label>
                     <select id="theme-select">
@@ -1268,15 +1265,9 @@
                 </div>
             </div>
 
+            <!-- Quick Add Management -->
             <div class="settings-section">
-                <h2 data-i18n="householdMembers">Household Members</h2>
-                <div class="members-grid" id="members-grid">
-                    <!-- Members populated by JS -->
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h2 data-i18n="manageStandardItems">Manage Standard Items</h2>
+                <h2>⚡ <span data-i18n="quickAdd">Quick Add</span></h2>
                 <div class="settings-buttons">
                     <button class="settings-btn" id="settings-shopping-standards">
                         <span>🛒 <span data-i18n="shoppingQuickAdd">Shopping Quick Add</span></span>
@@ -1290,6 +1281,14 @@
                         <span>👶 <span data-i18n="cliffordQuickAdd">Clifford Quick Add</span></span>
                         <span class="arrow">→</span>
                     </button>
+                </div>
+            </div>
+
+            <!-- Household Members -->
+            <div class="settings-section">
+                <h2>👥 <span data-i18n="householdMembers">Household Members</span></h2>
+                <div class="members-grid" id="members-grid">
+                    <!-- Members populated by JS -->
                 </div>
             </div>
         </section>
@@ -1963,7 +1962,6 @@
                 return '<div class="member-card">' +
                     '<div class="member-avatar ' + member.id + '">' + member.initials + '</div>' +
                     '<div class="member-name">' + member.name + '</div>' +
-                    '<div class="member-role">' + member.role + '</div>' +
                 '</div>';
             }).join('');
         }
