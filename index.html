@@ -6,6 +6,8 @@
     <meta name="theme-color" content="#000000">
     <meta name="description" content="House of Irish - Home Management App">
     <title>House of Irish</title>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ========================================
            CSS RESET & BASE STYLES
@@ -1075,9 +1077,335 @@
         .text-center { text-align: center; }
         .mb-0 { margin-bottom: 0; }
         .mt-16 { margin-top: 16px; }
+
+        /* ========================================
+           AUTH PAGES
+           ======================================== */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: var(--bg);
+        }
+
+        .auth-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .auth-header .logo {
+            font-size: 3rem;
+            margin-bottom: 8px;
+        }
+
+        .auth-header h1 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        .auth-header p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 16px;
+        }
+
+        .auth-form .btn {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .auth-switch button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .auth-error {
+            background: var(--danger-soft);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .auth-error.show {
+            display: block;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .auth-divider span {
+            padding: 0 12px;
+        }
+
+        /* Household Setup */
+        .household-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .household-option {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .household-option:hover {
+            border-color: var(--primary);
+        }
+
+        .household-option h3 {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .household-option p {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .invite-code-display {
+            background: var(--bg);
+            border: 2px dashed var(--primary);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .invite-code-display .code {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 4px;
+            font-family: monospace;
+        }
+
+        .invite-code-display p {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Sync indicator */
+        .sync-indicator {
+            position: fixed;
+            top: 60px;
+            right: 16px;
+            background: var(--card);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sync-indicator.show {
+            opacity: 1;
+        }
+
+        .sync-indicator.syncing {
+            color: var(--warning);
+        }
+
+        .sync-indicator.synced {
+            color: var(--primary);
+        }
+
+        .sync-indicator.offline {
+            color: var(--danger);
+        }
     </style>
 </head>
 <body>
+    <!-- ========================================
+         AUTH SCREENS
+         ======================================== -->
+    <div id="auth-screen" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo">🏠</div>
+                <h1>House of Irish</h1>
+                <p id="auth-subtitle">Sign in to manage your household</p>
+            </div>
+
+            <div id="auth-error" class="auth-error"></div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="Your password" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" id="login-btn">Sign In</button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="signup-name">Your Name</label>
+                    <input type="text" id="signup-name" required placeholder="John Smith">
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" required placeholder="Min 6 characters" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" id="signup-btn">Create Account</button>
+            </form>
+
+            <!-- Household Setup -->
+            <div id="household-setup" class="hidden">
+                <div id="household-choice">
+                    <p class="text-center" style="margin-bottom: 16px;">Welcome! Let's set up your household.</p>
+                    <div class="household-options">
+                        <div class="household-option" id="create-household-btn">
+                            <h3>🏠 Create Household</h3>
+                            <p>Start a new household and invite family members</p>
+                        </div>
+                        <div class="household-option" id="join-household-btn">
+                            <h3>🔗 Join Household</h3>
+                            <p>Join an existing household with an invite code</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Household Form -->
+                <form id="create-household-form" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="household-name">Household Name</label>
+                        <input type="text" id="household-name" required placeholder="e.g., The Smith Family">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Household</button>
+                    <button type="button" class="btn btn-secondary mt-16" id="back-to-choice">Back</button>
+                </form>
+
+                <!-- Household Created Success -->
+                <div id="household-created" class="hidden">
+                    <p class="text-center">Your household has been created!</p>
+                    <div class="invite-code-display">
+                        <div class="code" id="invite-code-display">------</div>
+                        <p>Share this code with family members to join</p>
+                    </div>
+                    <button class="btn btn-primary" id="continue-to-app">Continue to App</button>
+                </div>
+
+                <!-- Join Household Form -->
+                <form id="join-household-form" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="invite-code">Invite Code</label>
+                        <input type="text" id="invite-code" required placeholder="Enter 6-character code" maxlength="6" style="text-transform: uppercase; letter-spacing: 2px; text-align: center; font-size: 1.2rem;">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Join Household</button>
+                    <button type="button" class="btn btn-secondary mt-16" id="back-to-choice-2">Back</button>
+                </form>
+            </div>
+
+            <div class="auth-switch" id="auth-switch">
+                <span id="switch-text">Don't have an account?</span>
+                <button id="switch-to-signup">Sign Up</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         SYNC INDICATOR
+         ======================================== -->
+    <div id="sync-indicator" class="sync-indicator">
+        <span class="loading-spinner"></span>
+        <span id="sync-text">Syncing...</span>
+    </div>
+
+    <!-- ========================================
+         MAIN APP (hidden until authenticated)
+         ======================================== -->
+    <div id="main-app" class="hidden">
     <!-- ========================================
          HEADER
          ======================================== -->
@@ -1286,6 +1614,18 @@
                     <!-- Members populated by JS -->
                 </div>
             </div>
+
+            <!-- Household Info & Logout -->
+            <div class="settings-section">
+                <h2>🏠 Household</h2>
+                <div class="settings-control">
+                    <label>Invite Code</label>
+                    <span id="settings-invite-code" style="font-family: monospace; font-weight: 700; letter-spacing: 2px;">------</span>
+                </div>
+                <button class="btn btn-secondary" id="btn-logout" style="width: 100%; margin-top: 12px;">
+                    🚪 Sign Out
+                </button>
+            </div>
         </section>
     </main>
 
@@ -1341,10 +1681,26 @@
          ======================================== -->
     <div class="toast-container" id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
+    </div><!-- END main-app -->
+
     <!-- ========================================
          JAVASCRIPT
          ======================================== -->
     <script>
+        // ========================================
+        // SUPABASE CONFIGURATION
+        // ========================================
+        const SUPABASE_URL = 'https://gyutgfsdtsbbymhwrqka.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5dXRnZnNkdHNiYnltaHdycWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzM1MDgsImV4cCI6MjA3OTU0OTUwOH0.MT8uHkOR5nmnB1VqOXelaMUM24aWiTYISmGK4VcSt4g';
+
+        // Initialize Supabase client
+        let supabase = null;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.warn('Supabase not available, running in offline mode');
+        }
+
         // ========================================
         // TRANSLATIONS
         // ========================================
@@ -1503,20 +1859,23 @@
         // APPLICATION STATE
         // ========================================
         const state = {
+            // Auth state
+            user: null,
+            household: null,
+            householdMembers: [],
+
+            // Data
             shopping: [],
             tasks: [],
             clifford: [],
-            members: [
-                { id: 'john', name: 'John', initials: 'JH', role: 'Husband' },
-                { id: 'sarah', name: 'Sarah', initials: 'SW', role: 'Wife' },
-                { id: 'mary', name: 'Mary', initials: 'MM', role: 'Nanny' },
-                { id: 'tom', name: 'Tom', initials: 'TG', role: 'Gardener' }
-            ],
+            members: [],
             quickAdd: {
                 shopping: ['🥛 Milk', '🍞 Bread', '🥚 Eggs', '🧴 Soap', '🧻 Toilet Paper', '🐕 Dog Food'],
                 tasks: ['🐕 Feed Dogs', '🌱 Water Garden', '🗑️ Take Out Trash', '🧹 Clean House', '👕 Do Laundry', '🛒 Buy Groceries'],
                 clifford: ['💉 Vaccines due', '🍼 Buy formula', '👶 Buy nappies', '🥄 Buy baby food', '👨‍⚕️ Doctor appointment', '🛁 Bath supplies', '🧸 Toys/activities', '📏 Milestone check']
             },
+
+            // UI state
             currentManageType: null,
             language: localStorage.getItem('hoi-language') || 'en',
             theme: localStorage.getItem('hoi-theme') || 'dark',
@@ -1524,7 +1883,9 @@
                 shopping: true,
                 tasks: true,
                 clifford: true
-            }
+            },
+            isOnline: navigator.onLine,
+            isSyncing: false
         };
 
         // ========================================
@@ -1632,6 +1993,413 @@
             } catch (e) {
                 console.warn('Failed to load data from localStorage:', e);
                 return false;
+            }
+        }
+
+        // ========================================
+        // SYNC INDICATOR
+        // ========================================
+        function showSyncStatus(status, text) {
+            var indicator = document.getElementById('sync-indicator');
+            var textEl = document.getElementById('sync-text');
+            indicator.className = 'sync-indicator show ' + status;
+            textEl.textContent = text;
+            if (status !== 'syncing') {
+                setTimeout(function() { indicator.classList.remove('show'); }, 2000);
+            }
+        }
+
+        // ========================================
+        // AUTHENTICATION FUNCTIONS
+        // ========================================
+        async function handleLogin(email, password) {
+            if (!supabase) {
+                showAuthError('Offline mode - please check your connection');
+                return false;
+            }
+            try {
+                var result = await supabase.auth.signInWithPassword({ email: email, password: password });
+                if (result.error) throw result.error;
+                return true;
+            } catch (e) {
+                showAuthError(e.message || 'Login failed');
+                return false;
+            }
+        }
+
+        async function handleSignup(email, password, name) {
+            if (!supabase) {
+                showAuthError('Offline mode - please check your connection');
+                return false;
+            }
+            try {
+                var result = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: { data: { name: name } }
+                });
+                if (result.error) throw result.error;
+                localStorage.setItem('hoi-user-name', name);
+                return true;
+            } catch (e) {
+                showAuthError(e.message || 'Signup failed');
+                return false;
+            }
+        }
+
+        async function handleLogout() {
+            if (supabase) {
+                await supabase.auth.signOut();
+            }
+            state.user = null;
+            state.household = null;
+            state.householdMembers = [];
+            showAuthScreen();
+        }
+
+        function showAuthError(message) {
+            var errorEl = document.getElementById('auth-error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function hideAuthError() {
+            document.getElementById('auth-error').classList.remove('show');
+        }
+
+        // ========================================
+        // HOUSEHOLD FUNCTIONS
+        // ========================================
+        async function createHousehold(name) {
+            if (!supabase || !state.user) return null;
+            try {
+                // Create household
+                var result = await supabase.from('households').insert({
+                    name: name,
+                    created_by: state.user.id
+                }).select().single();
+                if (result.error) throw result.error;
+
+                var household = result.data;
+
+                // Add user as admin member
+                var userName = localStorage.getItem('hoi-user-name') || state.user.email.split('@')[0];
+                var initials = userName.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substring(0, 2);
+
+                var memberResult = await supabase.from('household_members').insert({
+                    household_id: household.id,
+                    user_id: state.user.id,
+                    name: userName,
+                    initials: initials,
+                    is_admin: true
+                }).select().single();
+                if (memberResult.error) throw memberResult.error;
+
+                // Initialize default quick add items
+                var quickAddItems = [];
+                ['shopping', 'tasks', 'clifford'].forEach(function(type) {
+                    state.quickAdd[type].forEach(function(item, index) {
+                        quickAddItems.push({
+                            household_id: household.id,
+                            type: type,
+                            name: item,
+                            sort_order: index
+                        });
+                    });
+                });
+                await supabase.from('quick_add').insert(quickAddItems);
+
+                return household;
+            } catch (e) {
+                console.error('Failed to create household:', e);
+                showAuthError(e.message || 'Failed to create household');
+                return null;
+            }
+        }
+
+        async function joinHousehold(inviteCode) {
+            if (!supabase || !state.user) return null;
+            try {
+                // Find household by invite code
+                var result = await supabase.rpc('get_household_by_invite_code', { code: inviteCode.toUpperCase() });
+                if (result.error) throw result.error;
+                if (!result.data || result.data.length === 0) {
+                    throw new Error('Invalid invite code');
+                }
+
+                var household = result.data[0];
+
+                // Add user as member
+                var userName = localStorage.getItem('hoi-user-name') || state.user.email.split('@')[0];
+                var initials = userName.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substring(0, 2);
+
+                var memberResult = await supabase.from('household_members').insert({
+                    household_id: household.id,
+                    user_id: state.user.id,
+                    name: userName,
+                    initials: initials,
+                    is_admin: false
+                }).select().single();
+                if (memberResult.error) throw memberResult.error;
+
+                return household;
+            } catch (e) {
+                console.error('Failed to join household:', e);
+                showAuthError(e.message || 'Failed to join household');
+                return null;
+            }
+        }
+
+        async function getUserHousehold() {
+            if (!supabase || !state.user) return null;
+            try {
+                var result = await supabase
+                    .from('household_members')
+                    .select('household_id, households(id, name, invite_code)')
+                    .eq('user_id', state.user.id)
+                    .limit(1)
+                    .single();
+
+                if (result.error && result.error.code !== 'PGRST116') throw result.error;
+                if (result.data && result.data.households) {
+                    return result.data.households;
+                }
+                return null;
+            } catch (e) {
+                console.error('Failed to get household:', e);
+                return null;
+            }
+        }
+
+        // ========================================
+        // SUPABASE DATA OPERATIONS
+        // ========================================
+        async function loadFromSupabase() {
+            if (!supabase || !state.household) return false;
+            showSyncStatus('syncing', 'Loading...');
+            try {
+                var householdId = state.household.id;
+
+                // Load all data in parallel
+                var results = await Promise.all([
+                    supabase.from('shopping').select('*').eq('household_id', householdId).order('created_at', { ascending: false }),
+                    supabase.from('tasks').select('*').eq('household_id', householdId).order('created_at', { ascending: false }),
+                    supabase.from('clifford').select('*').eq('household_id', householdId).order('created_at', { ascending: false }),
+                    supabase.from('household_members').select('*').eq('household_id', householdId),
+                    supabase.from('quick_add').select('*').eq('household_id', householdId).order('sort_order')
+                ]);
+
+                if (results[0].data) state.shopping = results[0].data.map(mapShoppingItem);
+                if (results[1].data) state.tasks = results[1].data.map(mapTaskItem);
+                if (results[2].data) state.clifford = results[2].data.map(mapTaskItem);
+                if (results[3].data) state.members = results[3].data.map(mapMember);
+                if (results[4].data) {
+                    state.quickAdd = { shopping: [], tasks: [], clifford: [] };
+                    results[4].data.forEach(function(item) {
+                        if (state.quickAdd[item.type]) {
+                            state.quickAdd[item.type].push(item.name);
+                        }
+                    });
+                }
+
+                saveData(); // Cache locally
+                showSyncStatus('synced', 'Synced');
+                return true;
+            } catch (e) {
+                console.error('Failed to load from Supabase:', e);
+                showSyncStatus('offline', 'Sync failed');
+                return false;
+            }
+        }
+
+        function mapShoppingItem(item) {
+            return {
+                id: item.id,
+                name: item.name,
+                notes: item.notes || '',
+                completed: item.completed
+            };
+        }
+
+        function mapTaskItem(item) {
+            return {
+                id: item.id,
+                name: item.name,
+                notes: item.notes || '',
+                assignee: item.assignee,
+                due: item.due_date || '',
+                completed: item.completed
+            };
+        }
+
+        function mapMember(member) {
+            return {
+                id: member.id,
+                name: member.name,
+                initials: member.initials,
+                role: member.role || 'Member'
+            };
+        }
+
+        async function addShoppingToSupabase(item) {
+            if (!supabase || !state.household) return;
+            try {
+                var result = await supabase.from('shopping').insert({
+                    household_id: state.household.id,
+                    name: item.name,
+                    notes: item.notes,
+                    completed: item.completed,
+                    created_by: state.user.id
+                }).select().single();
+                if (result.data) {
+                    item.id = result.data.id;
+                }
+            } catch (e) { console.error('Failed to add shopping:', e); }
+        }
+
+        async function updateShoppingInSupabase(id, updates) {
+            if (!supabase || !state.household) return;
+            try {
+                await supabase.from('shopping').update(updates).eq('id', id);
+            } catch (e) { console.error('Failed to update shopping:', e); }
+        }
+
+        async function addTaskToSupabase(table, item) {
+            if (!supabase || !state.household) return;
+            try {
+                var result = await supabase.from(table).insert({
+                    household_id: state.household.id,
+                    name: item.name,
+                    notes: item.notes,
+                    assignee: item.assignee || null,
+                    due_date: item.due || null,
+                    completed: item.completed,
+                    created_by: state.user.id
+                }).select().single();
+                if (result.data) {
+                    item.id = result.data.id;
+                }
+            } catch (e) { console.error('Failed to add ' + table + ':', e); }
+        }
+
+        async function updateTaskInSupabase(table, id, updates) {
+            if (!supabase || !state.household) return;
+            try {
+                var dbUpdates = {};
+                if ('completed' in updates) dbUpdates.completed = updates.completed;
+                if ('name' in updates) dbUpdates.name = updates.name;
+                if ('notes' in updates) dbUpdates.notes = updates.notes;
+                if ('due' in updates) dbUpdates.due_date = updates.due;
+                if ('assignee' in updates) dbUpdates.assignee = updates.assignee;
+                await supabase.from(table).update(dbUpdates).eq('id', id);
+            } catch (e) { console.error('Failed to update ' + table + ':', e); }
+        }
+
+        // ========================================
+        // REALTIME SUBSCRIPTIONS
+        // ========================================
+        function setupRealtimeSubscriptions() {
+            if (!supabase || !state.household) return;
+
+            var householdId = state.household.id;
+
+            supabase.channel('household-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping', filter: 'household_id=eq.' + householdId }, handleShoppingChange)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: 'household_id=eq.' + householdId }, handleTasksChange)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'clifford', filter: 'household_id=eq.' + householdId }, handleCliffordChange)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: 'household_id=eq.' + householdId }, handleMembersChange)
+                .subscribe();
+        }
+
+        function handleShoppingChange(payload) {
+            if (payload.eventType === 'INSERT') {
+                var exists = state.shopping.find(function(i) { return i.id === payload.new.id; });
+                if (!exists) {
+                    state.shopping.unshift(mapShoppingItem(payload.new));
+                    renderShopping();
+                    renderDashboard();
+                }
+            } else if (payload.eventType === 'UPDATE') {
+                var item = state.shopping.find(function(i) { return i.id === payload.new.id; });
+                if (item) {
+                    Object.assign(item, mapShoppingItem(payload.new));
+                    renderShopping();
+                    renderDashboard();
+                }
+            } else if (payload.eventType === 'DELETE') {
+                state.shopping = state.shopping.filter(function(i) { return i.id !== payload.old.id; });
+                renderShopping();
+                renderDashboard();
+            }
+            saveData();
+        }
+
+        function handleTasksChange(payload) {
+            handleGenericChange('tasks', payload);
+        }
+
+        function handleCliffordChange(payload) {
+            handleGenericChange('clifford', payload);
+        }
+
+        function handleGenericChange(type, payload) {
+            var list = state[type];
+            if (payload.eventType === 'INSERT') {
+                var exists = list.find(function(i) { return i.id === payload.new.id; });
+                if (!exists) {
+                    list.unshift(mapTaskItem(payload.new));
+                }
+            } else if (payload.eventType === 'UPDATE') {
+                var item = list.find(function(i) { return i.id === payload.new.id; });
+                if (item) {
+                    Object.assign(item, mapTaskItem(payload.new));
+                }
+            } else if (payload.eventType === 'DELETE') {
+                state[type] = list.filter(function(i) { return i.id !== payload.old.id; });
+            }
+            if (type === 'tasks') renderTasks();
+            else renderClifford();
+            renderDashboard();
+            saveData();
+        }
+
+        function handleMembersChange(payload) {
+            loadFromSupabase().then(function() {
+                renderMembers();
+                renderAll();
+            });
+        }
+
+        // ========================================
+        // UI SCREEN MANAGEMENT
+        // ========================================
+        function showAuthScreen() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('household-setup').classList.add('hidden');
+            document.getElementById('auth-switch').classList.remove('hidden');
+            hideAuthError();
+        }
+
+        function showHouseholdSetup() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('household-setup').classList.remove('hidden');
+            document.getElementById('household-choice').classList.remove('hidden');
+            document.getElementById('create-household-form').classList.add('hidden');
+            document.getElementById('join-household-form').classList.add('hidden');
+            document.getElementById('household-created').classList.add('hidden');
+            document.getElementById('auth-switch').classList.add('hidden');
+            document.getElementById('auth-subtitle').textContent = 'Set up your household';
+        }
+
+        function showMainApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            if (state.household) {
+                document.getElementById('settings-invite-code').textContent = state.household.invite_code || '------';
             }
         }
 
@@ -1760,7 +2528,8 @@
         }
 
         function renderUpcomingItem(item, type) {
-            var member = state.members.find(function(m) { return m.id === item.assignee; });
+            var member = item.assignee ? state.members.find(function(m) { return m.id === item.assignee; }) : null;
+            var memberName = member ? member.name : '';
             var dueText = formatDate(item.due);
             var dueClass = getDateClass(item.due);
             var safeName = escapeHtml(item.name);
@@ -1770,7 +2539,7 @@
                 '<div class="upcoming-content">' +
                     '<div class="upcoming-name">' + safeName + '</div>' +
                     '<div class="upcoming-meta">' +
-                        (member ? '<span>👤 ' + escapeHtml(member.name) + '</span>' : '') +
+                        (memberName ? '<span>👤 ' + escapeHtml(memberName) + '</span>' : '') +
                         (dueText ? '<span class="upcoming-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
                     '</div>' +
                 '</div>' +
@@ -1878,7 +2647,8 @@
         }
 
         function renderTaskItem(item, type) {
-            var member = state.members.find(function(m) { return m.id === item.assignee; });
+            var member = item.assignee ? state.members.find(function(m) { return m.id === item.assignee; }) : null;
+            var memberName = member ? member.name : '';
             var dueText = formatDate(item.due);
             var dueClass = getDateClass(item.due);
             var safeName = escapeHtml(item.name);
@@ -1893,7 +2663,7 @@
                 '<div class="item-content">' +
                     '<div class="item-name">' + safeName + '</div>' +
                     '<div class="item-meta">' +
-                        (member ? '<span class="badge badge-member">👤 ' + escapeHtml(member.name) + '</span>' : '') +
+                        (memberName ? '<span class="badge badge-member">👤 ' + escapeHtml(memberName) + '</span>' : '') +
                         (dueText ? '<span class="badge badge-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
                     '</div>' +
                     (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
@@ -1986,12 +2756,34 @@
         function renderMembers() {
             var container = document.getElementById('members-grid');
 
-            container.innerHTML = state.members.map(function(member) {
+            if (state.members.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-light); grid-column: 1/-1; text-align: center;">No household members yet</p>';
+                return;
+            }
+
+            container.innerHTML = state.members.map(function(member, index) {
+                var colors = ['john', 'sarah', 'mary', 'tom'];
+                var colorClass = colors[index % colors.length];
                 return '<div class="member-card">' +
-                    '<div class="member-avatar ' + member.id + '">' + member.initials + '</div>' +
-                    '<div class="member-name">' + member.name + '</div>' +
+                    '<div class="member-avatar ' + colorClass + '">' + escapeHtml(member.initials) + '</div>' +
+                    '<div class="member-name">' + escapeHtml(member.name) + '</div>' +
                 '</div>';
             }).join('');
+
+            // Update assignee dropdowns
+            updateAssigneeDropdowns();
+        }
+
+        function updateAssigneeDropdowns() {
+            var dropdowns = ['task-assignee', 'clifford-assignee'];
+            dropdowns.forEach(function(id) {
+                var select = document.getElementById(id);
+                if (select && state.members.length > 0) {
+                    select.innerHTML = state.members.map(function(member) {
+                        return '<option value="' + member.id + '">' + escapeHtml(member.name) + '</option>';
+                    }).join('');
+                }
+            });
         }
 
         function renderQuickButtons(type) {
@@ -2051,6 +2843,7 @@
             if (item) {
                 item.completed = !item.completed;
                 saveData();
+                updateShoppingInSupabase(id, { completed: item.completed });
                 renderShopping();
                 renderDashboard();
                 showToast(item.completed ? t('markedPurchased') : t('markedNotPurchased'));
@@ -2063,6 +2856,7 @@
             if (item) {
                 item.completed = !item.completed;
                 saveData();
+                updateTaskInSupabase(type, id, { completed: item.completed });
                 if (type === 'tasks') renderTasks();
                 else renderClifford();
                 renderDashboard();
@@ -2081,23 +2875,28 @@
             var name = itemText.replace(/^[\p{Emoji}\p{Emoji_Presentation}\p{Extended_Pictographic}]+\s*/gu, '') || itemText;
 
             if (type === 'shopping') {
-                state.shopping.unshift({
+                var item = {
                     id: generateId(),
                     name: name,
                     notes: '',
                     completed: false
-                });
+                };
+                state.shopping.unshift(item);
+                addShoppingToSupabase(item);
                 renderShopping();
             } else {
                 var list = type === 'tasks' ? state.tasks : state.clifford;
-                list.unshift({
+                var defaultAssignee = state.members.length > 0 ? state.members[0].id : null;
+                var taskItem = {
                     id: generateId(),
                     name: name,
-                    assignee: 'sarah',
+                    assignee: defaultAssignee,
                     due: '',
                     notes: '',
                     completed: false
-                });
+                };
+                list.unshift(taskItem);
+                addTaskToSupabase(type, taskItem);
                 if (type === 'tasks') renderTasks();
                 else renderClifford();
             }
@@ -2170,12 +2969,14 @@
                 var name = document.getElementById('shopping-name').value.trim();
                 if (!name) return;
 
-                state.shopping.unshift({
+                var item = {
                     id: generateId(),
                     name: name,
                     notes: document.getElementById('shopping-notes').value.trim(),
                     completed: false
-                });
+                };
+                state.shopping.unshift(item);
+                addShoppingToSupabase(item);
 
                 saveData();
                 formShopping.reset();
@@ -2207,14 +3008,16 @@
                 var name = document.getElementById('task-name').value.trim();
                 if (!name) return;
 
-                state.tasks.unshift({
+                var item = {
                     id: generateId(),
                     name: name,
                     assignee: document.getElementById('task-assignee').value,
                     due: document.getElementById('task-due').value,
                     notes: document.getElementById('task-notes').value.trim(),
                     completed: false
-                });
+                };
+                state.tasks.unshift(item);
+                addTaskToSupabase('tasks', item);
 
                 saveData();
                 formTask.reset();
@@ -2246,14 +3049,16 @@
                 var name = document.getElementById('clifford-name').value.trim();
                 if (!name) return;
 
-                state.clifford.unshift({
+                var item = {
                     id: generateId(),
                     name: name,
                     assignee: document.getElementById('clifford-assignee').value,
                     due: document.getElementById('clifford-due').value,
                     notes: document.getElementById('clifford-notes').value.trim(),
                     completed: false
-                });
+                };
+                state.clifford.unshift(item);
+                addTaskToSupabase('clifford', item);
 
                 saveData();
                 formClifford.reset();
@@ -2340,22 +3145,212 @@
         }
 
         // ========================================
+        // AUTH UI HANDLERS
+        // ========================================
+        function setupAuthUI() {
+            // Login form
+            document.getElementById('login-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideAuthError();
+                var btn = document.getElementById('login-btn');
+                btn.classList.add('loading');
+                btn.innerHTML = '<span class="loading-spinner"></span> Signing in...';
+
+                var success = await handleLogin(
+                    document.getElementById('login-email').value,
+                    document.getElementById('login-password').value
+                );
+
+                btn.classList.remove('loading');
+                btn.textContent = 'Sign In';
+            });
+
+            // Signup form
+            document.getElementById('signup-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideAuthError();
+                var btn = document.getElementById('signup-btn');
+                btn.classList.add('loading');
+                btn.innerHTML = '<span class="loading-spinner"></span> Creating account...';
+
+                var success = await handleSignup(
+                    document.getElementById('signup-email').value,
+                    document.getElementById('signup-password').value,
+                    document.getElementById('signup-name').value
+                );
+
+                btn.classList.remove('loading');
+                btn.textContent = 'Create Account';
+            });
+
+            // Switch between login/signup
+            document.getElementById('switch-to-signup').addEventListener('click', function() {
+                var loginForm = document.getElementById('login-form');
+                var signupForm = document.getElementById('signup-form');
+                var switchText = document.getElementById('switch-text');
+                var switchBtn = document.getElementById('switch-to-signup');
+                var subtitle = document.getElementById('auth-subtitle');
+                hideAuthError();
+
+                if (loginForm.classList.contains('hidden')) {
+                    loginForm.classList.remove('hidden');
+                    signupForm.classList.add('hidden');
+                    switchText.textContent = "Don't have an account?";
+                    switchBtn.textContent = 'Sign Up';
+                    subtitle.textContent = 'Sign in to manage your household';
+                } else {
+                    loginForm.classList.add('hidden');
+                    signupForm.classList.remove('hidden');
+                    switchText.textContent = 'Already have an account?';
+                    switchBtn.textContent = 'Sign In';
+                    subtitle.textContent = 'Create your account';
+                }
+            });
+
+            // Household setup
+            document.getElementById('create-household-btn').addEventListener('click', function() {
+                document.getElementById('household-choice').classList.add('hidden');
+                document.getElementById('create-household-form').classList.remove('hidden');
+            });
+
+            document.getElementById('join-household-btn').addEventListener('click', function() {
+                document.getElementById('household-choice').classList.add('hidden');
+                document.getElementById('join-household-form').classList.remove('hidden');
+            });
+
+            document.getElementById('back-to-choice').addEventListener('click', function() {
+                document.getElementById('create-household-form').classList.add('hidden');
+                document.getElementById('household-choice').classList.remove('hidden');
+            });
+
+            document.getElementById('back-to-choice-2').addEventListener('click', function() {
+                document.getElementById('join-household-form').classList.add('hidden');
+                document.getElementById('household-choice').classList.remove('hidden');
+            });
+
+            // Create household form
+            document.getElementById('create-household-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideAuthError();
+                var householdName = document.getElementById('household-name').value.trim();
+                if (!householdName) return;
+
+                var household = await createHousehold(householdName);
+                if (household) {
+                    state.household = household;
+                    document.getElementById('create-household-form').classList.add('hidden');
+                    document.getElementById('household-created').classList.remove('hidden');
+                    document.getElementById('invite-code-display').textContent = household.invite_code;
+                }
+            });
+
+            // Continue to app
+            document.getElementById('continue-to-app').addEventListener('click', async function() {
+                await loadFromSupabase();
+                setupRealtimeSubscriptions();
+                showMainApp();
+                renderAll();
+            });
+
+            // Join household form
+            document.getElementById('join-household-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideAuthError();
+                var code = document.getElementById('invite-code').value.trim();
+                if (!code) return;
+
+                var household = await joinHousehold(code);
+                if (household) {
+                    state.household = household;
+                    await loadFromSupabase();
+                    setupRealtimeSubscriptions();
+                    showMainApp();
+                    renderAll();
+                }
+            });
+
+            // Logout button
+            document.getElementById('btn-logout').addEventListener('click', handleLogout);
+        }
+
+        // ========================================
         // INITIALIZATION
         // ========================================
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             applyTheme();
             applyLanguage();
-            // Load saved data, or initialize with mock data if no saved data exists
-            var hasData = loadData();
-            if (!hasData) {
-                initMockData();
-                saveData();
+            setupAuthUI();
+
+            // Check for existing session
+            if (supabase) {
+                var session = await supabase.auth.getSession();
+                if (session.data.session) {
+                    state.user = session.data.session.user;
+
+                    // Check if user has a household
+                    var household = await getUserHousehold();
+                    if (household) {
+                        state.household = household;
+                        await loadFromSupabase();
+                        setupRealtimeSubscriptions();
+                        showMainApp();
+                        renderAll();
+                        setupNavigation();
+                        setupForms();
+                        setupModals();
+                        setupSettings();
+                    } else {
+                        showHouseholdSetup();
+                    }
+                } else {
+                    showAuthScreen();
+                }
+
+                // Listen for auth changes
+                supabase.auth.onAuthStateChange(async function(event, session) {
+                    if (event === 'SIGNED_IN' && session) {
+                        state.user = session.user;
+                        var household = await getUserHousehold();
+                        if (household) {
+                            state.household = household;
+                            await loadFromSupabase();
+                            setupRealtimeSubscriptions();
+                            showMainApp();
+                            renderAll();
+                            setupNavigation();
+                            setupForms();
+                            setupModals();
+                            setupSettings();
+                        } else {
+                            showHouseholdSetup();
+                        }
+                    } else if (event === 'SIGNED_OUT') {
+                        showAuthScreen();
+                    }
+                });
+            } else {
+                // Offline mode - load from localStorage
+                loadData();
+                showMainApp();
+                renderAll();
+                setupNavigation();
+                setupForms();
+                setupModals();
+                setupSettings();
             }
-            renderAll();
-            setupNavigation();
-            setupForms();
-            setupModals();
-            setupSettings();
+
+            // Online/offline detection
+            window.addEventListener('online', function() {
+                state.isOnline = true;
+                if (state.household) {
+                    loadFromSupabase();
+                }
+            });
+
+            window.addEventListener('offline', function() {
+                state.isOnline = false;
+                showSyncStatus('offline', 'Offline');
+            });
         });
     </script>
 </body>
