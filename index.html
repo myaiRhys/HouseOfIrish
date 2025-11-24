@@ -709,11 +709,6 @@
             margin-bottom: 2px;
         }
 
-        .member-role {
-            font-size: 0.8rem;
-            color: var(--text-light);
-        }
-
         /* ========================================
            MODAL
            ======================================== */
@@ -1608,6 +1603,39 @@
         }
 
         // ========================================
+        // DATA PERSISTENCE
+        // ========================================
+        function saveData() {
+            try {
+                localStorage.setItem('hoi-shopping', JSON.stringify(state.shopping));
+                localStorage.setItem('hoi-tasks', JSON.stringify(state.tasks));
+                localStorage.setItem('hoi-clifford', JSON.stringify(state.clifford));
+                localStorage.setItem('hoi-quickAdd', JSON.stringify(state.quickAdd));
+            } catch (e) {
+                console.warn('Failed to save data to localStorage:', e);
+            }
+        }
+
+        function loadData() {
+            try {
+                var shopping = localStorage.getItem('hoi-shopping');
+                var tasks = localStorage.getItem('hoi-tasks');
+                var clifford = localStorage.getItem('hoi-clifford');
+                var quickAdd = localStorage.getItem('hoi-quickAdd');
+
+                if (shopping) state.shopping = JSON.parse(shopping);
+                if (tasks) state.tasks = JSON.parse(tasks);
+                if (clifford) state.clifford = JSON.parse(clifford);
+                if (quickAdd) state.quickAdd = JSON.parse(quickAdd);
+
+                return shopping || tasks || clifford;
+            } catch (e) {
+                console.warn('Failed to load data from localStorage:', e);
+                return false;
+            }
+        }
+
+        // ========================================
         // LANGUAGE & THEME
         // ========================================
         function applyLanguage() {
@@ -1968,10 +1996,22 @@
 
         function renderQuickButtons(type) {
             var container = document.getElementById(type + '-quick-btns');
-            container.innerHTML = state.quickAdd[type].map(function(item) {
+            container.innerHTML = state.quickAdd[type].map(function(item, index) {
                 var safeItem = escapeHtml(item);
-                return '<button class="quick-btn" onclick="quickAdd(\'' + type + '\', \'' + item.replace(/'/g, "\\'") + '\')">' + safeItem + '</button>';
+                return '<button class="quick-btn" data-type="' + type + '" data-index="' + index + '">' + safeItem + '</button>';
             }).join('');
+
+            // Use event delegation for safety (no inline JS)
+            container.querySelectorAll('.quick-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var btnType = btn.getAttribute('data-type');
+                    var btnIndex = parseInt(btn.getAttribute('data-index'), 10);
+                    var itemText = state.quickAdd[btnType][btnIndex];
+                    if (itemText) {
+                        quickAdd(btnType, itemText);
+                    }
+                });
+            });
         }
 
         function renderManageList() {
@@ -1982,9 +2022,17 @@
                 var safeItem = escapeHtml(item);
                 return '<div class="manage-item">' +
                     '<span>' + safeItem + '</span>' +
-                    '<button onclick="removeStandardItem(' + index + ')" aria-label="Remove ' + safeItem + '">✕</button>' +
+                    '<button class="remove-item-btn" data-index="' + index + '" aria-label="Remove item">✕</button>' +
                 '</div>';
             }).join('');
+
+            // Use event delegation for safety
+            container.querySelectorAll('.remove-item-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(btn.getAttribute('data-index'), 10);
+                    removeStandardItem(idx);
+                });
+            });
         }
 
         function renderAll() {
@@ -2002,6 +2050,7 @@
             var item = state.shopping.find(function(i) { return i.id === id; });
             if (item) {
                 item.completed = !item.completed;
+                saveData();
                 renderShopping();
                 renderDashboard();
                 showToast(item.completed ? t('markedPurchased') : t('markedNotPurchased'));
@@ -2013,10 +2062,10 @@
             var item = list.find(function(t) { return t.id === id; });
             if (item) {
                 item.completed = !item.completed;
+                saveData();
                 if (type === 'tasks') renderTasks();
                 else renderClifford();
                 renderDashboard();
-                renderMembers();
                 showToast(item.completed ? t('taskCompleted') : t('taskIncomplete'));
             }
         }
@@ -2053,6 +2102,7 @@
                 else renderClifford();
             }
 
+            saveData();
             renderDashboard();
             showToast(t('itemAdded', { name: name }));
         }
@@ -2077,6 +2127,7 @@
             if (name) {
                 state.quickAdd[state.currentManageType].push(name);
                 input.value = '';
+                saveData();
                 renderManageList();
                 renderQuickButtons(state.currentManageType);
             }
@@ -2084,6 +2135,7 @@
 
         function removeStandardItem(index) {
             state.quickAdd[state.currentManageType].splice(index, 1);
+            saveData();
             renderManageList();
             renderQuickButtons(state.currentManageType);
         }
@@ -2125,6 +2177,7 @@
                     completed: false
                 });
 
+                saveData();
                 formShopping.reset();
                 formShopping.classList.remove('open');
                 btnAddShopping.setAttribute('aria-expanded', 'false');
@@ -2163,6 +2216,7 @@
                     completed: false
                 });
 
+                saveData();
                 formTask.reset();
                 formTask.classList.remove('open');
                 btnAddTask.setAttribute('aria-expanded', 'false');
@@ -2201,6 +2255,7 @@
                     completed: false
                 });
 
+                saveData();
                 formClifford.reset();
                 formClifford.classList.remove('open');
                 btnAddClifford.setAttribute('aria-expanded', 'false');
@@ -2290,7 +2345,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             applyTheme();
             applyLanguage();
-            initMockData();
+            // Load saved data, or initialize with mock data if no saved data exists
+            var hasData = loadData();
+            if (!hasData) {
+                initMockData();
+                saveData();
+            }
             renderAll();
             setupNavigation();
             setupForms();
