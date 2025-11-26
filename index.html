@@ -1,0 +1,3371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="House of Irish - Home Management App">
+    <title>House of Irish</title>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* ========================================
+           CSS RESET & BASE STYLES
+           ======================================== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 18px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 80px;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* ========================================
+           THEME VARIABLES (CSS Custom Properties)
+           ======================================== */
+        :root {
+            /* Dark Theme (Default) */
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --secondary: #4ade80;
+            --accent: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --danger-soft: #7f1d1d;
+            --bg: #000000;
+            --card: #0a0a0a;
+            --text: #22c55e;
+            --text-light: #4ade80;
+            --border: #1a1a1a;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-lg: 0 4px 6px rgba(0,0,0,0.4);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --badge-member-bg: #052e16;
+            --badge-member-color: #4ade80;
+            --badge-member-border: #166534;
+            --badge-due-bg: #78350f;
+            --badge-due-color: #fcd34d;
+            --badge-due-border: #92400e;
+        }
+
+        /* Light Theme */
+        [data-theme="light"] {
+            --primary: #16a34a;
+            --primary-dark: #15803d;
+            --secondary: #22c55e;
+            --accent: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --danger-soft: #fee2e2;
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 6px rgba(0,0,0,0.15);
+            --badge-member-bg: #dcfce7;
+            --badge-member-color: #166534;
+            --badge-member-border: #86efac;
+            --badge-due-bg: #fef3c7;
+            --badge-due-color: #92400e;
+            --badge-due-border: #fcd34d;
+        }
+
+        /* ========================================
+           TYPOGRAPHY
+           ======================================== */
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.25rem; }
+        h3 { font-size: 1.1rem; }
+
+        /* ========================================
+           LAYOUT COMPONENTS
+           ======================================== */
+        .app-header {
+            background: var(--card);
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .app-header h1 {
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 1.1rem;
+        }
+
+        main {
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========================================
+           BOTTOM NAVIGATION
+           ======================================== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 4px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            z-index: 1000;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 4px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 0.65rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            min-height: 60px;
+        }
+
+        .nav-btn:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .nav-btn .icon {
+            font-size: 1.4rem;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ========================================
+           CARDS
+           ======================================== */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        /* ========================================
+           STAT CARDS (Dashboard)
+           ======================================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            padding: 8px 6px;
+            text-align: center;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+        }
+
+        .stat-icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+            background: var(--border);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-icon-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .stat-icon-btn:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .stat-icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        .stat-card .stat-title {
+            font-size: 0.6rem;
+            color: var(--text-light);
+            margin-bottom: 2px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--warning);
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.55rem;
+            color: var(--text-light);
+        }
+
+        /* ========================================
+           FORMS
+           ======================================== */
+        .add-form {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+            margin-bottom: 16px;
+            display: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-form.open {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.2s ease, background-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* ========================================
+           BUTTONS
+           ======================================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 50px;
+        }
+
+        .btn:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-light);
+            padding: 8px;
+            min-height: 44px;
+        }
+
+        .btn-ghost:hover {
+            background: var(--border);
+        }
+
+        .btn-add {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            min-height: 44px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+        }
+
+        /* ========================================
+           LIST ITEMS (Compact)
+           ======================================== */
+        .list-section {
+            margin-bottom: 16px;
+        }
+
+        .list-section h3 {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            padding-left: 4px;
+        }
+
+        .list-item {
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            transition: all 0.2s ease;
+        }
+
+        .list-item.completed {
+            opacity: 0.6;
+        }
+
+        .list-item.completed .item-name {
+            text-decoration: line-through;
+            color: var(--text-light);
+        }
+
+        .item-checkbox {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            background: transparent;
+            min-width: 28px;
+            color: transparent;
+        }
+
+        .item-checkbox:hover {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .item-checkbox.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .item-checkbox:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+
+        .item-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .item-notes {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 4px;
+            padding: 6px 8px;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+        }
+
+        /* ========================================
+           BADGES
+           ======================================== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .badge-member {
+            background: var(--badge-member-bg);
+            color: var(--badge-member-color);
+            border: 1px solid var(--badge-member-border);
+        }
+
+        .badge-due {
+            background: var(--badge-due-bg);
+            color: var(--badge-due-color);
+            border: 1px solid var(--badge-due-border);
+        }
+
+        .badge-due.overdue {
+            background: var(--danger-soft);
+            color: #fca5a5;
+            border: 1px solid #991b1b;
+        }
+
+        [data-theme="light"] .badge-due.overdue {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+
+        .badge-due.today {
+            background: #7c2d12;
+            color: #fdba74;
+            border: 1px solid #c2410c;
+        }
+
+        [data-theme="light"] .badge-due.today {
+            background: #ffedd5;
+            color: #c2410c;
+            border: 1px solid #fdba74;
+        }
+
+        /* ========================================
+           COLLAPSIBLE SECTION
+           ======================================== */
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: background-color 0.2s ease;
+            min-height: 44px;
+        }
+
+        .collapsible-header:hover {
+            background: var(--card);
+        }
+
+        .collapsible-header:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .collapsible-header h3 {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .collapsible-toggle {
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible-header.expanded .collapsible-toggle {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.expanded {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        /* ========================================
+           QUICK ADD BUTTONS
+           ======================================== */
+        .quick-add {
+            margin-top: 20px;
+        }
+
+        .quick-add h4 {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+
+        .quick-add-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .quick-btn {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 44px;
+            color: var(--text);
+        }
+
+        .quick-btn:hover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .quick-btn:active {
+            transform: scale(0.95);
+        }
+
+        .quick-btn:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .manage-btn {
+            font-size: 0.8rem;
+            color: var(--accent);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 0;
+            text-decoration: underline;
+        }
+
+        /* ========================================
+           MEMBER CARDS (Settings)
+           ======================================== */
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .member-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .member-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .member-avatar.john { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .member-avatar.sarah { background: linear-gradient(135deg, #ec4899, #be185d); }
+        .member-avatar.mary { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+        .member-avatar.tom { background: linear-gradient(135deg, #10b981, #059669); }
+
+        .member-name {
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        /* ========================================
+           MODAL
+           ======================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalIn 0.2s ease;
+            transition: background-color 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            transition: background 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--card);
+        }
+
+        .modal-close:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        /* ========================================
+           MANAGE ITEMS LIST
+           ======================================== */
+        .manage-list {
+            margin-bottom: 16px;
+        }
+
+        .manage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+        }
+
+        .manage-item span {
+            font-weight: 500;
+        }
+
+        .manage-item button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .add-standard-form {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-standard-form input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .add-standard-form input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* ========================================
+           TOAST NOTIFICATIONS
+           ======================================== */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+        }
+
+        .toast {
+            background: var(--text);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: toastIn 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.success {
+            background: var(--primary);
+        }
+
+        .toast.hiding {
+            animation: toastOut 0.3s ease forwards;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+
+        /* ========================================
+           SETTINGS SECTIONS
+           ======================================== */
+        .settings-section {
+            margin-bottom: 24px;
+        }
+
+        .settings-section h2 {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .settings-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--card);
+            border: none;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            font-size: 1rem;
+            text-align: left;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .settings-btn:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .settings-btn span {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-btn .arrow {
+            color: var(--text-light);
+        }
+
+        /* Settings Form Controls */
+        .settings-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 8px;
+        }
+
+        .settings-control label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-control select {
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        .settings-control select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* ========================================
+           DASHBOARD UPCOMING
+           ======================================== */
+        .upcoming-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .upcoming-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dashboard-upcoming {
+            margin-bottom: 0;
+        }
+
+        .dashboard-upcoming h3 {
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .upcoming-item {
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upcoming-item .upcoming-icon {
+            font-size: 1rem;
+        }
+
+        .upcoming-item .upcoming-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .upcoming-item .upcoming-name {
+            font-weight: 600;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .upcoming-item .upcoming-meta {
+            font-size: 0.65rem;
+            color: var(--text-light);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .upcoming-item .upcoming-due {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .upcoming-item .upcoming-due.overdue {
+            color: var(--danger);
+        }
+
+        .upcoming-item .upcoming-due.today {
+            color: #fdba74;
+        }
+
+        /* ========================================
+           EMPTY STATE
+           ======================================== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* ========================================
+           UTILITY CLASSES
+           ======================================== */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        .text-center { text-align: center; }
+        .mb-0 { margin-bottom: 0; }
+        .mt-16 { margin-top: 16px; }
+
+        /* ========================================
+           AUTH PAGES
+           ======================================== */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: var(--bg);
+        }
+
+        .auth-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .auth-header .logo {
+            font-size: 3rem;
+            margin-bottom: 8px;
+        }
+
+        .auth-header h1 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        .auth-header p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 16px;
+        }
+
+        .auth-form .btn {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .auth-switch button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .auth-error {
+            background: var(--danger-soft);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .auth-error.show {
+            display: block;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .auth-divider span {
+            padding: 0 12px;
+        }
+
+        /* Household Setup */
+        .household-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .household-option {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .household-option:hover {
+            border-color: var(--primary);
+        }
+
+        .household-option h3 {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .household-option p {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .invite-code-display {
+            background: var(--bg);
+            border: 2px dashed var(--primary);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .invite-code-display .code {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 4px;
+            font-family: monospace;
+        }
+
+        .invite-code-display p {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Sync indicator */
+        .sync-indicator {
+            position: fixed;
+            top: 60px;
+            right: 16px;
+            background: var(--card);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sync-indicator.show {
+            opacity: 1;
+        }
+
+        .sync-indicator.syncing {
+            color: var(--warning);
+        }
+
+        .sync-indicator.synced {
+            color: var(--primary);
+        }
+
+        .sync-indicator.offline {
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <!-- ========================================
+         AUTH SCREENS
+         ======================================== -->
+    <div id="auth-screen" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo">🏠</div>
+                <h1>House of Irish</h1>
+                <p id="auth-subtitle">Sign in to manage your household</p>
+            </div>
+
+            <div id="auth-error" class="auth-error"></div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="Your password" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" id="login-btn">Sign In</button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="signup-name">Your Name</label>
+                    <input type="text" id="signup-name" required placeholder="John Smith">
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" required placeholder="Min 6 characters" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" id="signup-btn">Create Account</button>
+            </form>
+
+            <!-- Household Setup -->
+            <div id="household-setup" class="hidden">
+                <div id="household-choice">
+                    <p class="text-center" style="margin-bottom: 16px;">Welcome! Let's set up your household.</p>
+                    <div class="household-options">
+                        <div class="household-option" id="create-household-btn">
+                            <h3>🏠 Create Household</h3>
+                            <p>Start a new household and invite family members</p>
+                        </div>
+                        <div class="household-option" id="join-household-btn">
+                            <h3>🔗 Join Household</h3>
+                            <p>Join an existing household with an invite code</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Household Form -->
+                <form id="create-household-form" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="household-name">Household Name</label>
+                        <input type="text" id="household-name" required placeholder="e.g., The Smith Family">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Household</button>
+                    <button type="button" class="btn btn-secondary mt-16" id="back-to-choice">Back</button>
+                </form>
+
+                <!-- Household Created Success -->
+                <div id="household-created" class="hidden">
+                    <p class="text-center">Your household has been created!</p>
+                    <div class="invite-code-display">
+                        <div class="code" id="invite-code-display">------</div>
+                        <p>Share this code with family members to join</p>
+                    </div>
+                    <button class="btn btn-primary" id="continue-to-app">Continue to App</button>
+                </div>
+
+                <!-- Join Household Form -->
+                <form id="join-household-form" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="invite-code">Invite Code</label>
+                        <input type="text" id="invite-code" required placeholder="Enter 6-character code" maxlength="6" style="text-transform: uppercase; letter-spacing: 2px; text-align: center; font-size: 1.2rem;">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Join Household</button>
+                    <button type="button" class="btn btn-secondary mt-16" id="back-to-choice-2">Back</button>
+                </form>
+            </div>
+
+            <div class="auth-switch" id="auth-switch">
+                <span id="switch-text">Don't have an account?</span>
+                <button id="switch-to-signup">Sign Up</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         SYNC INDICATOR
+         ======================================== -->
+    <div id="sync-indicator" class="sync-indicator">
+        <span class="loading-spinner"></span>
+        <span id="sync-text">Syncing...</span>
+    </div>
+
+    <!-- ========================================
+         MAIN APP (hidden until authenticated)
+         ======================================== -->
+    <div id="main-app" class="hidden">
+    <!-- ========================================
+         HEADER
+         ======================================== -->
+    <header class="app-header">
+        <h1>🏠 <span data-i18n="appName">House of Irish</span></h1>
+    </header>
+
+    <!-- ========================================
+         MAIN CONTENT
+         ======================================== -->
+    <main>
+        <!-- Dashboard Page -->
+        <section id="page-dashboard" class="page active" aria-label="Dashboard">
+            <h2 style="margin-bottom: 8px; font-size: 1rem;" data-i18n="overview">Overview</h2>
+            <div class="stats-grid" id="dashboard-stats">
+                <!-- Stats populated by JS -->
+            </div>
+
+            <div class="upcoming-grid">
+                <div id="dashboard-upcoming-tasks" class="dashboard-upcoming">
+                    <!-- Upcoming tasks populated by JS -->
+                </div>
+
+                <div id="dashboard-upcoming-clifford" class="dashboard-upcoming">
+                    <!-- Upcoming Clifford tasks populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Shopping Page -->
+        <section id="page-shopping" class="page" aria-label="Shopping List">
+            <button class="btn btn-primary btn-add" id="btn-add-shopping" aria-expanded="false">
+                + <span data-i18n="addItem">Add Item</span>
+            </button>
+
+            <form class="add-form" id="form-shopping" aria-label="Add shopping item">
+                <div class="form-group">
+                    <label for="shopping-name" data-i18n="itemName">Item Name *</label>
+                    <input type="text" id="shopping-name" required data-i18n-placeholder="itemNamePlaceholder" placeholder="e.g., Full cream milk">
+                </div>
+                <div class="form-group">
+                    <label for="shopping-notes" data-i18n="notesOptional">Notes (optional)</label>
+                    <textarea id="shopping-notes" data-i18n-placeholder="notesPlaceholder" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-shopping" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="addItem">Add Item</button>
+                </div>
+            </form>
+
+            <div id="shopping-list" aria-live="polite" aria-relevant="additions removals">
+                <!-- Items populated by JS -->
+            </div>
+
+            <div class="quick-add">
+                <h4 data-i18n="quickAdd">Quick Add</h4>
+                <div class="quick-add-grid" id="shopping-quick-btns">
+                    <!-- Quick buttons populated by JS -->
+                </div>
+                <button class="manage-btn" id="manage-shopping-standards" data-i18n="manageStandardItems">Manage Standard Items</button>
+            </div>
+        </section>
+
+        <!-- Tasks Page -->
+        <section id="page-tasks" class="page" aria-label="Household Tasks">
+            <button class="btn btn-primary btn-add" id="btn-add-task" aria-expanded="false">
+                + <span data-i18n="addTask">Add Task</span>
+            </button>
+
+            <form class="add-form" id="form-task" aria-label="Add task">
+                <div class="form-group">
+                    <label for="task-name" data-i18n="taskName">Task Name *</label>
+                    <input type="text" id="task-name" required data-i18n-placeholder="taskNamePlaceholder" placeholder="e.g., Water the garden">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-assignee" data-i18n="assignTo">Assign To</label>
+                        <select id="task-assignee">
+                            <option value="john">John</option>
+                            <option value="sarah">Sarah</option>
+                            <option value="mary">Mary</option>
+                            <option value="tom">Tom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-due" data-i18n="dueDate">Due Date</label>
+                        <input type="date" id="task-due">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="task-notes" data-i18n="notesOptional">Notes (optional)</label>
+                    <textarea id="task-notes" data-i18n-placeholder="notesPlaceholder" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-task" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="addTask">Add Task</button>
+                </div>
+            </form>
+
+            <div id="tasks-list" aria-live="polite" aria-relevant="additions removals">
+                <!-- Tasks populated by JS -->
+            </div>
+
+            <div class="quick-add">
+                <h4 data-i18n="quickAdd">Quick Add</h4>
+                <div class="quick-add-grid" id="tasks-quick-btns">
+                    <!-- Quick buttons populated by JS -->
+                </div>
+                <button class="manage-btn" id="manage-tasks-standards" data-i18n="manageStandardItems">Manage Standard Items</button>
+            </div>
+        </section>
+
+        <!-- Clifford Page -->
+        <section id="page-clifford" class="page" aria-label="Clifford's Tasks">
+            <button class="btn btn-primary btn-add" id="btn-add-clifford" aria-expanded="false">
+                + <span data-i18n="addTask">Add Task</span>
+            </button>
+
+            <form class="add-form" id="form-clifford" aria-label="Add Clifford task">
+                <div class="form-group">
+                    <label for="clifford-name" data-i18n="taskName">Task Name *</label>
+                    <input type="text" id="clifford-name" required data-i18n-placeholder="cliffordTaskPlaceholder" placeholder="e.g., Buy nappies">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clifford-assignee" data-i18n="assignTo">Assign To</label>
+                        <select id="clifford-assignee">
+                            <option value="john">John</option>
+                            <option value="sarah">Sarah</option>
+                            <option value="mary">Mary</option>
+                            <option value="tom">Tom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="clifford-due" data-i18n="dueDate">Due Date</label>
+                        <input type="date" id="clifford-due">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="clifford-notes" data-i18n="notesOptional">Notes (optional)</label>
+                    <textarea id="clifford-notes" data-i18n-placeholder="notesPlaceholder" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-clifford" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="addTask">Add Task</button>
+                </div>
+            </form>
+
+            <div id="clifford-list" aria-live="polite" aria-relevant="additions removals">
+                <!-- Clifford tasks populated by JS -->
+            </div>
+
+            <div class="quick-add">
+                <h4 data-i18n="quickAdd">Quick Add</h4>
+                <div class="quick-add-grid" id="clifford-quick-btns">
+                    <!-- Quick buttons populated by JS -->
+                </div>
+                <button class="manage-btn" id="manage-clifford-standards" data-i18n="manageStandardItems">Manage Standard Items</button>
+            </div>
+        </section>
+
+        <!-- Settings Page -->
+        <section id="page-settings" class="page" aria-label="Settings">
+            <!-- Language & Theme Settings -->
+            <div class="settings-section">
+                <h2>⚙️ <span data-i18n="settings">Settings</span></h2>
+                <div class="settings-control">
+                    <label for="language-select">🌐 <span data-i18n="language">Language</span></label>
+                    <select id="language-select">
+                        <option value="en">English</option>
+                        <option value="af">Afrikaans</option>
+                    </select>
+                </div>
+                <div class="settings-control">
+                    <label for="theme-select">🎨 <span data-i18n="theme">Theme</span></label>
+                    <select id="theme-select">
+                        <option value="dark" data-i18n="darkTheme">Dark</option>
+                        <option value="light" data-i18n="lightTheme">Light</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Quick Add Management -->
+            <div class="settings-section">
+                <h2>⚡ <span data-i18n="quickAdd">Quick Add</span></h2>
+                <div class="settings-buttons">
+                    <button class="settings-btn" id="settings-shopping-standards">
+                        <span>🛒 <span data-i18n="shoppingQuickAdd">Shopping Quick Add</span></span>
+                        <span class="arrow">→</span>
+                    </button>
+                    <button class="settings-btn" id="settings-tasks-standards">
+                        <span>✓ <span data-i18n="tasksQuickAdd">Tasks Quick Add</span></span>
+                        <span class="arrow">→</span>
+                    </button>
+                    <button class="settings-btn" id="settings-clifford-standards">
+                        <span>👶 <span data-i18n="cliffordQuickAdd">Clifford Quick Add</span></span>
+                        <span class="arrow">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Household Members -->
+            <div class="settings-section">
+                <h2>👥 <span data-i18n="householdMembers">Household Members</span></h2>
+                <div class="members-grid" id="members-grid">
+                    <!-- Members populated by JS -->
+                </div>
+            </div>
+
+            <!-- Household Info & Logout -->
+            <div class="settings-section">
+                <h2>🏠 Household</h2>
+                <div class="settings-control">
+                    <label>Invite Code</label>
+                    <span id="settings-invite-code" style="font-family: monospace; font-weight: 700; letter-spacing: 2px;">------</span>
+                </div>
+                <button class="btn btn-secondary" id="btn-logout" style="width: 100%; margin-top: 12px;">
+                    🚪 Sign Out
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- ========================================
+         BOTTOM NAVIGATION
+         ======================================== -->
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <button class="nav-btn active" data-page="dashboard" aria-current="page">
+            <span class="icon">🏠</span>
+            <span data-i18n="dashboard">Dashboard</span>
+        </button>
+        <button class="nav-btn" data-page="shopping">
+            <span class="icon">🛒</span>
+            <span data-i18n="shopping">Shopping</span>
+        </button>
+        <button class="nav-btn" data-page="tasks">
+            <span class="icon">✓</span>
+            <span data-i18n="tasks">Tasks</span>
+        </button>
+        <button class="nav-btn" data-page="clifford">
+            <span class="icon">👶</span>
+            <span data-i18n="clifford">Clifford</span>
+        </button>
+        <button class="nav-btn" data-page="settings">
+            <span class="icon">⚙️</span>
+            <span data-i18n="settings">Settings</span>
+        </button>
+    </nav>
+
+    <!-- ========================================
+         MODAL (Manage Standard Items)
+         ======================================== -->
+    <div class="modal-overlay" id="modal-manage" aria-hidden="true">
+        <div class="modal" role="dialog" aria-labelledby="modal-manage-title">
+            <div class="modal-header">
+                <h3 id="modal-manage-title" data-i18n="manageStandardItems">Manage Standard Items</h3>
+                <button class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="manage-list" id="manage-list">
+                    <!-- Items populated by JS -->
+                </div>
+                <div class="add-standard-form">
+                    <input type="text" id="new-standard-name" data-i18n-placeholder="newItemName" placeholder="New item name">
+                    <button class="btn btn-primary btn-sm" id="btn-add-standard" data-i18n="add">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         TOAST CONTAINER
+         ======================================== -->
+    <div class="toast-container" id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    </div><!-- END main-app -->
+
+    <!-- ========================================
+         JAVASCRIPT
+         ======================================== -->
+    <script>
+        // ========================================
+        // SUPABASE CONFIGURATION
+        // ========================================
+        const SUPABASE_URL = 'https://gyutgfsdtsbbymhwrqka.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5dXRnZnNkdHNiYnltaHdycWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzM1MDgsImV4cCI6MjA3OTU0OTUwOH0.MT8uHkOR5nmnB1VqOXelaMUM24aWiTYISmGK4VcSt4g';
+
+        // Initialize Supabase client
+        let supabase = null;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.warn('Supabase not available, running in offline mode');
+        }
+
+        // ========================================
+        // TRANSLATIONS
+        // ========================================
+        const translations = {
+            en: {
+                // App
+                appName: 'House of Irish',
+                overview: 'Overview',
+
+                // Navigation
+                dashboard: 'Dashboard',
+                shopping: 'Shopping',
+                tasks: 'Tasks',
+                clifford: 'Clifford',
+                settings: 'Settings',
+
+                // Dashboard
+                toBuy: 'To Buy',
+                active: 'Active',
+
+                // Forms
+                addItem: 'Add Item',
+                addTask: 'Add Task',
+                cancel: 'Cancel',
+                add: 'Add',
+                itemName: 'Item Name *',
+                taskName: 'Task Name *',
+                assignTo: 'Assign To',
+                dueDate: 'Due Date',
+                notesOptional: 'Notes (optional)',
+                itemNamePlaceholder: 'e.g., Full cream milk',
+                taskNamePlaceholder: 'e.g., Water the garden',
+                cliffordTaskPlaceholder: 'e.g., Buy nappies',
+                notesPlaceholder: 'Any additional details...',
+                newItemName: 'New item name',
+
+                // Lists
+                quickAdd: 'Quick Add',
+                manageStandardItems: 'Manage Standard Items',
+                purchased: 'Purchased',
+                completed: 'Completed',
+                activeTasks: 'Active Tasks',
+
+                // Settings
+                languageSettings: 'Language Settings',
+                appearanceSettings: 'Appearance Settings',
+                householdMembers: 'Household Members',
+                language: 'Language',
+                theme: 'Theme',
+                darkTheme: 'Dark',
+                lightTheme: 'Light',
+                shoppingQuickAdd: 'Shopping Quick Add',
+                tasksQuickAdd: 'Tasks Quick Add',
+                cliffordQuickAdd: 'Clifford Quick Add',
+                tasksCompleted: 'tasks completed',
+
+                // Date labels
+                today: 'Today',
+                tomorrow: 'Tomorrow',
+                overdue: 'Overdue',
+                inDays: 'In {days} days',
+
+                // Toast messages
+                itemAdded: '{name} added!',
+                markedPurchased: 'Marked as purchased!',
+                markedNotPurchased: 'Marked as not purchased',
+                taskCompleted: 'Task completed!',
+                taskIncomplete: 'Task marked as incomplete',
+
+                // Empty states
+                noShoppingItems: 'No shopping items yet',
+                noTasks: 'No tasks yet',
+                noCliffordTasks: 'No tasks for Clifford yet',
+
+                // Upcoming
+                upcomingTasks: 'Upcoming Tasks',
+                upcomingClifford: 'Upcoming for Clifford'
+            },
+            af: {
+                // App
+                appName: 'Huis van Irish',
+                overview: 'Oorsig',
+
+                // Navigation
+                dashboard: 'Paneelbord',
+                shopping: 'Inkopies',
+                tasks: 'Take',
+                clifford: 'Clifford',
+                settings: 'Instellings',
+
+                // Dashboard
+                toBuy: 'Te Koop',
+                active: 'Aktief',
+
+                // Forms
+                addItem: 'Voeg Item By',
+                addTask: 'Voeg Taak By',
+                cancel: 'Kanselleer',
+                add: 'Voeg By',
+                itemName: 'Item Naam *',
+                taskName: 'Taak Naam *',
+                assignTo: 'Ken Toe Aan',
+                dueDate: 'Sperdatum',
+                notesOptional: 'Notas (opsioneel)',
+                itemNamePlaceholder: 'bv. Volroom melk',
+                taskNamePlaceholder: 'bv. Nat die tuin',
+                cliffordTaskPlaceholder: 'bv. Koop doeke',
+                notesPlaceholder: 'Enige bykomende besonderhede...',
+                newItemName: 'Nuwe item naam',
+
+                // Lists
+                quickAdd: 'Vinnig Byvoeg',
+                manageStandardItems: 'Bestuur Standaard Items',
+                purchased: 'Gekoop',
+                completed: 'Voltooi',
+                activeTasks: 'Aktiewe Take',
+
+                // Settings
+                languageSettings: 'Taal Instellings',
+                appearanceSettings: 'Voorkoms Instellings',
+                householdMembers: 'Huishouding Lede',
+                language: 'Taal',
+                theme: 'Tema',
+                darkTheme: 'Donker',
+                lightTheme: 'Lig',
+                shoppingQuickAdd: 'Inkopies Vinnig Byvoeg',
+                tasksQuickAdd: 'Take Vinnig Byvoeg',
+                cliffordQuickAdd: 'Clifford Vinnig Byvoeg',
+                tasksCompleted: 'take voltooi',
+
+                // Date labels
+                today: 'Vandag',
+                tomorrow: 'Môre',
+                overdue: 'Agterstallig',
+                inDays: 'Oor {days} dae',
+
+                // Toast messages
+                itemAdded: '{name} bygevoeg!',
+                markedPurchased: 'Gemerk as gekoop!',
+                markedNotPurchased: 'Gemerk as nie gekoop nie',
+                taskCompleted: 'Taak voltooi!',
+                taskIncomplete: 'Taak gemerk as onvoltooi',
+
+                // Empty states
+                noShoppingItems: 'Geen inkopie items nog nie',
+                noTasks: 'Geen take nog nie',
+                noCliffordTasks: 'Geen take vir Clifford nog nie',
+
+                // Upcoming
+                upcomingTasks: 'Komende Take',
+                upcomingClifford: 'Komende vir Clifford'
+            }
+        };
+
+        // ========================================
+        // APPLICATION STATE
+        // ========================================
+        const state = {
+            // Auth state
+            user: null,
+            household: null,
+            householdMembers: [],
+
+            // Data
+            shopping: [],
+            tasks: [],
+            clifford: [],
+            members: [],
+            quickAdd: {
+                shopping: ['🥛 Milk', '🍞 Bread', '🥚 Eggs', '🧴 Soap', '🧻 Toilet Paper', '🐕 Dog Food'],
+                tasks: ['🐕 Feed Dogs', '🌱 Water Garden', '🗑️ Take Out Trash', '🧹 Clean House', '👕 Do Laundry', '🛒 Buy Groceries'],
+                clifford: ['💉 Vaccines due', '🍼 Buy formula', '👶 Buy nappies', '🥄 Buy baby food', '👨‍⚕️ Doctor appointment', '🛁 Bath supplies', '🧸 Toys/activities', '📏 Milestone check']
+            },
+
+            // UI state
+            currentManageType: null,
+            language: localStorage.getItem('hoi-language') || 'en',
+            theme: localStorage.getItem('hoi-theme') || 'dark',
+            collapsedSections: {
+                shopping: true,
+                tasks: true,
+                clifford: true
+            },
+            isOnline: navigator.onLine,
+            isSyncing: false
+        };
+
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function t(key, replacements) {
+            var text = translations[state.language][key] || translations['en'][key] || key;
+            if (replacements) {
+                Object.keys(replacements).forEach(function(k) {
+                    text = text.replace('{' + k + '}', replacements[k]);
+                });
+            }
+            return text;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            var itemDate = new Date(dateStr);
+            itemDate.setHours(0, 0, 0, 0);
+
+            if (itemDate.getTime() === today.getTime()) return t('today');
+            if (itemDate.getTime() === tomorrow.getTime()) return t('tomorrow');
+            if (itemDate < today) return t('overdue');
+
+            var diff = Math.ceil((itemDate - today) / (1000 * 60 * 60 * 24));
+            if (diff <= 7) return t('inDays', { days: diff });
+
+            return itemDate.toLocaleDateString(state.language === 'af' ? 'af-ZA' : 'en-ZA', { day: 'numeric', month: 'short' });
+        }
+
+        function getDateClass(dateStr) {
+            if (!dateStr) return '';
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var itemDate = new Date(dateStr);
+            itemDate.setHours(0, 0, 0, 0);
+
+            if (itemDate < today) return 'overdue';
+            if (itemDate.getTime() === today.getTime()) return 'today';
+            return '';
+        }
+
+        function showToast(message, type) {
+            type = type || 'success';
+            var container = document.getElementById('toast-container');
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = '✓ ' + message;
+            container.appendChild(toast);
+
+            setTimeout(function() {
+                toast.classList.add('hiding');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 2000);
+        }
+
+        function getRelativeDate(daysFromNow) {
+            var date = new Date();
+            date.setDate(date.getDate() + daysFromNow);
+            return date.toISOString().split('T')[0];
+        }
+
+        // ========================================
+        // DATA PERSISTENCE
+        // ========================================
+        function saveData() {
+            try {
+                localStorage.setItem('hoi-shopping', JSON.stringify(state.shopping));
+                localStorage.setItem('hoi-tasks', JSON.stringify(state.tasks));
+                localStorage.setItem('hoi-clifford', JSON.stringify(state.clifford));
+                localStorage.setItem('hoi-quickAdd', JSON.stringify(state.quickAdd));
+            } catch (e) {
+                console.warn('Failed to save data to localStorage:', e);
+            }
+        }
+
+        function loadData() {
+            try {
+                var shopping = localStorage.getItem('hoi-shopping');
+                var tasks = localStorage.getItem('hoi-tasks');
+                var clifford = localStorage.getItem('hoi-clifford');
+                var quickAdd = localStorage.getItem('hoi-quickAdd');
+
+                if (shopping) state.shopping = JSON.parse(shopping);
+                if (tasks) state.tasks = JSON.parse(tasks);
+                if (clifford) state.clifford = JSON.parse(clifford);
+                if (quickAdd) state.quickAdd = JSON.parse(quickAdd);
+
+                return shopping || tasks || clifford;
+            } catch (e) {
+                console.warn('Failed to load data from localStorage:', e);
+                return false;
+            }
+        }
+
+        // ========================================
+        // SYNC INDICATOR
+        // ========================================
+        function showSyncStatus(status, text) {
+            var indicator = document.getElementById('sync-indicator');
+            var textEl = document.getElementById('sync-text');
+            indicator.className = 'sync-indicator show ' + status;
+            textEl.textContent = text;
+            if (status !== 'syncing') {
+                setTimeout(function() { indicator.classList.remove('show'); }, 2000);
+            }
+        }
+
+        // ========================================
+        // AUTHENTICATION FUNCTIONS
+        // ========================================
+        async function handleLogin(email, password) {
+            if (!supabase) {
+                showAuthError('Offline mode - please check your connection');
+                return false;
+            }
+            try {
+                var result = await supabase.auth.signInWithPassword({ email: email, password: password });
+                if (result.error) throw result.error;
+                return true;
+            } catch (e) {
+                showAuthError(e.message || 'Login failed');
+                return false;
+            }
+        }
+
+        async function handleSignup(email, password, name) {
+            if (!supabase) {
+                showAuthError('Offline mode - please check your connection');
+                return false;
+            }
+            try {
+                var result = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: { data: { name: name } }
+                });
+                if (result.error) throw result.error;
+                localStorage.setItem('hoi-user-name', name);
+                return true;
+            } catch (e) {
+                showAuthError(e.message || 'Signup failed');
+                return false;
+            }
+        }
+
+        async function handleLogout() {
+            if (supabase) {
+                await supabase.auth.signOut();
+            }
+            state.user = null;
+            state.household = null;
+            state.householdMembers = [];
+            showAuthScreen();
+        }
+
+        function showAuthError(message) {
+            var errorEl = document.getElementById('auth-error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function hideAuthError() {
+            document.getElementById('auth-error').classList.remove('show');
+        }
+
+        // ========================================
+        // HOUSEHOLD FUNCTIONS
+        // ========================================
+        async function createHousehold(name) {
+            if (!supabase || !state.user) return null;
+            try {
+                // Create household
+                var result = await supabase.from('households').insert({
+                    name: name,
+                    created_by: state.user.id
+                }).select().single();
+                if (result.error) throw result.error;
+
+                var household = result.data;
+
+                // Add user as admin member
+                var userName = localStorage.getItem('hoi-user-name') || state.user.email.split('@')[0];
+                var initials = userName.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substring(0, 2);
+
+                var memberResult = await supabase.from('household_members').insert({
+                    household_id: household.id,
+                    user_id: state.user.id,
+                    name: userName,
+                    initials: initials,
+                    is_admin: true
+                }).select().single();
+                if (memberResult.error) throw memberResult.error;
+
+                // Initialize default quick add items
+                var quickAddItems = [];
+                ['shopping', 'tasks', 'clifford'].forEach(function(type) {
+                    state.quickAdd[type].forEach(function(item, index) {
+                        quickAddItems.push({
+                            household_id: household.id,
+                            type: type,
+                            name: item,
+                            sort_order: index
+                        });
+                    });
+                });
+                await supabase.from('quick_add').insert(quickAddItems);
+
+                return household;
+            } catch (e) {
+                console.error('Failed to create household:', e);
+                showAuthError(e.message || 'Failed to create household');
+                return null;
+            }
+        }
+
+        async function joinHousehold(inviteCode) {
+            if (!supabase || !state.user) return null;
+            try {
+                // Find household by invite code
+                var result = await supabase.rpc('get_household_by_invite_code', { code: inviteCode.toUpperCase() });
+                if (result.error) throw result.error;
+                if (!result.data || result.data.length === 0) {
+                    throw new Error('Invalid invite code');
+                }
+
+                var household = result.data[0];
+
+                // Add user as member
+                var userName = localStorage.getItem('hoi-user-name') || state.user.email.split('@')[0];
+                var initials = userName.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substring(0, 2);
+
+                var memberResult = await supabase.from('household_members').insert({
+                    household_id: household.id,
+                    user_id: state.user.id,
+                    name: userName,
+                    initials: initials,
+                    is_admin: false
+                }).select().single();
+                if (memberResult.error) throw memberResult.error;
+
+                return household;
+            } catch (e) {
+                console.error('Failed to join household:', e);
+                showAuthError(e.message || 'Failed to join household');
+                return null;
+            }
+        }
+
+        async function getUserHousehold() {
+            if (!supabase || !state.user) return null;
+            try {
+                var result = await supabase
+                    .from('household_members')
+                    .select('household_id, households(id, name, invite_code)')
+                    .eq('user_id', state.user.id)
+                    .limit(1)
+                    .single();
+
+                if (result.error && result.error.code !== 'PGRST116') throw result.error;
+                if (result.data && result.data.households) {
+                    return result.data.households;
+                }
+                return null;
+            } catch (e) {
+                console.error('Failed to get household:', e);
+                return null;
+            }
+        }
+
+        // ========================================
+        // SUPABASE DATA OPERATIONS
+        // ========================================
+        async function loadFromSupabase() {
+            if (!supabase || !state.household) return false;
+            showSyncStatus('syncing', 'Loading...');
+            try {
+                var householdId = state.household.id;
+
+                // Load all data in parallel
+                var results = await Promise.all([
+                    supabase.from('shopping').select('*').eq('household_id', householdId).order('created_at', { ascending: false }),
+                    supabase.from('tasks').select('*').eq('household_id', householdId).order('created_at', { ascending: false }),
+                    supabase.from('clifford').select('*').eq('household_id', householdId).order('created_at', { ascending: false }),
+                    supabase.from('household_members').select('*').eq('household_id', householdId),
+                    supabase.from('quick_add').select('*').eq('household_id', householdId).order('sort_order')
+                ]);
+
+                if (results[0].data) state.shopping = results[0].data.map(mapShoppingItem);
+                if (results[1].data) state.tasks = results[1].data.map(mapTaskItem);
+                if (results[2].data) state.clifford = results[2].data.map(mapTaskItem);
+                if (results[3].data) state.members = results[3].data.map(mapMember);
+                if (results[4].data) {
+                    state.quickAdd = { shopping: [], tasks: [], clifford: [] };
+                    results[4].data.forEach(function(item) {
+                        if (state.quickAdd[item.type]) {
+                            state.quickAdd[item.type].push(item.name);
+                        }
+                    });
+                }
+
+                saveData(); // Cache locally
+                showSyncStatus('synced', 'Synced');
+                return true;
+            } catch (e) {
+                console.error('Failed to load from Supabase:', e);
+                showSyncStatus('offline', 'Sync failed');
+                return false;
+            }
+        }
+
+        function mapShoppingItem(item) {
+            return {
+                id: item.id,
+                name: item.name,
+                notes: item.notes || '',
+                completed: item.completed
+            };
+        }
+
+        function mapTaskItem(item) {
+            return {
+                id: item.id,
+                name: item.name,
+                notes: item.notes || '',
+                assignee: item.assignee,
+                due: item.due_date || '',
+                completed: item.completed
+            };
+        }
+
+        function mapMember(member) {
+            return {
+                id: member.id,
+                name: member.name,
+                initials: member.initials,
+                role: member.role || 'Member'
+            };
+        }
+
+        async function addShoppingToSupabase(item) {
+            if (!supabase || !state.household) return;
+            try {
+                var result = await supabase.from('shopping').insert({
+                    household_id: state.household.id,
+                    name: item.name,
+                    notes: item.notes,
+                    completed: item.completed,
+                    created_by: state.user.id
+                }).select().single();
+                if (result.data) {
+                    item.id = result.data.id;
+                }
+            } catch (e) { console.error('Failed to add shopping:', e); }
+        }
+
+        async function updateShoppingInSupabase(id, updates) {
+            if (!supabase || !state.household) return;
+            try {
+                await supabase.from('shopping').update(updates).eq('id', id);
+            } catch (e) { console.error('Failed to update shopping:', e); }
+        }
+
+        async function addTaskToSupabase(table, item) {
+            if (!supabase || !state.household) return;
+            try {
+                var result = await supabase.from(table).insert({
+                    household_id: state.household.id,
+                    name: item.name,
+                    notes: item.notes,
+                    assignee: item.assignee || null,
+                    due_date: item.due || null,
+                    completed: item.completed,
+                    created_by: state.user.id
+                }).select().single();
+                if (result.data) {
+                    item.id = result.data.id;
+                }
+            } catch (e) { console.error('Failed to add ' + table + ':', e); }
+        }
+
+        async function updateTaskInSupabase(table, id, updates) {
+            if (!supabase || !state.household) return;
+            try {
+                var dbUpdates = {};
+                if ('completed' in updates) dbUpdates.completed = updates.completed;
+                if ('name' in updates) dbUpdates.name = updates.name;
+                if ('notes' in updates) dbUpdates.notes = updates.notes;
+                if ('due' in updates) dbUpdates.due_date = updates.due;
+                if ('assignee' in updates) dbUpdates.assignee = updates.assignee;
+                await supabase.from(table).update(dbUpdates).eq('id', id);
+            } catch (e) { console.error('Failed to update ' + table + ':', e); }
+        }
+
+        // ========================================
+        // REALTIME SUBSCRIPTIONS
+        // ========================================
+        function setupRealtimeSubscriptions() {
+            if (!supabase || !state.household) return;
+
+            var householdId = state.household.id;
+
+            supabase.channel('household-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping', filter: 'household_id=eq.' + householdId }, handleShoppingChange)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: 'household_id=eq.' + householdId }, handleTasksChange)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'clifford', filter: 'household_id=eq.' + householdId }, handleCliffordChange)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: 'household_id=eq.' + householdId }, handleMembersChange)
+                .subscribe();
+        }
+
+        function handleShoppingChange(payload) {
+            if (payload.eventType === 'INSERT') {
+                var exists = state.shopping.find(function(i) { return i.id === payload.new.id; });
+                if (!exists) {
+                    state.shopping.unshift(mapShoppingItem(payload.new));
+                    renderShopping();
+                    renderDashboard();
+                }
+            } else if (payload.eventType === 'UPDATE') {
+                var item = state.shopping.find(function(i) { return i.id === payload.new.id; });
+                if (item) {
+                    Object.assign(item, mapShoppingItem(payload.new));
+                    renderShopping();
+                    renderDashboard();
+                }
+            } else if (payload.eventType === 'DELETE') {
+                state.shopping = state.shopping.filter(function(i) { return i.id !== payload.old.id; });
+                renderShopping();
+                renderDashboard();
+            }
+            saveData();
+        }
+
+        function handleTasksChange(payload) {
+            handleGenericChange('tasks', payload);
+        }
+
+        function handleCliffordChange(payload) {
+            handleGenericChange('clifford', payload);
+        }
+
+        function handleGenericChange(type, payload) {
+            var list = state[type];
+            if (payload.eventType === 'INSERT') {
+                var exists = list.find(function(i) { return i.id === payload.new.id; });
+                if (!exists) {
+                    list.unshift(mapTaskItem(payload.new));
+                }
+            } else if (payload.eventType === 'UPDATE') {
+                var item = list.find(function(i) { return i.id === payload.new.id; });
+                if (item) {
+                    Object.assign(item, mapTaskItem(payload.new));
+                }
+            } else if (payload.eventType === 'DELETE') {
+                state[type] = list.filter(function(i) { return i.id !== payload.old.id; });
+            }
+            if (type === 'tasks') renderTasks();
+            else renderClifford();
+            renderDashboard();
+            saveData();
+        }
+
+        function handleMembersChange(payload) {
+            loadFromSupabase().then(function() {
+                renderMembers();
+                renderAll();
+            });
+        }
+
+        // ========================================
+        // UI SCREEN MANAGEMENT
+        // ========================================
+        function showAuthScreen() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('household-setup').classList.add('hidden');
+            document.getElementById('auth-switch').classList.remove('hidden');
+            hideAuthError();
+        }
+
+        function showHouseholdSetup() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('household-setup').classList.remove('hidden');
+            document.getElementById('household-choice').classList.remove('hidden');
+            document.getElementById('create-household-form').classList.add('hidden');
+            document.getElementById('join-household-form').classList.add('hidden');
+            document.getElementById('household-created').classList.add('hidden');
+            document.getElementById('auth-switch').classList.add('hidden');
+            document.getElementById('auth-subtitle').textContent = 'Set up your household';
+        }
+
+        function showMainApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            if (state.household) {
+                document.getElementById('settings-invite-code').textContent = state.household.invite_code || '------';
+            }
+        }
+
+        // ========================================
+        // LANGUAGE & THEME
+        // ========================================
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(function(el) {
+                var key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+                var key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = t(key);
+            });
+            document.documentElement.lang = state.language;
+        }
+
+        function applyTheme() {
+            document.body.setAttribute('data-theme', state.theme);
+            var metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) {
+                metaTheme.content = state.theme === 'light' ? '#f5f5f5' : '#000000';
+            }
+        }
+
+        function setLanguage(lang) {
+            state.language = lang;
+            localStorage.setItem('hoi-language', lang);
+            applyLanguage();
+            renderAll();
+        }
+
+        function setTheme(theme) {
+            state.theme = theme;
+            localStorage.setItem('hoi-theme', theme);
+            applyTheme();
+        }
+
+        // ========================================
+        // MOCK DATA INITIALIZATION
+        // ========================================
+        function initMockData() {
+            state.shopping = [
+                { id: generateId(), name: 'Full cream milk', notes: 'Get 2 litres red label', completed: false },
+                { id: generateId(), name: 'Whole wheat bread', notes: 'Albany brand', completed: false },
+                { id: generateId(), name: 'Free range eggs', notes: 'Large size', completed: false },
+                { id: generateId(), name: 'Dish soap', notes: '', completed: false },
+                { id: generateId(), name: 'Fresh vegetables', notes: '', completed: true }
+            ];
+
+            state.tasks = [
+                { id: generateId(), name: 'Feed the dogs', assignee: 'sarah', due: getRelativeDate(0), notes: 'Morning and evening', completed: false },
+                { id: generateId(), name: 'Water the garden', assignee: 'john', due: getRelativeDate(2), notes: 'Early morning', completed: false },
+                { id: generateId(), name: 'Weekly grocery shopping', assignee: 'mary', due: getRelativeDate(1), notes: 'Check list first', completed: false },
+                { id: generateId(), name: 'Clean the pool', assignee: 'tom', due: getRelativeDate(3), notes: '', completed: false },
+                { id: generateId(), name: 'Take out trash', assignee: 'john', due: getRelativeDate(0), notes: '', completed: true }
+            ];
+
+            state.clifford = [
+                { id: generateId(), name: 'Vaccines due', assignee: 'sarah', due: getRelativeDate(5), notes: '6-month checkup', completed: false },
+                { id: generateId(), name: 'Buy nappies', assignee: 'mary', due: getRelativeDate(1), notes: 'Size 4 Pampers', completed: false },
+                { id: generateId(), name: 'Doctor appointment', assignee: 'john', due: getRelativeDate(7), notes: 'Pediatrician - 10am', completed: false },
+                { id: generateId(), name: 'Buy formula', assignee: 'sarah', due: getRelativeDate(3), notes: '', completed: true }
+            ];
+        }
+
+        // ========================================
+        // NAVIGATION FUNCTIONS
+        // ========================================
+        function navigateToPage(pageName) {
+            var navBtns = document.querySelectorAll('.nav-btn');
+            var pages = document.querySelectorAll('.page');
+
+            navBtns.forEach(function(b) {
+                b.classList.remove('active');
+                b.removeAttribute('aria-current');
+                if (b.dataset.page === pageName) {
+                    b.classList.add('active');
+                    b.setAttribute('aria-current', 'page');
+                }
+            });
+
+            pages.forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('page-' + pageName).classList.add('active');
+
+            // Refresh dashboard when navigating to it
+            if (pageName === 'dashboard') {
+                renderDashboard();
+            }
+
+            window.scrollTo(0, 0);
+        }
+
+        // ========================================
+        // RENDER FUNCTIONS
+        // ========================================
+        function renderDashboard() {
+            var container = document.getElementById('dashboard-stats');
+            var shoppingActive = state.shopping.filter(function(i) { return !i.completed; }).length;
+            var tasksActive = state.tasks.filter(function(t) { return !t.completed; }).length;
+            var cliffordActive = state.clifford.filter(function(t) { return !t.completed; }).length;
+
+            container.innerHTML =
+                '<div class="stat-card">' +
+                    '<button class="stat-icon-btn" onclick="navigateToPage(\'shopping\')" aria-label="' + t('shopping') + '">' +
+                        '🛒' +
+                    '</button>' +
+                    '<div class="stat-title">' + t('shopping') + '</div>' +
+                    '<div class="stat-value">' + shoppingActive + '</div>' +
+                    '<div class="stat-label">' + t('toBuy') + '</div>' +
+                '</div>' +
+                '<div class="stat-card">' +
+                    '<button class="stat-icon-btn" onclick="navigateToPage(\'tasks\')" aria-label="' + t('tasks') + '">' +
+                        '✓' +
+                    '</button>' +
+                    '<div class="stat-title">' + t('tasks') + '</div>' +
+                    '<div class="stat-value">' + tasksActive + '</div>' +
+                    '<div class="stat-label">' + t('active') + '</div>' +
+                '</div>' +
+                '<div class="stat-card">' +
+                    '<button class="stat-icon-btn" onclick="navigateToPage(\'clifford\')" aria-label="' + t('clifford') + '">' +
+                        '👶' +
+                    '</button>' +
+                    '<div class="stat-title">' + t('clifford') + '</div>' +
+                    '<div class="stat-value">' + cliffordActive + '</div>' +
+                    '<div class="stat-label">' + t('active') + '</div>' +
+                '</div>';
+
+            renderUpcomingTasks();
+            renderUpcomingClifford();
+        }
+
+        function renderUpcomingItem(item, type) {
+            var member = item.assignee ? state.members.find(function(m) { return m.id === item.assignee; }) : null;
+            var memberName = member ? member.name : '';
+            var dueText = formatDate(item.due);
+            var dueClass = getDateClass(item.due);
+            var safeName = escapeHtml(item.name);
+
+            return '<div class="upcoming-item">' +
+                '<div class="upcoming-icon">' + (type === 'tasks' ? '✓' : '👶') + '</div>' +
+                '<div class="upcoming-content">' +
+                    '<div class="upcoming-name">' + safeName + '</div>' +
+                    '<div class="upcoming-meta">' +
+                        (memberName ? '<span>👤 ' + escapeHtml(memberName) + '</span>' : '') +
+                        (dueText ? '<span class="upcoming-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }
+
+        function renderUpcomingTasks() {
+            var container = document.getElementById('dashboard-upcoming-tasks');
+            var upcoming = state.tasks
+                .filter(function(t) { return !t.completed; })
+                .sort(function(a, b) {
+                    if (!a.due && !b.due) return 0;
+                    if (!a.due) return 1;
+                    if (!b.due) return -1;
+                    return new Date(a.due) - new Date(b.due);
+                })
+                .slice(0, 5);
+
+            if (upcoming.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            var html = '<h3>✓ ' + t('upcomingTasks') + '</h3>';
+            upcoming.forEach(function(item) {
+                html += renderUpcomingItem(item, 'tasks');
+            });
+            container.innerHTML = html;
+        }
+
+        function renderUpcomingClifford() {
+            var container = document.getElementById('dashboard-upcoming-clifford');
+            var upcoming = state.clifford
+                .filter(function(t) { return !t.completed; })
+                .sort(function(a, b) {
+                    if (!a.due && !b.due) return 0;
+                    if (!a.due) return 1;
+                    if (!b.due) return -1;
+                    return new Date(a.due) - new Date(b.due);
+                })
+                .slice(0, 5);
+
+            if (upcoming.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            var html = '<h3>👶 ' + t('upcomingClifford') + '</h3>';
+            upcoming.forEach(function(item) {
+                html += renderUpcomingItem(item, 'clifford');
+            });
+            container.innerHTML = html;
+        }
+
+        function renderShoppingItem(item) {
+            var safeName = escapeHtml(item.name);
+            var safeNotes = escapeHtml(item.notes);
+
+            return '<div class="list-item ' + (item.completed ? 'completed' : '') + '" data-id="' + item.id + '">' +
+                '<button class="item-checkbox ' + (item.completed ? 'checked' : '') + '" ' +
+                        'onclick="toggleShopping(\'' + item.id + '\')" ' +
+                        'aria-label="' + (item.completed ? t('markedNotPurchased') : t('markedPurchased')) + '">' +
+                    (item.completed ? '✓' : '') +
+                '</button>' +
+                '<div class="item-content">' +
+                    '<div class="item-name">' + safeName + '</div>' +
+                    (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
+                '</div>' +
+            '</div>';
+        }
+
+        function renderShopping() {
+            var container = document.getElementById('shopping-list');
+            var active = state.shopping.filter(function(i) { return !i.completed; });
+            var completed = state.shopping.filter(function(i) { return i.completed; });
+
+            var html = '';
+
+            if (active.length > 0) {
+                html += '<div class="list-section"><h3>' + t('toBuy') + ' (' + active.length + ')</h3>';
+                active.forEach(function(item) { html += renderShoppingItem(item); });
+                html += '</div>';
+            }
+
+            if (completed.length > 0) {
+                var isExpanded = !state.collapsedSections.shopping;
+                html += '<div class="list-section">';
+                html += '<button class="collapsible-header ' + (isExpanded ? 'expanded' : '') + '" ' +
+                        'onclick="toggleCollapsedSection(\'shopping\')" ' +
+                        'aria-expanded="' + isExpanded + '" aria-controls="shopping-completed">' +
+                    '<h3>' + t('purchased') + ' (' + completed.length + ')</h3>' +
+                    '<span class="collapsible-toggle">▼</span>' +
+                '</button>';
+                html += '<div id="shopping-completed" class="collapsible-content ' + (isExpanded ? 'expanded' : '') + '">';
+                completed.forEach(function(item) { html += renderShoppingItem(item); });
+                html += '</div></div>';
+            }
+
+            if (state.shopping.length === 0) {
+                html = '<div class="empty-state"><div class="icon">🛒</div><p>' + t('noShoppingItems') + '</p></div>';
+            }
+
+            container.innerHTML = html;
+            renderQuickButtons('shopping');
+        }
+
+        function renderTaskItem(item, type) {
+            var member = item.assignee ? state.members.find(function(m) { return m.id === item.assignee; }) : null;
+            var memberName = member ? member.name : '';
+            var dueText = formatDate(item.due);
+            var dueClass = getDateClass(item.due);
+            var safeName = escapeHtml(item.name);
+            var safeNotes = escapeHtml(item.notes);
+
+            return '<div class="list-item ' + (item.completed ? 'completed' : '') + '" data-id="' + item.id + '">' +
+                '<button class="item-checkbox ' + (item.completed ? 'checked' : '') + '" ' +
+                        'onclick="toggleTask(\'' + item.id + '\', \'' + type + '\')" ' +
+                        'aria-label="' + (item.completed ? t('taskIncomplete') : t('taskCompleted')) + '">' +
+                    (item.completed ? '✓' : '') +
+                '</button>' +
+                '<div class="item-content">' +
+                    '<div class="item-name">' + safeName + '</div>' +
+                    '<div class="item-meta">' +
+                        (memberName ? '<span class="badge badge-member">👤 ' + escapeHtml(memberName) + '</span>' : '') +
+                        (dueText ? '<span class="badge badge-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
+                    '</div>' +
+                    (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
+                '</div>' +
+            '</div>';
+        }
+
+        function sortTasks(tasks) {
+            return tasks.slice().sort(function(a, b) {
+                if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                if (!a.due && !b.due) return 0;
+                if (!a.due) return 1;
+                if (!b.due) return -1;
+                return new Date(a.due) - new Date(b.due);
+            });
+        }
+
+        function renderTasks() {
+            var container = document.getElementById('tasks-list');
+            var sorted = sortTasks(state.tasks);
+            var active = sorted.filter(function(t) { return !t.completed; });
+            var completed = sorted.filter(function(t) { return t.completed; });
+
+            var html = '';
+
+            if (active.length > 0) {
+                html += '<div class="list-section"><h3>' + t('activeTasks') + ' (' + active.length + ')</h3>';
+                active.forEach(function(item) { html += renderTaskItem(item, 'tasks'); });
+                html += '</div>';
+            }
+
+            if (completed.length > 0) {
+                var isExpanded = !state.collapsedSections.tasks;
+                html += '<div class="list-section">';
+                html += '<button class="collapsible-header ' + (isExpanded ? 'expanded' : '') + '" ' +
+                        'onclick="toggleCollapsedSection(\'tasks\')" ' +
+                        'aria-expanded="' + isExpanded + '" aria-controls="tasks-completed">' +
+                    '<h3>' + t('completed') + ' (' + completed.length + ')</h3>' +
+                    '<span class="collapsible-toggle">▼</span>' +
+                '</button>';
+                html += '<div id="tasks-completed" class="collapsible-content ' + (isExpanded ? 'expanded' : '') + '">';
+                completed.forEach(function(item) { html += renderTaskItem(item, 'tasks'); });
+                html += '</div></div>';
+            }
+
+            if (state.tasks.length === 0) {
+                html = '<div class="empty-state"><div class="icon">✓</div><p>' + t('noTasks') + '</p></div>';
+            }
+
+            container.innerHTML = html;
+            renderQuickButtons('tasks');
+        }
+
+        function renderClifford() {
+            var container = document.getElementById('clifford-list');
+            var sorted = sortTasks(state.clifford);
+            var active = sorted.filter(function(t) { return !t.completed; });
+            var completed = sorted.filter(function(t) { return t.completed; });
+
+            var html = '';
+
+            if (active.length > 0) {
+                html += '<div class="list-section"><h3>' + t('activeTasks') + ' (' + active.length + ')</h3>';
+                active.forEach(function(item) { html += renderTaskItem(item, 'clifford'); });
+                html += '</div>';
+            }
+
+            if (completed.length > 0) {
+                var isExpanded = !state.collapsedSections.clifford;
+                html += '<div class="list-section">';
+                html += '<button class="collapsible-header ' + (isExpanded ? 'expanded' : '') + '" ' +
+                        'onclick="toggleCollapsedSection(\'clifford\')" ' +
+                        'aria-expanded="' + isExpanded + '" aria-controls="clifford-completed">' +
+                    '<h3>' + t('completed') + ' (' + completed.length + ')</h3>' +
+                    '<span class="collapsible-toggle">▼</span>' +
+                '</button>';
+                html += '<div id="clifford-completed" class="collapsible-content ' + (isExpanded ? 'expanded' : '') + '">';
+                completed.forEach(function(item) { html += renderTaskItem(item, 'clifford'); });
+                html += '</div></div>';
+            }
+
+            if (state.clifford.length === 0) {
+                html = '<div class="empty-state"><div class="icon">👶</div><p>' + t('noCliffordTasks') + '</p></div>';
+            }
+
+            container.innerHTML = html;
+            renderQuickButtons('clifford');
+        }
+
+        function renderMembers() {
+            var container = document.getElementById('members-grid');
+
+            if (state.members.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-light); grid-column: 1/-1; text-align: center;">No household members yet</p>';
+                return;
+            }
+
+            container.innerHTML = state.members.map(function(member, index) {
+                var colors = ['john', 'sarah', 'mary', 'tom'];
+                var colorClass = colors[index % colors.length];
+                return '<div class="member-card">' +
+                    '<div class="member-avatar ' + colorClass + '">' + escapeHtml(member.initials) + '</div>' +
+                    '<div class="member-name">' + escapeHtml(member.name) + '</div>' +
+                '</div>';
+            }).join('');
+
+            // Update assignee dropdowns
+            updateAssigneeDropdowns();
+        }
+
+        function updateAssigneeDropdowns() {
+            var dropdowns = ['task-assignee', 'clifford-assignee'];
+            dropdowns.forEach(function(id) {
+                var select = document.getElementById(id);
+                if (select && state.members.length > 0) {
+                    select.innerHTML = state.members.map(function(member) {
+                        return '<option value="' + member.id + '">' + escapeHtml(member.name) + '</option>';
+                    }).join('');
+                }
+            });
+        }
+
+        function renderQuickButtons(type) {
+            var container = document.getElementById(type + '-quick-btns');
+            container.innerHTML = state.quickAdd[type].map(function(item, index) {
+                var safeItem = escapeHtml(item);
+                return '<button class="quick-btn" data-type="' + type + '" data-index="' + index + '">' + safeItem + '</button>';
+            }).join('');
+
+            // Use event delegation for safety (no inline JS)
+            container.querySelectorAll('.quick-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var btnType = btn.getAttribute('data-type');
+                    var btnIndex = parseInt(btn.getAttribute('data-index'), 10);
+                    var itemText = state.quickAdd[btnType][btnIndex];
+                    if (itemText) {
+                        quickAdd(btnType, itemText);
+                    }
+                });
+            });
+        }
+
+        function renderManageList() {
+            var container = document.getElementById('manage-list');
+            var items = state.quickAdd[state.currentManageType];
+
+            container.innerHTML = items.map(function(item, index) {
+                var safeItem = escapeHtml(item);
+                return '<div class="manage-item">' +
+                    '<span>' + safeItem + '</span>' +
+                    '<button class="remove-item-btn" data-index="' + index + '" aria-label="Remove item">✕</button>' +
+                '</div>';
+            }).join('');
+
+            // Use event delegation for safety
+            container.querySelectorAll('.remove-item-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(btn.getAttribute('data-index'), 10);
+                    removeStandardItem(idx);
+                });
+            });
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderShopping();
+            renderTasks();
+            renderClifford();
+            renderMembers();
+        }
+
+        // ========================================
+        // ACTION HANDLERS
+        // ========================================
+        function toggleShopping(id) {
+            var item = state.shopping.find(function(i) { return i.id === id; });
+            if (item) {
+                item.completed = !item.completed;
+                saveData();
+                updateShoppingInSupabase(id, { completed: item.completed });
+                renderShopping();
+                renderDashboard();
+                showToast(item.completed ? t('markedPurchased') : t('markedNotPurchased'));
+            }
+        }
+
+        function toggleTask(id, type) {
+            var list = state[type];
+            var item = list.find(function(t) { return t.id === id; });
+            if (item) {
+                item.completed = !item.completed;
+                saveData();
+                updateTaskInSupabase(type, id, { completed: item.completed });
+                if (type === 'tasks') renderTasks();
+                else renderClifford();
+                renderDashboard();
+                showToast(item.completed ? t('taskCompleted') : t('taskIncomplete'));
+            }
+        }
+
+        function toggleCollapsedSection(type) {
+            state.collapsedSections[type] = !state.collapsedSections[type];
+            if (type === 'shopping') renderShopping();
+            else if (type === 'tasks') renderTasks();
+            else if (type === 'clifford') renderClifford();
+        }
+
+        function quickAdd(type, itemText) {
+            var name = itemText.replace(/^[\p{Emoji}\p{Emoji_Presentation}\p{Extended_Pictographic}]+\s*/gu, '') || itemText;
+
+            if (type === 'shopping') {
+                var item = {
+                    id: generateId(),
+                    name: name,
+                    notes: '',
+                    completed: false
+                };
+                state.shopping.unshift(item);
+                addShoppingToSupabase(item);
+                renderShopping();
+            } else {
+                var list = type === 'tasks' ? state.tasks : state.clifford;
+                var defaultAssignee = state.members.length > 0 ? state.members[0].id : null;
+                var taskItem = {
+                    id: generateId(),
+                    name: name,
+                    assignee: defaultAssignee,
+                    due: '',
+                    notes: '',
+                    completed: false
+                };
+                list.unshift(taskItem);
+                addTaskToSupabase(type, taskItem);
+                if (type === 'tasks') renderTasks();
+                else renderClifford();
+            }
+
+            saveData();
+            renderDashboard();
+            showToast(t('itemAdded', { name: name }));
+        }
+
+        function openManageModal(type) {
+            state.currentManageType = type;
+            var titles = {
+                shopping: t('shoppingQuickAdd'),
+                tasks: t('tasksQuickAdd'),
+                clifford: t('cliffordQuickAdd')
+            };
+            document.getElementById('modal-manage-title').textContent = titles[type];
+            document.getElementById('new-standard-name').value = '';
+            renderManageList();
+            document.getElementById('modal-manage').classList.add('open');
+            document.getElementById('modal-manage').setAttribute('aria-hidden', 'false');
+        }
+
+        function addStandardItem() {
+            var input = document.getElementById('new-standard-name');
+            var name = input.value.trim();
+            if (name) {
+                state.quickAdd[state.currentManageType].push(name);
+                input.value = '';
+                saveData();
+                renderManageList();
+                renderQuickButtons(state.currentManageType);
+            }
+        }
+
+        function removeStandardItem(index) {
+            state.quickAdd[state.currentManageType].splice(index, 1);
+            saveData();
+            renderManageList();
+            renderQuickButtons(state.currentManageType);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('open');
+            document.getElementById(modalId).setAttribute('aria-hidden', 'true');
+        }
+
+        // ========================================
+        // FORM HANDLERS
+        // ========================================
+        function setupForms() {
+            // Shopping form
+            var btnAddShopping = document.getElementById('btn-add-shopping');
+            var formShopping = document.getElementById('form-shopping');
+            var btnCancelShopping = document.getElementById('btn-cancel-shopping');
+
+            btnAddShopping.addEventListener('click', function() {
+                formShopping.classList.toggle('open');
+                btnAddShopping.setAttribute('aria-expanded', formShopping.classList.contains('open'));
+            });
+
+            btnCancelShopping.addEventListener('click', function() {
+                formShopping.classList.remove('open');
+                formShopping.reset();
+                btnAddShopping.setAttribute('aria-expanded', 'false');
+            });
+
+            formShopping.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name = document.getElementById('shopping-name').value.trim();
+                if (!name) return;
+
+                var item = {
+                    id: generateId(),
+                    name: name,
+                    notes: document.getElementById('shopping-notes').value.trim(),
+                    completed: false
+                };
+                state.shopping.unshift(item);
+                addShoppingToSupabase(item);
+
+                saveData();
+                formShopping.reset();
+                formShopping.classList.remove('open');
+                btnAddShopping.setAttribute('aria-expanded', 'false');
+                renderShopping();
+                renderDashboard();
+                showToast(t('itemAdded', { name: name }));
+            });
+
+            // Tasks form
+            var btnAddTask = document.getElementById('btn-add-task');
+            var formTask = document.getElementById('form-task');
+            var btnCancelTask = document.getElementById('btn-cancel-task');
+
+            btnAddTask.addEventListener('click', function() {
+                formTask.classList.toggle('open');
+                btnAddTask.setAttribute('aria-expanded', formTask.classList.contains('open'));
+            });
+
+            btnCancelTask.addEventListener('click', function() {
+                formTask.classList.remove('open');
+                formTask.reset();
+                btnAddTask.setAttribute('aria-expanded', 'false');
+            });
+
+            formTask.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name = document.getElementById('task-name').value.trim();
+                if (!name) return;
+
+                var item = {
+                    id: generateId(),
+                    name: name,
+                    assignee: document.getElementById('task-assignee').value,
+                    due: document.getElementById('task-due').value,
+                    notes: document.getElementById('task-notes').value.trim(),
+                    completed: false
+                };
+                state.tasks.unshift(item);
+                addTaskToSupabase('tasks', item);
+
+                saveData();
+                formTask.reset();
+                formTask.classList.remove('open');
+                btnAddTask.setAttribute('aria-expanded', 'false');
+                renderTasks();
+                renderDashboard();
+                showToast(t('itemAdded', { name: name }));
+            });
+
+            // Clifford form
+            var btnAddClifford = document.getElementById('btn-add-clifford');
+            var formClifford = document.getElementById('form-clifford');
+            var btnCancelClifford = document.getElementById('btn-cancel-clifford');
+
+            btnAddClifford.addEventListener('click', function() {
+                formClifford.classList.toggle('open');
+                btnAddClifford.setAttribute('aria-expanded', formClifford.classList.contains('open'));
+            });
+
+            btnCancelClifford.addEventListener('click', function() {
+                formClifford.classList.remove('open');
+                formClifford.reset();
+                btnAddClifford.setAttribute('aria-expanded', 'false');
+            });
+
+            formClifford.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name = document.getElementById('clifford-name').value.trim();
+                if (!name) return;
+
+                var item = {
+                    id: generateId(),
+                    name: name,
+                    assignee: document.getElementById('clifford-assignee').value,
+                    due: document.getElementById('clifford-due').value,
+                    notes: document.getElementById('clifford-notes').value.trim(),
+                    completed: false
+                };
+                state.clifford.unshift(item);
+                addTaskToSupabase('clifford', item);
+
+                saveData();
+                formClifford.reset();
+                formClifford.classList.remove('open');
+                btnAddClifford.setAttribute('aria-expanded', 'false');
+                renderClifford();
+                renderDashboard();
+                showToast(t('itemAdded', { name: name }));
+            });
+        }
+
+        // ========================================
+        // NAVIGATION
+        // ========================================
+        function setupNavigation() {
+            var navBtns = document.querySelectorAll('.nav-btn');
+
+            navBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    navigateToPage(btn.dataset.page);
+                });
+            });
+        }
+
+        // ========================================
+        // SETTINGS HANDLERS
+        // ========================================
+        function setupSettings() {
+            var languageSelect = document.getElementById('language-select');
+            var themeSelect = document.getElementById('theme-select');
+
+            languageSelect.value = state.language;
+            themeSelect.value = state.theme;
+
+            languageSelect.addEventListener('change', function() {
+                setLanguage(this.value);
+            });
+
+            themeSelect.addEventListener('change', function() {
+                setTheme(this.value);
+            });
+        }
+
+        // ========================================
+        // MODAL HANDLERS
+        // ========================================
+        function setupModals() {
+            // Manage modal
+            document.querySelector('#modal-manage .modal-close').addEventListener('click', function() { closeModal('modal-manage'); });
+            document.getElementById('btn-add-standard').addEventListener('click', addStandardItem);
+            document.getElementById('new-standard-name').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addStandardItem();
+            });
+
+            // Manage buttons
+            document.getElementById('manage-shopping-standards').addEventListener('click', function() { openManageModal('shopping'); });
+            document.getElementById('manage-tasks-standards').addEventListener('click', function() { openManageModal('tasks'); });
+            document.getElementById('manage-clifford-standards').addEventListener('click', function() { openManageModal('clifford'); });
+
+            // Settings page manage buttons
+            document.getElementById('settings-shopping-standards').addEventListener('click', function() { openManageModal('shopping'); });
+            document.getElementById('settings-tasks-standards').addEventListener('click', function() { openManageModal('tasks'); });
+            document.getElementById('settings-clifford-standards').addEventListener('click', function() { openManageModal('clifford'); });
+
+            // Close modals on overlay click
+            document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('open');
+                        overlay.setAttribute('aria-hidden', 'true');
+                    }
+                });
+            });
+
+            // Close modals on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay.open').forEach(function(modal) {
+                        modal.classList.remove('open');
+                        modal.setAttribute('aria-hidden', 'true');
+                    });
+                }
+            });
+        }
+
+        // ========================================
+        // AUTH UI HANDLERS
+        // ========================================
+        function setupAuthUI() {
+            // Login form
+            document.getElementById('login-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideAuthError();
+                var btn = document.getElementById('login-btn');
+                btn.classList.add('loading');
+                btn.innerHTML = '<span class="loading-spinner"></span> Signing in...';
+
+                var success = await handleLogin(
+                    document.getElementById('login-email').value,
+                    document.getElementById('login-password').value
+                );
+
+                btn.classList.remove('loading');
+                btn.textContent = 'Sign In';
+            });
+
+            // Signup form
+            document.getElementById('signup-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideAuthError();
+                var btn = document.getElementById('signup-btn');
+                btn.classList.add('loading');
+                btn.innerHTML = '<span class="loading-spinner"></span> Creating account...';
+
+                var success = await handleSignup(
+                    document.getElementById('signup-email').value,
+                    document.getElementById('signup-password').value,
+                    document.getElementById('signup-name').value
+                );
+
+                btn.classList.remove('loading');
+                btn.textContent = 'Create Account';
+            });
+
+            // Switch between login/signup
+            document.getElementById('switch-to-signup').addEventListener('click', function() {
+                var loginForm = document.getElementById('login-form');
+                var signupForm = document.getElementById('signup-form');
+                var switchText = document.getElementById('switch-text');
+                var switchBtn = document.getElementById('switch-to-signup');
+                var subtitle = document.getElementById('auth-subtitle');
+                hideAuthError();
+
+                if (loginForm.classList.contains('hidden')) {
+                    loginForm.classList.remove('hidden');
+                    signupForm.classList.add('hidden');
+                    switchText.textContent = "Don't have an account?";
+                    switchBtn.textContent = 'Sign Up';
+                    subtitle.textContent = 'Sign in to manage your household';
+                } else {
+                    loginForm.classList.add('hidden');
+                    signupForm.classList.remove('hidden');
+                    switchText.textContent = 'Already have an account?';
+                    switchBtn.textContent = 'Sign In';
+                    subtitle.textContent = 'Create your account';
+                }
+            });
+
+            // Household setup
+            document.getElementById('create-household-btn').addEventListener('click', function() {
+                document.getElementById('household-choice').classList.add('hidden');
+                document.getElementById('create-household-form').classList.remove('hidden');
+            });
+
+            document.getElementById('join-household-btn').addEventListener('click', function() {
+                document.getElementById('household-choice').classList.add('hidden');
+                document.getElementById('join-household-form').classList.remove('hidden');
+            });
+
+            document.getElementById('back-to-choice').addEventListener('click', function() {
+                document.getElementById('create-household-form').classList.add('hidden');
+                document.getElementById('household-choice').classList.remove('hidden');
+            });
+
+            document.getElementById('back-to-choice-2').addEventListener('click', function() {
+                document.getElementById('join-household-form').classList.add('hidden');
+                document.getElementById('household-choice').classList.remove('hidden');
+            });
+
+            // Create household form
+            document.getElementById('create-household-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideAuthError();
+                var householdName = document.getElementById('household-name').value.trim();
+                if (!householdName) return;
+
+                var household = await createHousehold(householdName);
+                if (household) {
+                    state.household = household;
+                    document.getElementById('create-household-form').classList.add('hidden');
+                    document.getElementById('household-created').classList.remove('hidden');
+                    document.getElementById('invite-code-display').textContent = household.invite_code;
+                }
+            });
+
+            // Continue to app
+            document.getElementById('continue-to-app').addEventListener('click', async function() {
+                await loadFromSupabase();
+                setupRealtimeSubscriptions();
+                showMainApp();
+                renderAll();
+                setupNavigation();
+                setupForms();
+                setupModals();
+                setupSettings();
+            });
+
+            // Join household form
+            document.getElementById('join-household-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideAuthError();
+                var code = document.getElementById('invite-code').value.trim();
+                if (!code) return;
+
+                var household = await joinHousehold(code);
+                if (household) {
+                    state.household = household;
+                    await loadFromSupabase();
+                    setupRealtimeSubscriptions();
+                    showMainApp();
+                    renderAll();
+                    setupNavigation();
+                    setupForms();
+                    setupModals();
+                    setupSettings();
+                }
+            });
+
+            // Logout button
+            document.getElementById('btn-logout').addEventListener('click', handleLogout);
+        }
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            applyTheme();
+            applyLanguage();
+            setupAuthUI();
+
+            // Check for existing session
+            if (supabase) {
+                var session = await supabase.auth.getSession();
+                if (session.data.session) {
+                    state.user = session.data.session.user;
+
+                    // Check if user has a household
+                    var household = await getUserHousehold();
+                    if (household) {
+                        state.household = household;
+                        await loadFromSupabase();
+                        setupRealtimeSubscriptions();
+                        showMainApp();
+                        renderAll();
+                        setupNavigation();
+                        setupForms();
+                        setupModals();
+                        setupSettings();
+                    } else {
+                        showHouseholdSetup();
+                    }
+                } else {
+                    showAuthScreen();
+                }
+
+                // Listen for auth changes
+                supabase.auth.onAuthStateChange(async function(event, session) {
+                    if (event === 'SIGNED_IN' && session) {
+                        state.user = session.user;
+                        var household = await getUserHousehold();
+                        if (household) {
+                            state.household = household;
+                            await loadFromSupabase();
+                            setupRealtimeSubscriptions();
+                            showMainApp();
+                            renderAll();
+                            setupNavigation();
+                            setupForms();
+                            setupModals();
+                            setupSettings();
+                        } else {
+                            showHouseholdSetup();
+                        }
+                    } else if (event === 'SIGNED_OUT') {
+                        showAuthScreen();
+                    }
+                });
+            } else {
+                // Offline mode - load from localStorage
+                loadData();
+                showMainApp();
+                renderAll();
+                setupNavigation();
+                setupForms();
+                setupModals();
+                setupSettings();
+            }
+
+            // Online/offline detection
+            window.addEventListener('online', function() {
+                state.isOnline = true;
+                if (state.household) {
+                    loadFromSupabase();
+                }
+            });
+
+            window.addEventListener('offline', function() {
+                state.isOnline = false;
+                showSyncStatus('offline', 'Offline');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-result {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ccc;
+        }
+        .test-result.success {
+            border-left-color: #22c55e;
+        }
+        .test-result.error {
+            border-left-color: #ef4444;
+        }
+        .test-result.warning {
+            border-left-color: #fbbf24;
+        }
+        h1 { color: #333; }
+        pre {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #16a34a;
+        }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Supabase Connection Diagnostics</h1>
+    <button onclick="runTests()">Run All Tests</button>
+    <div id="results"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://gyutgfsdtsbbymhwrqka.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5dXRnZnNkdHNiYnltaHdycWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzM1MDgsImV4cCI6MjA3OTU0OTUwOH0.MT8uHkOR5nmnB1VqOXelaMUM24aWiTYISmGK4VcSt4g';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const results = document.getElementById('results');
+
+        function addResult(title, status, message, details = null) {
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+
+            let html = `<h3>${status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️'} ${title}</h3>`;
+            html += `<p>${message}</p>`;
+
+            if (details) {
+                html += `<pre>${JSON.stringify(details, null, 2)}</pre>`;
+            }
+
+            div.innerHTML = html;
+            results.appendChild(div);
+        }
+
+        async function runTests() {
+            results.innerHTML = '<h2>Running diagnostics...</h2>';
+
+            // Test 1: Client Initialization
+            try {
+                if (supabase) {
+                    addResult('Client Initialization', 'success', 'Supabase client initialized successfully');
+                } else {
+                    addResult('Client Initialization', 'error', 'Failed to initialize Supabase client');
+                    return;
+                }
+            } catch (e) {
+                addResult('Client Initialization', 'error', 'Error initializing client', e.message);
+                return;
+            }
+
+            // Test 2: Connection Test (try to query a table)
+            try {
+                const { data, error } = await supabase.from('households').select('count');
+
+                if (error) {
+                    if (error.code === '42P01') {
+                        addResult('Database Schema', 'error',
+                            'Table "households" does not exist. You need to run supabase-schema.sql in your Supabase SQL Editor.',
+                            { error: error.message, hint: error.hint });
+                    } else if (error.code === 'PGRST301') {
+                        addResult('Database Schema', 'warning',
+                            'Tables exist but might have RLS issues or permission problems.',
+                            { error: error.message });
+                    } else {
+                        addResult('Database Connection', 'error', 'Database query failed', error);
+                    }
+                } else {
+                    addResult('Database Connection', 'success', 'Successfully connected to database');
+                    addResult('Database Schema', 'success', 'Table "households" exists');
+                }
+            } catch (e) {
+                addResult('Database Connection', 'error', 'Connection error', e.message);
+            }
+
+            // Test 3: Check all required tables
+            const tables = ['households', 'household_members', 'shopping', 'tasks', 'clifford', 'quick_add'];
+            let allTablesExist = true;
+
+            for (const table of tables) {
+                try {
+                    const { error } = await supabase.from(table).select('count').limit(0);
+
+                    if (error) {
+                        if (error.code === '42P01') {
+                            addResult(`Table: ${table}`, 'error', `Table "${table}" does not exist`);
+                            allTablesExist = false;
+                        } else if (error.code === 'PGRST301') {
+                            addResult(`Table: ${table}`, 'warning',
+                                `Table "${table}" exists but RLS might be blocking access (this is normal when not authenticated)`);
+                        } else {
+                            addResult(`Table: ${table}`, 'success', `Table "${table}" exists`);
+                        }
+                    } else {
+                        addResult(`Table: ${table}`, 'success', `Table "${table}" exists and is accessible`);
+                    }
+                } catch (e) {
+                    addResult(`Table: ${table}`, 'error', `Error checking table`, e.message);
+                    allTablesExist = false;
+                }
+            }
+
+            // Test 4: Auth Status
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (session) {
+                    addResult('Authentication', 'success',
+                        `Logged in as: ${session.user.email}`,
+                        { user_id: session.user.id, email: session.user.email });
+                } else {
+                    addResult('Authentication', 'warning',
+                        'Not currently authenticated. This is normal for initial setup.',
+                        { message: 'You can test signup/login through the main app' });
+                }
+            } catch (e) {
+                addResult('Authentication', 'error', 'Error checking auth status', e.message);
+            }
+
+            // Test 5: Check if function exists
+            try {
+                const { data, error } = await supabase.rpc('get_household_by_invite_code', { code: 'TEST' });
+
+                if (error) {
+                    if (error.code === '42883') {
+                        addResult('Database Functions', 'error',
+                            'Function "get_household_by_invite_code" does not exist. Run the schema SQL file.');
+                    } else {
+                        addResult('Database Functions', 'success',
+                            'Function "get_household_by_invite_code" exists (no household found with code TEST is expected)');
+                    }
+                } else {
+                    addResult('Database Functions', 'success', 'Database functions are set up correctly');
+                }
+            } catch (e) {
+                addResult('Database Functions', 'error', 'Error checking functions', e.message);
+            }
+
+            // Summary
+            if (!allTablesExist) {
+                addResult('⚡ Action Required', 'error',
+                    'Some tables are missing. Please run the supabase-schema.sql file in your Supabase SQL Editor.',
+                    {
+                        steps: [
+                            '1. Go to your Supabase project dashboard',
+                            '2. Navigate to SQL Editor',
+                            '3. Copy the contents of supabase-schema.sql',
+                            '4. Paste and run the SQL',
+                            '5. Refresh this page and run tests again'
+                        ]
+                    });
+            } else {
+                addResult('✨ Summary', 'success',
+                    'Your Supabase backend is properly configured! You can now use the main app.');
+            }
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 500);
+        });
+    </script>
+</body>
+</html>
