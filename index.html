@@ -2242,7 +2242,18 @@
         }
 
         async function addShoppingToSupabase(item) {
-            if (!supabase || !state.household) return;
+            if (!supabase || !state.household) {
+                console.error('❌ addShoppingToSupabase failed: Missing supabase or household');
+                return false;
+            }
+
+            console.log('🚀 Adding shopping to Supabase:', {
+                name: item.name,
+                notes: item.notes,
+                household_id: state.household.id,
+                user_id: state.user.id
+            });
+
             try {
                 var result = await supabase.from('shopping').insert({
                     household_id: state.household.id,
@@ -2251,10 +2262,23 @@
                     completed: item.completed,
                     created_by: state.user.id
                 }).select().single();
+
+                if (result.error) {
+                    console.error('❌ Supabase shopping insert error:', result.error);
+                    showToast('Failed to add item: ' + result.error.message);
+                    return false;
+                }
+
                 if (result.data) {
                     item.id = result.data.id;
+                    console.log('✅ Shopping added successfully:', { id: result.data.id, name: item.name });
+                    return true;
                 }
-            } catch (e) { console.error('Failed to add shopping:', e); }
+            } catch (e) {
+                console.error('❌ Failed to add shopping (exception):', e);
+                showToast('Failed to add item. Please try again.');
+                return false;
+            }
         }
 
         async function updateShoppingInSupabase(id, updates) {
@@ -2265,7 +2289,20 @@
         }
 
         async function addTaskToSupabase(table, item) {
-            if (!supabase || !state.household) return;
+            if (!supabase || !state.household) {
+                console.error('❌ addTaskToSupabase failed: Missing supabase or household');
+                return false;
+            }
+
+            console.log('🚀 Adding task to Supabase:', {
+                table: table,
+                name: item.name,
+                notes: item.notes,
+                assignee: item.assignee,
+                household_id: state.household.id,
+                user_id: state.user.id
+            });
+
             try {
                 var result = await supabase.from(table).insert({
                     household_id: state.household.id,
@@ -2276,10 +2313,23 @@
                     completed: item.completed,
                     created_by: state.user.id
                 }).select().single();
+
+                if (result.error) {
+                    console.error('❌ Supabase task insert error:', result.error);
+                    showToast('Failed to add task: ' + result.error.message);
+                    return false;
+                }
+
                 if (result.data) {
                     item.id = result.data.id;
+                    console.log('✅ Task added successfully:', { table: table, id: result.data.id, name: item.name });
+                    return true;
                 }
-            } catch (e) { console.error('Failed to add ' + table + ':', e); }
+            } catch (e) {
+                console.error('❌ Failed to add ' + table + ' (exception):', e);
+                showToast('Failed to add task. Please try again.');
+                return false;
+            }
         }
 
         async function updateTaskInSupabase(table, id, updates) {
@@ -2801,13 +2851,27 @@
 
             // Use event delegation for safety (no inline JS)
             container.querySelectorAll('.quick-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', async function() {
+                    // Disable button to prevent double-clicks
+                    if (btn.disabled) return;
+
+                    var originalText = btn.textContent;
+                    btn.disabled = true;
+                    btn.textContent = '⏳ ' + originalText;
+                    btn.classList.add('loading');
+
                     var btnType = btn.getAttribute('data-type');
                     var btnIndex = parseInt(btn.getAttribute('data-index'), 10);
                     var itemText = state.quickAdd[btnType][btnIndex];
+
                     if (itemText) {
-                        quickAdd(btnType, itemText);
+                        await quickAdd(btnType, itemText);
                     }
+
+                    // Re-enable button after completion
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    btn.classList.remove('loading');
                 });
             });
         }
@@ -2877,7 +2941,26 @@
             else if (type === 'clifford') renderClifford();
         }
 
-        function quickAdd(type, itemText) {
+        async function quickAdd(type, itemText) {
+            console.log('🚀 Quick Add triggered:', {
+                type: type,
+                itemText: itemText,
+                householdId: state.household ? state.household.id : 'MISSING',
+                userId: state.user ? state.user.id : 'MISSING'
+            });
+
+            if (!state.household) {
+                console.error('❌ Quick Add failed: No household selected');
+                showToast('Please select a household first');
+                return;
+            }
+
+            if (!state.user) {
+                console.error('❌ Quick Add failed: No user logged in');
+                showToast('Please log in first');
+                return;
+            }
+
             var name = itemText.replace(/^[\p{Emoji}\p{Emoji_Presentation}\p{Extended_Pictographic}]+\s*/gu, '') || itemText;
 
             if (type === 'shopping') {
@@ -2887,9 +2970,21 @@
                     notes: '',
                     completed: false
                 };
-                state.shopping.unshift(item);
-                addShoppingToSupabase(item);
-                renderShopping();
+
+                console.log('🚀 Quick Add: Creating shopping item:', item);
+
+                // Add to Supabase first, then to local state only if successful
+                var success = await addShoppingToSupabase(item);
+
+                if (success) {
+                    state.shopping.unshift(item);
+                    renderShopping();
+                    saveData();
+                    renderDashboard();
+                    showToast(t('itemAdded', { name: name }));
+                } else {
+                    console.error('❌ Quick Add: Shopping item not added due to database error');
+                }
             } else {
                 var list = type === 'tasks' ? state.tasks : state.clifford;
                 var defaultAssignee = state.members.length > 0 ? state.members[0].id : null;
@@ -2901,15 +2996,23 @@
                     notes: '',
                     completed: false
                 };
-                list.unshift(taskItem);
-                addTaskToSupabase(type, taskItem);
-                if (type === 'tasks') renderTasks();
-                else renderClifford();
-            }
 
-            saveData();
-            renderDashboard();
-            showToast(t('itemAdded', { name: name }));
+                console.log('🚀 Quick Add: Creating task item:', { type: type, item: taskItem });
+
+                // Add to Supabase first, then to local state only if successful
+                var success = await addTaskToSupabase(type, taskItem);
+
+                if (success) {
+                    list.unshift(taskItem);
+                    if (type === 'tasks') renderTasks();
+                    else renderClifford();
+                    saveData();
+                    renderDashboard();
+                    showToast(t('itemAdded', { name: name }));
+                } else {
+                    console.error('❌ Quick Add: Task item not added due to database error');
+                }
+            }
         }
 
         function openManageModal(type) {
@@ -2970,7 +3073,7 @@
                 btnAddShopping.setAttribute('aria-expanded', 'false');
             });
 
-            formShopping.addEventListener('submit', function(e) {
+            formShopping.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 var name = document.getElementById('shopping-name').value.trim();
                 if (!name) return;
@@ -2981,16 +3084,24 @@
                     notes: document.getElementById('shopping-notes').value.trim(),
                     completed: false
                 };
-                state.shopping.unshift(item);
-                addShoppingToSupabase(item);
 
-                saveData();
-                formShopping.reset();
-                formShopping.classList.remove('open');
-                btnAddShopping.setAttribute('aria-expanded', 'false');
-                renderShopping();
-                renderDashboard();
-                showToast(t('itemAdded', { name: name }));
+                console.log('📝 Manual shopping form submit:', item);
+
+                // Add to Supabase first, then to local state only if successful
+                var success = await addShoppingToSupabase(item);
+
+                if (success) {
+                    state.shopping.unshift(item);
+                    saveData();
+                    formShopping.reset();
+                    formShopping.classList.remove('open');
+                    btnAddShopping.setAttribute('aria-expanded', 'false');
+                    renderShopping();
+                    renderDashboard();
+                    showToast(t('itemAdded', { name: name }));
+                } else {
+                    console.error('❌ Manual shopping form: Item not added due to database error');
+                }
             });
 
             // Tasks form
@@ -3009,7 +3120,7 @@
                 btnAddTask.setAttribute('aria-expanded', 'false');
             });
 
-            formTask.addEventListener('submit', function(e) {
+            formTask.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 var name = document.getElementById('task-name').value.trim();
                 if (!name) return;
@@ -3022,16 +3133,24 @@
                     notes: document.getElementById('task-notes').value.trim(),
                     completed: false
                 };
-                state.tasks.unshift(item);
-                addTaskToSupabase('tasks', item);
 
-                saveData();
-                formTask.reset();
-                formTask.classList.remove('open');
-                btnAddTask.setAttribute('aria-expanded', 'false');
-                renderTasks();
-                renderDashboard();
-                showToast(t('itemAdded', { name: name }));
+                console.log('📝 Manual task form submit:', item);
+
+                // Add to Supabase first, then to local state only if successful
+                var success = await addTaskToSupabase('tasks', item);
+
+                if (success) {
+                    state.tasks.unshift(item);
+                    saveData();
+                    formTask.reset();
+                    formTask.classList.remove('open');
+                    btnAddTask.setAttribute('aria-expanded', 'false');
+                    renderTasks();
+                    renderDashboard();
+                    showToast(t('itemAdded', { name: name }));
+                } else {
+                    console.error('❌ Manual task form: Item not added due to database error');
+                }
             });
 
             // Clifford form
@@ -3050,7 +3169,7 @@
                 btnAddClifford.setAttribute('aria-expanded', 'false');
             });
 
-            formClifford.addEventListener('submit', function(e) {
+            formClifford.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 var name = document.getElementById('clifford-name').value.trim();
                 if (!name) return;
@@ -3063,16 +3182,24 @@
                     notes: document.getElementById('clifford-notes').value.trim(),
                     completed: false
                 };
-                state.clifford.unshift(item);
-                addTaskToSupabase('clifford', item);
 
-                saveData();
-                formClifford.reset();
-                formClifford.classList.remove('open');
-                btnAddClifford.setAttribute('aria-expanded', 'false');
-                renderClifford();
-                renderDashboard();
-                showToast(t('itemAdded', { name: name }));
+                console.log('📝 Manual Clifford form submit:', item);
+
+                // Add to Supabase first, then to local state only if successful
+                var success = await addTaskToSupabase('clifford', item);
+
+                if (success) {
+                    state.clifford.unshift(item);
+                    saveData();
+                    formClifford.reset();
+                    formClifford.classList.remove('open');
+                    btnAddClifford.setAttribute('aria-expanded', 'false');
+                    renderClifford();
+                    renderDashboard();
+                    showToast(t('itemAdded', { name: name }));
+                } else {
+                    console.error('❌ Manual Clifford form: Item not added due to database error');
+                }
             });
         }
 
