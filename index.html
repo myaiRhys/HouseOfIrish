@@ -2247,6 +2247,11 @@
                 return false;
             }
 
+            if (!state.user || !state.user.id) {
+                console.error('❌ addShoppingToSupabase failed: Missing user');
+                return false;
+            }
+
             console.log('🚀 Adding shopping to Supabase:', {
                 name: item.name,
                 notes: item.notes,
@@ -2274,6 +2279,10 @@
                     console.log('✅ Shopping added successfully:', { id: result.data.id, name: item.name });
                     return true;
                 }
+
+                // Fallback: if no error and no data, something unexpected happened
+                console.error('❌ Supabase shopping insert returned no error and no data');
+                return false;
             } catch (e) {
                 console.error('❌ Failed to add shopping (exception):', e);
                 showToast('Failed to add item. Please try again.');
@@ -2291,6 +2300,11 @@
         async function addTaskToSupabase(table, item) {
             if (!supabase || !state.household) {
                 console.error('❌ addTaskToSupabase failed: Missing supabase or household');
+                return false;
+            }
+
+            if (!state.user || !state.user.id) {
+                console.error('❌ addTaskToSupabase failed: Missing user');
                 return false;
             }
 
@@ -2325,6 +2339,10 @@
                     console.log('✅ Task added successfully:', { table: table, id: result.data.id, name: item.name });
                     return true;
                 }
+
+                // Fallback: if no error and no data, something unexpected happened
+                console.error('❌ Supabase task insert returned no error and no data');
+                return false;
             } catch (e) {
                 console.error('❌ Failed to add ' + table + ' (exception):', e);
                 showToast('Failed to add task. Please try again.');
@@ -2860,18 +2878,23 @@
                     btn.textContent = '⏳ ' + originalText;
                     btn.classList.add('loading');
 
-                    var btnType = btn.getAttribute('data-type');
-                    var btnIndex = parseInt(btn.getAttribute('data-index'), 10);
-                    var itemText = state.quickAdd[btnType][btnIndex];
+                    try {
+                        var btnType = btn.getAttribute('data-type');
+                        var btnIndex = parseInt(btn.getAttribute('data-index'), 10);
+                        var itemText = state.quickAdd[btnType][btnIndex];
 
-                    if (itemText) {
-                        await quickAdd(btnType, itemText);
+                        if (itemText) {
+                            await quickAdd(btnType, itemText);
+                        }
+                    } catch (e) {
+                        console.error('❌ Quick Add button error:', e);
+                        showToast('An unexpected error occurred. Please try again.');
+                    } finally {
+                        // Always re-enable button, even if error occurs
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        btn.classList.remove('loading');
                     }
-
-                    // Re-enable button after completion
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                    btn.classList.remove('loading');
                 });
             });
         }
