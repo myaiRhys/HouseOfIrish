@@ -6,6 +6,30 @@
     <meta name="theme-color" content="#000000">
     <meta name="description" content="House of Irish - Home Management App">
     <title>House of Irish</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="/icons/icon-384x384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png">
+
+    <!-- Apple Mobile Web App -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="HOI">
+
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#000000">
+    <meta name="msapplication-TileImage" content="/icons/icon-144x144.png">
+
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -110,6 +134,9 @@
             top: 0;
             z-index: 100;
             transition: background-color 0.3s ease, border-color 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .app-header h1 {
@@ -118,6 +145,28 @@
             align-items: center;
             gap: 6px;
             font-size: 1.1rem;
+        }
+
+        .pwa-install-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .pwa-install-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
 
         main {
@@ -1499,6 +1548,7 @@
          ======================================== -->
     <header class="app-header">
         <h1>🏠 <span data-i18n="appName">House of Irish</span></h1>
+        <button id="pwa-install-btn" class="pwa-install-btn hidden" title="Install App">📲</button>
     </header>
 
     <!-- ========================================
@@ -1657,6 +1707,21 @@
 
         <!-- Settings Page -->
         <section id="page-settings" class="page" aria-label="Settings">
+            <!-- PWA Settings -->
+            <div class="settings-section">
+                <h2>📱 App</h2>
+                <div class="settings-buttons">
+                    <button class="settings-btn" id="pwa-install-btn-settings">
+                        <span>📲 Install App</span>
+                        <span class="arrow">→</span>
+                    </button>
+                    <button class="settings-btn" id="pwa-notification-btn">
+                        <span>🔔 <span id="notification-status">Enable Notifications</span></span>
+                        <span class="arrow">→</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Language & Theme Settings -->
             <div class="settings-section">
                 <h2>⚙️ <span data-i18n="settings">Settings</span></h2>
@@ -4060,6 +4125,166 @@
                 showSyncStatus('offline', 'Offline');
             });
         });
+
+        // ========================================
+        // PWA FUNCTIONALITY
+        // ========================================
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('✅ ServiceWorker registered:', registration.scope);
+
+                        // Check for updates
+                        registration.addEventListener('updatefound', function() {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', function() {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('🔄 New version available! Refresh to update.');
+                                    // Optionally show a toast notification here
+                                }
+                            });
+                        });
+                    })
+                    .catch(function(error) {
+                        console.log('❌ ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+
+        // Install Button Functionality
+        let deferredPrompt;
+        const installBtn = document.getElementById('pwa-install-btn');
+        const installBtnSettings = document.getElementById('pwa-install-btn-settings');
+
+        window.addEventListener('beforeinstallprompt', function(e) {
+            console.log('📲 Install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Show install button
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+
+        function handleInstall() {
+            if (!deferredPrompt) {
+                alert('App is already installed or installation not available on this device.');
+                return;
+            }
+
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function(choiceResult) {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('✅ User accepted install');
+                } else {
+                    console.log('❌ User dismissed install');
+                }
+                deferredPrompt = null;
+                if (installBtn) installBtn.classList.add('hidden');
+            });
+        }
+
+        if (installBtn) {
+            installBtn.addEventListener('click', handleInstall);
+        }
+
+        if (installBtnSettings) {
+            installBtnSettings.addEventListener('click', handleInstall);
+        }
+
+        window.addEventListener('appinstalled', function() {
+            console.log('✅ App installed successfully');
+            deferredPrompt = null;
+            if (installBtn) installBtn.classList.add('hidden');
+        });
+
+        // Push Notification Functionality
+        const notificationBtn = document.getElementById('pwa-notification-btn');
+        const notificationStatus = document.getElementById('notification-status');
+
+        function updateNotificationStatus() {
+            if (!('Notification' in window)) {
+                notificationStatus.textContent = 'Not Supported';
+                if (notificationBtn) notificationBtn.disabled = true;
+                return;
+            }
+
+            const permission = Notification.permission;
+            if (permission === 'granted') {
+                notificationStatus.textContent = 'Enabled ✓';
+            } else if (permission === 'denied') {
+                notificationStatus.textContent = 'Blocked';
+            } else {
+                notificationStatus.textContent = 'Enable Notifications';
+            }
+        }
+
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                alert('Notifications are not supported in this browser.');
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                // Test notification
+                new Notification('House of Irish', {
+                    body: 'Notifications are enabled! You will receive updates for tasks and shopping items.',
+                    icon: '/icons/icon-192x192.png',
+                    badge: '/icons/icon-72x72.png'
+                });
+                return;
+            }
+
+            if (Notification.permission === 'denied') {
+                alert('Notifications are blocked. Please enable them in your browser settings.');
+                return;
+            }
+
+            try {
+                const permission = await Notification.requestPermission();
+                updateNotificationStatus();
+
+                if (permission === 'granted') {
+                    // Subscribe to push notifications
+                    const registration = await navigator.serviceWorker.ready;
+
+                    // Check if push manager is available
+                    if ('pushManager' in registration) {
+                        try {
+                            // For now, just show a notification
+                            new Notification('House of Irish', {
+                                body: 'Notifications enabled! You will receive updates.',
+                                icon: '/icons/icon-192x192.png',
+                                badge: '/icons/icon-72x72.png'
+                            });
+
+                            // TODO: Subscribe to push service
+                            // const subscription = await registration.pushManager.subscribe({
+                            //     userVisibleOnly: true,
+                            //     applicationServerKey: 'YOUR_PUBLIC_VAPID_KEY'
+                            // });
+                            // Send subscription to server
+                        } catch (error) {
+                            console.log('Push subscription error:', error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Notification permission error:', error);
+            }
+        }
+
+        if (notificationBtn) {
+            notificationBtn.addEventListener('click', requestNotificationPermission);
+        }
+
+        // Update notification status on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateNotificationStatus();
+        });
     </script>
+
 </body>
 </html>
