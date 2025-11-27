@@ -2443,6 +2443,7 @@
             });
 
             try {
+                console.log('⏳ Executing INSERT query...');
                 var result = await supabase.from('shopping').insert({
                     household_id: state.household.id,
                     name: item.name,
@@ -2450,6 +2451,8 @@
                     completed: item.completed,
                     created_by: state.user.id
                 }).select().single();
+
+                console.log('📦 INSERT completed, result:', result);
 
                 if (result.error) {
                     console.error('❌ Supabase shopping insert error:', result.error);
@@ -2532,6 +2535,7 @@
             });
 
             try {
+                console.log('⏳ Executing INSERT query...');
                 var result = await supabase.from(table).insert({
                     household_id: state.household.id,
                     name: item.name,
@@ -2541,6 +2545,8 @@
                     completed: item.completed,
                     created_by: state.user.id
                 }).select().single();
+
+                console.log('📦 INSERT completed, result:', result);
 
                 if (result.error) {
                     console.error('❌ Supabase task insert error:', result.error);
