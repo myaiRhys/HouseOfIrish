@@ -1,10 +1,10 @@
 // Service Worker for Thibault PWA
-// Version 1.5.0
+// Version 1.6.0
 // Note: This service worker only caches STATIC assets (HTML, CSS, JS, images).
 // It NEVER caches API requests to prevent stale connections.
 
-const CACHE_NAME = 'hoi-cache-v1.5';
-const RUNTIME_CACHE = 'hoi-runtime-v1.5';
+const CACHE_NAME = 'hoi-cache-v1.6';
+const RUNTIME_CACHE = 'hoi-runtime-v1.6';
 
 // Files to cache immediately on install (using relative paths)
 const PRECACHE_URLS = [

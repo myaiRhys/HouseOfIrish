@@ -1938,7 +1938,7 @@
         const SUPABASE_URL = 'https://gyutgfsdtsbbymhwrqka.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5dXRnZnNkdHNiYnltaHdycWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzM1MDgsImV4cCI6MjA3OTU0OTUwOH0.MT8uHkOR5nmnB1VqOXelaMUM24aWiTYISmGK4VcSt4g';
 
-        // Initialize Supabase client with persistent auth
+        // Initialize Supabase client with persistent auth and connection configuration
         let supabase = null;
         try {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -1948,9 +1948,38 @@
                     detectSessionInUrl: true,
                     storage: window.localStorage,
                     storageKey: 'hoi-supabase-auth'
+                },
+                db: {
+                    schema: 'public'
+                },
+                global: {
+                    headers: {
+                        'X-Client-Info': 'thibault-pwa'
+                    },
+                    fetch: function(url, options) {
+                        // Add timeout to all fetch requests (60 seconds)
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 60000);
+
+                        return fetch(url, {
+                            ...options,
+                            signal: controller.signal
+                        }).finally(() => clearTimeout(timeout));
+                    }
+                },
+                realtime: {
+                    params: {
+                        eventsPerSecond: 10
+                    },
+                    timeout: 30000, // 30 second timeout for realtime operations
+                    heartbeatIntervalMs: 15000, // Send heartbeat every 15 seconds to keep connection alive
+                    reconnectAfterMs: function(tries) {
+                        // Exponential backoff: 1s, 2s, 4s, 8s, max 30s
+                        return Math.min(1000 * Math.pow(2, tries), 30000);
+                    }
                 }
             });
-            console.log('✅ Supabase client initialized with persistent auth');
+            console.log('✅ Supabase client initialized with connection management');
         } catch (e) {
             console.warn('Supabase not available, running in offline mode');
         }
@@ -2370,6 +2399,24 @@
         }
 
         async function handleLogout() {
+            // Clean up realtime subscription
+            if (state.realtimeChannel && supabase) {
+                console.log('🔌 Cleaning up realtime on logout...');
+                try {
+                    supabase.removeChannel(state.realtimeChannel);
+                } catch (e) {
+                    console.warn('Error removing channel on logout:', e);
+                }
+                state.realtimeChannel = null;
+            }
+
+            // Clear reconnect timer
+            if (realtimeReconnectTimer) {
+                clearTimeout(realtimeReconnectTimer);
+                realtimeReconnectTimer = null;
+            }
+            realtimeReconnectAttempts = 0;
+
             if (supabase) {
                 await supabase.auth.signOut();
             }
@@ -2882,14 +2929,27 @@
         // ========================================
         // REALTIME SUBSCRIPTIONS
         // ========================================
+        let realtimeReconnectAttempts = 0;
+        let realtimeReconnectTimer = null;
+
         function setupRealtimeSubscriptions() {
             if (!supabase || !state.household) return;
 
             // Clean up existing subscription first to prevent memory leaks
             if (state.realtimeChannel) {
                 console.log('🔌 Cleaning up old realtime subscription...');
-                supabase.removeChannel(state.realtimeChannel);
+                try {
+                    supabase.removeChannel(state.realtimeChannel);
+                } catch (e) {
+                    console.warn('Error removing channel:', e);
+                }
                 state.realtimeChannel = null;
+            }
+
+            // Clear any pending reconnect timer
+            if (realtimeReconnectTimer) {
+                clearTimeout(realtimeReconnectTimer);
+                realtimeReconnectTimer = null;
             }
 
             var householdId = state.household.id;
@@ -2901,15 +2961,79 @@
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'clifford', filter: 'household_id=eq.' + householdId }, handleCliffordChange)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: 'household_id=eq.' + householdId }, handleMembersChange)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_add', filter: 'household_id=eq.' + householdId }, handleQuickAddChange)
-                .subscribe(function(status) {
+                .subscribe(function(status, error) {
+                    console.log('🔔 Realtime status:', status, error || '');
+
                     if (status === 'SUBSCRIBED') {
                         console.log('✅ Realtime subscriptions active');
+                        // Reset reconnect attempts on successful connection
+                        realtimeReconnectAttempts = 0;
+                        showSyncStatus('online', 'Online');
                     } else if (status === 'CLOSED') {
-                        console.log('❌ Realtime subscription closed');
+                        console.log('❌ Realtime subscription closed - attempting reconnect...');
+                        attemptRealtimeReconnect();
                     } else if (status === 'CHANNEL_ERROR') {
-                        console.error('❌ Realtime subscription error');
+                        console.error('❌ Realtime subscription error - attempting reconnect...', error);
+                        attemptRealtimeReconnect();
+                    } else if (status === 'TIMED_OUT') {
+                        console.error('⏱️ Realtime subscription timed out - attempting reconnect...');
+                        attemptRealtimeReconnect();
                     }
                 });
+        }
+
+        function attemptRealtimeReconnect() {
+            // Don't reconnect if user is not logged in or no household
+            if (!supabase || !state.household || !state.user) {
+                console.log('⏸️ Skipping reconnect - not authenticated');
+                return;
+            }
+
+            // Don't reconnect if page is hidden
+            if (document.hidden) {
+                console.log('⏸️ Skipping reconnect - page is hidden');
+                return;
+            }
+
+            // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
+            realtimeReconnectAttempts++;
+            const delay = Math.min(1000 * Math.pow(2, realtimeReconnectAttempts - 1), 30000);
+
+            console.log(`🔄 Will attempt reconnect #${realtimeReconnectAttempts} in ${delay}ms...`);
+            showSyncStatus('offline', 'Reconnecting...');
+
+            // Clear any existing timer
+            if (realtimeReconnectTimer) {
+                clearTimeout(realtimeReconnectTimer);
+            }
+
+            realtimeReconnectTimer = setTimeout(function() {
+                console.log(`🔄 Reconnecting realtime (attempt ${realtimeReconnectAttempts})...`);
+                setupRealtimeSubscriptions();
+            }, delay);
+        }
+
+        function checkRealtimeHealth() {
+            if (!state.realtimeChannel || !supabase) return true;
+
+            try {
+                // Get channel state
+                const channelState = state.realtimeChannel.state;
+                console.log('🩺 Realtime health check - state:', channelState);
+
+                // If channel is not in joined state, reconnect
+                if (channelState !== 'joined') {
+                    console.warn('⚠️ Realtime channel not healthy, reconnecting...');
+                    setupRealtimeSubscriptions();
+                    return false;
+                }
+
+                return true;
+            } catch (e) {
+                console.error('❌ Error checking realtime health:', e);
+                setupRealtimeSubscriptions();
+                return false;
+            }
         }
 
         function handleShoppingChange(payload) {
@@ -4331,16 +4455,37 @@
 
             // Online/offline detection
             window.addEventListener('online', function() {
+                console.log('🌐 App came online');
                 state.isOnline = true;
                 if (state.household) {
                     loadFromSupabase();
+                    // Reconnect realtime when coming back online
+                    if (state.user && supabase) {
+                        console.log('🔄 Reconnecting realtime after coming online...');
+                        checkRealtimeHealth();
+                    }
                 }
+                showSyncStatus('online', 'Online');
             });
 
             window.addEventListener('offline', function() {
+                console.log('📴 App went offline');
                 state.isOnline = false;
                 showSyncStatus('offline', 'Offline');
+                // Clear reconnect timer when offline
+                if (realtimeReconnectTimer) {
+                    clearTimeout(realtimeReconnectTimer);
+                    realtimeReconnectTimer = null;
+                }
             });
+
+            // Periodic health check for realtime connection
+            // Check every 60 seconds to ensure connection is alive
+            setInterval(function() {
+                if (state.user && state.household && supabase && !document.hidden && state.isOnline) {
+                    checkRealtimeHealth();
+                }
+            }, 60000); // 60 seconds
 
             // Handle page visibility - refresh session and wake up connection when app becomes visible
             document.addEventListener('visibilitychange', async function() {
@@ -4379,8 +4524,24 @@
                         } else {
                             console.warn('⚠️ Database warmup failed, but continuing anyway');
                         }
+
+                        // Check realtime subscription health and reconnect if needed
+                        console.log('🔄 Checking realtime subscription health...');
+                        const isHealthy = checkRealtimeHealth();
+                        if (!isHealthy) {
+                            console.log('⚠️ Realtime connection was unhealthy, reconnecting...');
+                        } else {
+                            console.log('✅ Realtime connection is healthy');
+                        }
                     } catch (e) {
                         console.error('❌ Error refreshing session or warming up connection:', e);
+                    }
+                } else if (document.hidden) {
+                    // When page is hidden, clear any pending reconnect timers
+                    if (realtimeReconnectTimer) {
+                        console.log('⏸️ Page hidden, pausing reconnect attempts');
+                        clearTimeout(realtimeReconnectTimer);
+                        realtimeReconnectTimer = null;
                     }
                 }
             });
