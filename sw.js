@@ -1,18 +1,17 @@
 // Service Worker for House of Irish PWA
-// Version 1.1.0
+// Version 1.2.0
 // Note: This service worker only caches network requests.
 // It does NOT interfere with localStorage or session storage.
 
-const CACHE_NAME = 'hoi-cache-v1.1';
-const RUNTIME_CACHE = 'hoi-runtime-v1.1';
-const SUPABASE_CACHE = 'hoi-supabase-v1.1';
+const CACHE_NAME = 'hoi-cache-v1.2';
+const RUNTIME_CACHE = 'hoi-runtime-v1.2';
+const SUPABASE_CACHE = 'hoi-supabase-v1.2';
 
-// Files to cache immediately on install
+// Files to cache immediately on install (using relative paths)
 const PRECACHE_URLS = [
-    '/index.html',
-    '/manifest.json',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png'
+    './manifest.json',
+    './icons/icon-192x192.png',
+    './icons/icon-512x512.png'
 ];
 
 // Supabase API endpoint to cache
@@ -101,7 +100,34 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Handle app shell (cache first, fallback to network)
+    // Handle HTML documents with network-first strategy (to always get latest version)
+    if (request.destination === 'document' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    // Cache the new version
+                    if (response.status === 200) {
+                        caches.open(RUNTIME_CACHE).then((cache) => {
+                            cache.put(request, response.clone());
+                        });
+                    }
+                    return response;
+                })
+                .catch(() => {
+                    // Fallback to cache if offline
+                    return caches.match(request).then((cachedResponse) => {
+                        if (cachedResponse) {
+                            return cachedResponse;
+                        }
+                        // Last resort: return any cached HTML
+                        return caches.match('./index.html');
+                    });
+                })
+        );
+        return;
+    }
+
+    // Handle other assets (cache first for better performance)
     event.respondWith(
         caches.match(request).then((cachedResponse) => {
             if (cachedResponse) {
@@ -116,10 +142,8 @@ self.addEventListener('fetch', (event) => {
                     }
                     return response;
                 }).catch(() => {
-                    // Return offline page if available
-                    if (request.destination === 'document') {
-                        return caches.match('/index.html');
-                    }
+                    // No fallback for non-document requests
+                    return null;
                 });
             });
         })
