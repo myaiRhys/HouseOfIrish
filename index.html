@@ -2266,6 +2266,32 @@
             ]);
         }
 
+        // Helper function to ensure session is fresh before database operations
+        async function ensureFreshSession() {
+            if (!supabase || !state.user) {
+                throw new Error('Not authenticated');
+            }
+
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) {
+                    console.error('❌ Session validation error:', error);
+                    throw error;
+                }
+                if (!session) {
+                    console.error('❌ No active session');
+                    throw new Error('Session expired');
+                }
+                // Update state with fresh session
+                state.user = session.user;
+                console.log('✅ Session validated and refreshed');
+                return session;
+            } catch (error) {
+                console.error('❌ Error ensuring fresh session:', error);
+                throw error;
+            }
+        }
+
         async function handleLogout() {
             if (supabase) {
                 await supabase.auth.signOut();
@@ -2535,6 +2561,9 @@
             });
 
             try {
+                // Ensure session is fresh before database operation
+                await ensureFreshSession();
+
                 console.log('⏳ Executing INSERT query...');
 
                 var insertPromise = supabase.from('shopping').insert({
@@ -2634,6 +2663,9 @@
             });
 
             try {
+                // Ensure session is fresh before database operation
+                await ensureFreshSession();
+
                 console.log('⏳ Executing INSERT query...');
 
                 var insertPromise = supabase.from(table).insert({
@@ -4172,6 +4204,32 @@
             window.addEventListener('offline', function() {
                 state.isOnline = false;
                 showSyncStatus('offline', 'Offline');
+            });
+
+            // Handle page visibility - refresh session when app becomes visible
+            document.addEventListener('visibilitychange', async function() {
+                if (!document.hidden && supabase && state.user) {
+                    console.log('👁️ App became visible, refreshing session...');
+                    try {
+                        const { data: { session }, error } = await supabase.auth.getSession();
+                        if (error) {
+                            console.error('❌ Session refresh error:', error);
+                            // If session is invalid, show auth screen
+                            if (error.message.includes('refresh_token_not_found') ||
+                                error.message.includes('invalid_grant')) {
+                                showAuthScreen();
+                            }
+                        } else if (session) {
+                            console.log('✅ Session refreshed successfully');
+                            state.user = session.user;
+                        } else {
+                            console.log('⚠️ No session found, showing auth screen');
+                            showAuthScreen();
+                        }
+                    } catch (e) {
+                        console.error('❌ Error refreshing session:', e);
+                    }
+                }
             });
         });
 
