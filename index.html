@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
-    <meta name="description" content="House of Irish - Home Management App">
-    <title>House of Irish</title>
+    <meta name="description" content="Thibault - Home Management App">
+    <title>Thibault</title>
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -1485,7 +1485,7 @@
          ======================================== -->
     <div id="splash-screen" class="splash-screen">
         <div class="splash-logo">🏠</div>
-        <div class="splash-title">House of Irish</div>
+        <div class="splash-title">Thibault</div>
     </div>
 
     <!-- ========================================
@@ -1495,7 +1495,7 @@
         <div class="auth-card">
             <div class="auth-header">
                 <div class="logo">🏠</div>
-                <h1>House of Irish</h1>
+                <h1>Thibault</h1>
                 <p id="auth-subtitle">Sign in to manage your household</p>
             </div>
 
@@ -1601,7 +1601,7 @@
          HEADER
          ======================================== -->
     <header class="app-header">
-        <h1>🏠 <span data-i18n="appName">House of Irish</span></h1>
+        <h1>🏠 <span data-i18n="appName">Thibault</span></h1>
         <button id="pwa-install-btn" class="pwa-install-btn hidden" title="Install App">📲</button>
     </header>
 
@@ -1961,7 +1961,7 @@
         const translations = {
             en: {
                 // App
-                appName: 'House of Irish',
+                appName: 'Thibault',
                 overview: 'Overview',
 
                 // Navigation
@@ -4453,7 +4453,7 @@
 
             if (Notification.permission === 'granted') {
                 // Test notification
-                new Notification('House of Irish', {
+                new Notification('Thibault', {
                     body: 'Notifications are enabled! You will receive updates for tasks and shopping items.',
                     icon: '/icons/icon-192x192.png',
                     badge: '/icons/icon-72x72.png'
@@ -4478,7 +4478,7 @@
                     if ('pushManager' in registration) {
                         try {
                             // For now, just show a notification
-                            new Notification('House of Irish', {
+                            new Notification('Thibault', {
                                 body: 'Notifications enabled! You will receive updates.',
                                 icon: '/icons/icon-192x192.png',
                                 badge: '/icons/icon-72x72.png'

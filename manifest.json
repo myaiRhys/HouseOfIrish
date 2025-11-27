@@ -1,7 +1,7 @@
 {
-  "name": "House of Irish",
-  "short_name": "HOI",
-  "description": "House of Irish - Home Management App for shopping, tasks, and baby care",
+  "name": "Thibault",
+  "short_name": "Thibault",
+  "description": "Thibault - Home Management App for shopping, tasks, and baby care",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#000000",

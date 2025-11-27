@@ -1,11 +1,11 @@
-// Service Worker for House of Irish PWA
-// Version 1.2.0
+// Service Worker for Thibault PWA
+// Version 1.3.0
 // Note: This service worker only caches network requests.
 // It does NOT interfere with localStorage or session storage.
 
-const CACHE_NAME = 'hoi-cache-v1.2';
-const RUNTIME_CACHE = 'hoi-runtime-v1.2';
-const SUPABASE_CACHE = 'hoi-supabase-v1.2';
+const CACHE_NAME = 'hoi-cache-v1.3';
+const RUNTIME_CACHE = 'hoi-runtime-v1.3';
+const SUPABASE_CACHE = 'hoi-supabase-v1.3';
 
 // Files to cache immediately on install (using relative paths)
 const PRECACHE_URLS = [
@@ -155,7 +155,7 @@ self.addEventListener('push', (event) => {
     console.log('[ServiceWorker] Push received');
 
     let notificationData = {
-        title: 'House of Irish',
+        title: 'Thibault',
         body: 'You have a new notification',
         icon: '/icons/icon-192x192.png',
         badge: '/icons/icon-72x72.png',
