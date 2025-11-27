@@ -2252,20 +2252,45 @@
         }
 
         async function joinHousehold(inviteCode) {
-            if (!supabase || !state.user) return null;
+            if (!supabase) {
+                console.error('❌ joinHousehold failed: Supabase client is null');
+                showAuthError('Database connection error. Please refresh the page.');
+                return null;
+            }
+
+            if (!state.user) {
+                console.error('❌ joinHousehold failed: No user logged in');
+                showAuthError('Please log in first.');
+                return null;
+            }
+
+            console.log('🏠 Attempting to join household with code:', inviteCode);
+
             try {
                 // Find household by invite code
+                console.log('🔍 Looking up household by invite code...');
                 var result = await supabase.rpc('get_household_by_invite_code', { code: inviteCode.toUpperCase() });
-                if (result.error) throw result.error;
+
+                console.log('🔍 Household lookup result:', result);
+
+                if (result.error) {
+                    console.error('❌ RPC error:', result.error);
+                    throw result.error;
+                }
+
                 if (!result.data || result.data.length === 0) {
+                    console.error('❌ No household found with code:', inviteCode);
                     throw new Error('Invalid invite code');
                 }
 
                 var household = result.data[0];
+                console.log('✅ Found household:', household);
 
                 // Add user as member
                 var userName = localStorage.getItem('hoi-user-name') || state.user.email.split('@')[0];
                 var initials = userName.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase().substring(0, 2);
+
+                console.log('👤 Adding user as member:', { userName, initials, userId: state.user.id, householdId: household.id });
 
                 var memberResult = await supabase.from('household_members').insert({
                     household_id: household.id,
@@ -2274,11 +2299,18 @@
                     initials: initials,
                     is_admin: false
                 }).select().single();
-                if (memberResult.error) throw memberResult.error;
 
+                console.log('👤 Member insert result:', memberResult);
+
+                if (memberResult.error) {
+                    console.error('❌ Member insert error:', memberResult.error);
+                    throw memberResult.error;
+                }
+
+                console.log('✅ Successfully joined household:', household.name);
                 return household;
             } catch (e) {
-                console.error('Failed to join household:', e);
+                console.error('❌ Failed to join household:', e);
                 showAuthError(e.message || 'Failed to join household');
                 return null;
             }
@@ -2377,13 +2409,29 @@
         }
 
         async function addShoppingToSupabase(item) {
-            if (!supabase || !state.household) {
-                console.error('❌ addShoppingToSupabase failed: Missing supabase or household');
+            if (!supabase) {
+                console.error('❌ addShoppingToSupabase failed: Supabase client is null');
+                showToast('Database connection error. Please refresh the page.');
+                return false;
+            }
+
+            if (!state.household) {
+                console.error('❌ addShoppingToSupabase failed: No household in state', {
+                    stateKeys: Object.keys(state),
+                    hasUser: !!state.user,
+                    userId: state.user ? state.user.id : 'NO USER'
+                });
+                showToast('No household selected. Please refresh and try again.');
                 return false;
             }
 
             if (!state.user || !state.user.id) {
-                console.error('❌ addShoppingToSupabase failed: Missing user');
+                console.error('❌ addShoppingToSupabase failed: No user in state', {
+                    hasUser: !!state.user,
+                    stateKeys: Object.keys(state),
+                    household: state.household ? state.household.id : 'NO HOUSEHOLD'
+                });
+                showToast('User session lost. Please refresh and log in again.');
                 return false;
             }
 
@@ -2446,13 +2494,31 @@
         }
 
         async function addTaskToSupabase(table, item) {
-            if (!supabase || !state.household) {
-                console.error('❌ addTaskToSupabase failed: Missing supabase or household');
+            if (!supabase) {
+                console.error('❌ addTaskToSupabase failed: Supabase client is null');
+                showToast('Database connection error. Please refresh the page.');
+                return false;
+            }
+
+            if (!state.household) {
+                console.error('❌ addTaskToSupabase failed: No household in state', {
+                    table: table,
+                    stateKeys: Object.keys(state),
+                    hasUser: !!state.user,
+                    userId: state.user ? state.user.id : 'NO USER'
+                });
+                showToast('No household selected. Please refresh and try again.');
                 return false;
             }
 
             if (!state.user || !state.user.id) {
-                console.error('❌ addTaskToSupabase failed: Missing user');
+                console.error('❌ addTaskToSupabase failed: No user in state', {
+                    table: table,
+                    hasUser: !!state.user,
+                    stateKeys: Object.keys(state),
+                    household: state.household ? state.household.id : 'NO HOUSEHOLD'
+                });
+                showToast('User session lost. Please refresh and log in again.');
                 return false;
             }
 
