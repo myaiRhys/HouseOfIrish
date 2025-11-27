@@ -483,6 +483,68 @@
             outline-offset: 2px;
         }
 
+        .item-delete {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            opacity: 0.6;
+        }
+
+        .item-delete:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            opacity: 1;
+        }
+
+        .item-delete:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .item-edit {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+
+        .item-edit:hover {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--primary);
+            opacity: 1;
+        }
+
+        .item-edit:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
         .item-content {
             flex: 1;
             min-width: 0;
@@ -686,6 +748,32 @@
             padding: 16px;
             text-align: center;
             transition: background-color 0.3s ease;
+            position: relative;
+        }
+
+        .member-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+        }
+
+        .member-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            opacity: 1;
         }
 
         .member-avatar {
@@ -1677,6 +1765,44 @@
     </div>
 
     <!-- ========================================
+         EDIT ITEM MODAL
+         ======================================== -->
+    <div class="modal-overlay" id="modal-edit" aria-hidden="true">
+        <div class="modal" role="dialog" aria-labelledby="modal-edit-title">
+            <div class="modal-header">
+                <h3 id="modal-edit-title">Edit Item</h3>
+                <button class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-item">
+                    <div class="form-group">
+                        <label for="edit-name">Name</label>
+                        <input type="text" id="edit-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-notes">Notes</label>
+                        <textarea id="edit-notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-group" id="edit-assignee-group" style="display: none;">
+                        <label for="edit-assignee">Assign to</label>
+                        <select id="edit-assignee">
+                            <option value="">Unassigned</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="edit-due-group" style="display: none;">
+                        <label for="edit-due">Due date</label>
+                        <input type="date" id="edit-due">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-edit">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
          TOAST CONTAINER
          ======================================== -->
     <div class="toast-container" id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -1877,6 +2003,7 @@
 
             // UI state
             currentManageType: null,
+            editingItem: null, // { type: 'shopping'|'tasks'|'clifford', item: {...} }
             language: localStorage.getItem('hoi-language') || 'en',
             theme: localStorage.getItem('hoi-theme') || 'dark',
             collapsedSections: {
@@ -2051,9 +2178,16 @@
             if (supabase) {
                 await supabase.auth.signOut();
             }
+            // Clear all state
             state.user = null;
             state.household = null;
-            state.householdMembers = [];
+            state.members = [];
+            state.shopping = [];
+            state.tasks = [];
+            state.clifford = [];
+            state.quickAdd = { shopping: [], tasks: [], clifford: [] };
+            // Clear localStorage
+            localStorage.clear();
             showAuthScreen();
         }
 
@@ -2235,6 +2369,7 @@
         function mapMember(member) {
             return {
                 id: member.id,
+                user_id: member.user_id,
                 name: member.name,
                 initials: member.initials,
                 role: member.role || 'Member'
@@ -2254,14 +2389,20 @@
                 if (result.data) {
                     item.id = result.data.id;
                 }
-            } catch (e) { console.error('Failed to add shopping:', e); }
+            } catch (e) {
+                console.error('Failed to add shopping:', e);
+                showToast('Error: Failed to add shopping item. Please try again.');
+            }
         }
 
         async function updateShoppingInSupabase(id, updates) {
             if (!supabase || !state.household) return;
             try {
                 await supabase.from('shopping').update(updates).eq('id', id);
-            } catch (e) { console.error('Failed to update shopping:', e); }
+            } catch (e) {
+                console.error('Failed to update shopping:', e);
+                showToast('Error: Failed to update shopping item. Please try again.');
+            }
         }
 
         async function addTaskToSupabase(table, item) {
@@ -2279,7 +2420,10 @@
                 if (result.data) {
                     item.id = result.data.id;
                 }
-            } catch (e) { console.error('Failed to add ' + table + ':', e); }
+            } catch (e) {
+                console.error('Failed to add ' + table + ':', e);
+                showToast('Error: Failed to add task. Please try again.');
+            }
         }
 
         async function updateTaskInSupabase(table, id, updates) {
@@ -2292,7 +2436,62 @@
                 if ('due' in updates) dbUpdates.due_date = updates.due;
                 if ('assignee' in updates) dbUpdates.assignee = updates.assignee;
                 await supabase.from(table).update(dbUpdates).eq('id', id);
-            } catch (e) { console.error('Failed to update ' + table + ':', e); }
+            } catch (e) {
+                console.error('Failed to update ' + table + ':', e);
+                showToast('Error: Failed to update task. Please try again.');
+            }
+        }
+
+        async function deleteShoppingFromSupabase(id) {
+            if (!supabase || !state.household) return;
+            try {
+                await supabase.from('shopping').delete().eq('id', id);
+            } catch (e) {
+                console.error('Failed to delete shopping:', e);
+                showToast('Error: Failed to delete item. Please try again.');
+            }
+        }
+
+        async function deleteTaskFromSupabase(table, id) {
+            if (!supabase || !state.household) return;
+            try {
+                await supabase.from(table).delete().eq('id', id);
+            } catch (e) {
+                console.error('Failed to delete ' + table + ':', e);
+                showToast('Error: Failed to delete task. Please try again.');
+            }
+        }
+
+        async function addQuickAddToSupabase(type, name) {
+            if (!supabase || !state.household) return null;
+            try {
+                var sortOrder = state.quickAdd[type].length - 1;
+                var result = await supabase.from('quick_add').insert({
+                    household_id: state.household.id,
+                    type: type,
+                    name: name,
+                    sort_order: sortOrder
+                }).select().single();
+                return result.data;
+            } catch (e) {
+                console.error('Failed to add quick_add:', e);
+                showToast('Error: Failed to save quick-add item. Please try again.');
+                return null;
+            }
+        }
+
+        async function removeQuickAddFromSupabase(type, name) {
+            if (!supabase || !state.household) return;
+            try {
+                await supabase.from('quick_add')
+                    .delete()
+                    .eq('household_id', state.household.id)
+                    .eq('type', type)
+                    .eq('name', name);
+            } catch (e) {
+                console.error('Failed to delete quick_add:', e);
+                showToast('Error: Failed to remove quick-add item. Please try again.');
+            }
         }
 
         // ========================================
@@ -2308,6 +2507,7 @@
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: 'household_id=eq.' + householdId }, handleTasksChange)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'clifford', filter: 'household_id=eq.' + householdId }, handleCliffordChange)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: 'household_id=eq.' + householdId }, handleMembersChange)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_add', filter: 'household_id=eq.' + householdId }, handleQuickAddChange)
                 .subscribe();
         }
 
@@ -2368,6 +2568,29 @@
                 renderMembers();
                 renderAll();
             });
+        }
+
+        function handleQuickAddChange(payload) {
+            if (payload.eventType === 'INSERT') {
+                var type = payload.new.type;
+                var name = payload.new.name;
+                if (state.quickAdd[type] && !state.quickAdd[type].includes(name)) {
+                    state.quickAdd[type].push(name);
+                    renderQuickButtons(type);
+                    saveData();
+                }
+            } else if (payload.eventType === 'DELETE') {
+                var type = payload.old.type;
+                var name = payload.old.name;
+                if (state.quickAdd[type]) {
+                    state.quickAdd[type] = state.quickAdd[type].filter(function(item) { return item !== name; });
+                    renderQuickButtons(type);
+                    saveData();
+                }
+            } else if (payload.eventType === 'UPDATE') {
+                // Reload all quick_add items to maintain proper order
+                loadFromSupabase();
+            }
         }
 
         // ========================================
@@ -2614,6 +2837,18 @@
                     '<div class="item-name">' + safeName + '</div>' +
                     (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
                 '</div>' +
+                '<div class="item-actions">' +
+                    '<button class="item-edit" ' +
+                            'onclick="openEditModal(\'shopping\', \'' + item.id + '\')" ' +
+                            'aria-label="Edit item">' +
+                        '✎' +
+                    '</button>' +
+                    '<button class="item-delete" ' +
+                            'onclick="deleteShopping(\'' + item.id + '\')" ' +
+                            'aria-label="Delete item">' +
+                        '✕' +
+                    '</button>' +
+                '</div>' +
             '</div>';
         }
 
@@ -2673,6 +2908,18 @@
                         (dueText ? '<span class="badge badge-due ' + dueClass + '">📅 ' + dueText + '</span>' : '') +
                     '</div>' +
                     (safeNotes ? '<div class="item-notes">' + safeNotes + '</div>' : '') +
+                '</div>' +
+                '<div class="item-actions">' +
+                    '<button class="item-edit" ' +
+                            'onclick="openEditModal(\'' + type + '\', \'' + item.id + '\')" ' +
+                            'aria-label="Edit task">' +
+                        '✎' +
+                    '</button>' +
+                    '<button class="item-delete" ' +
+                            'onclick="deleteTask(\'' + item.id + '\', \'' + type + '\')" ' +
+                            'aria-label="Delete task">' +
+                        '✕' +
+                    '</button>' +
                 '</div>' +
             '</div>';
         }
@@ -2770,9 +3017,12 @@
             container.innerHTML = state.members.map(function(member, index) {
                 var colors = ['john', 'sarah', 'mary', 'tom'];
                 var colorClass = colors[index % colors.length];
+                var isCurrentUser = member.user_id === state.user.id;
+
                 return '<div class="member-card">' +
                     '<div class="member-avatar ' + colorClass + '">' + escapeHtml(member.initials) + '</div>' +
                     '<div class="member-name">' + escapeHtml(member.name) + '</div>' +
+                    (!isCurrentUser ? '<button class="member-remove" onclick="removeUserFromHousehold(\'' + member.id + '\')" aria-label="Remove member">✕</button>' : '') +
                 '</div>';
             }).join('');
 
@@ -2870,6 +3120,187 @@
             }
         }
 
+        function deleteShopping(id) {
+            var item = state.shopping.find(function(i) { return i.id === id; });
+            if (item) {
+                var itemName = item.name;
+                state.shopping = state.shopping.filter(function(i) { return i.id !== id; });
+                saveData();
+                deleteShoppingFromSupabase(id);
+                renderShopping();
+                renderDashboard();
+                showToast('Deleted: ' + itemName);
+            }
+        }
+
+        function deleteTask(id, type) {
+            var list = state[type];
+            var item = list.find(function(t) { return t.id === id; });
+            if (item) {
+                var itemName = item.name;
+                state[type] = list.filter(function(t) { return t.id !== id; });
+                saveData();
+                deleteTaskFromSupabase(type, id);
+                if (type === 'tasks') renderTasks();
+                else renderClifford();
+                renderDashboard();
+                showToast('Deleted: ' + itemName);
+            }
+        }
+
+        async function removeUserFromHousehold(memberId) {
+            var member = state.members.find(function(m) { return m.id === memberId; });
+            if (!member) return;
+
+            if (!confirm('Remove ' + member.name + ' from the household? Any tasks assigned to them will become unassigned.')) {
+                return;
+            }
+
+            try {
+                // Unassign all tasks from this member
+                await unassignMemberTasks(memberId);
+
+                // Remove member from database
+                if (supabase) {
+                    await supabase.from('household_members').delete().eq('id', memberId);
+                }
+
+                // Update local state
+                state.members = state.members.filter(function(m) { return m.id !== memberId; });
+                saveData();
+                renderMembers();
+                renderAll(); // Re-render all lists to update assignee displays
+                showToast(member.name + ' removed from household');
+            } catch (e) {
+                console.error('Failed to remove member:', e);
+                showToast('Error: Failed to remove member. Please try again.');
+            }
+        }
+
+        async function unassignMemberTasks(memberId) {
+            if (!supabase || !state.household) return;
+
+            try {
+                // Unassign tasks
+                await supabase.from('tasks')
+                    .update({ assignee: null })
+                    .eq('household_id', state.household.id)
+                    .eq('assignee', memberId);
+
+                // Unassign clifford tasks
+                await supabase.from('clifford')
+                    .update({ assignee: null })
+                    .eq('household_id', state.household.id)
+                    .eq('assignee', memberId);
+
+                // Update local state
+                state.tasks.forEach(function(task) {
+                    if (task.assignee === memberId) task.assignee = null;
+                });
+                state.clifford.forEach(function(task) {
+                    if (task.assignee === memberId) task.assignee = null;
+                });
+            } catch (e) {
+                console.error('Failed to unassign tasks:', e);
+                throw e;
+            }
+        }
+
+        function openEditModal(type, id) {
+            var item;
+            if (type === 'shopping') {
+                item = state.shopping.find(function(i) { return i.id === id; });
+            } else {
+                item = state[type].find(function(i) { return i.id === id; });
+            }
+
+            if (!item) return;
+
+            state.editingItem = { type: type, item: JSON.parse(JSON.stringify(item)) };
+
+            // Populate form
+            document.getElementById('edit-name').value = item.name;
+            document.getElementById('edit-notes').value = item.notes || '';
+
+            // Show/hide fields based on type
+            if (type === 'shopping') {
+                document.getElementById('edit-assignee-group').style.display = 'none';
+                document.getElementById('edit-due-group').style.display = 'none';
+                document.getElementById('modal-edit-title').textContent = 'Edit Shopping Item';
+            } else {
+                document.getElementById('edit-assignee-group').style.display = 'block';
+                document.getElementById('edit-due-group').style.display = 'block';
+                document.getElementById('modal-edit-title').textContent = type === 'tasks' ? 'Edit Task' : 'Edit Clifford Task';
+
+                // Populate assignee dropdown
+                var assigneeSelect = document.getElementById('edit-assignee');
+                assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
+                state.members.forEach(function(member) {
+                    var selected = item.assignee === member.id ? ' selected' : '';
+                    assigneeSelect.innerHTML += '<option value="' + member.id + '"' + selected + '>' + escapeHtml(member.name) + '</option>';
+                });
+
+                // Set due date
+                document.getElementById('edit-due').value = item.due || '';
+            }
+
+            // Open modal
+            document.getElementById('modal-edit').classList.add('open');
+            document.getElementById('modal-edit').setAttribute('aria-hidden', 'false');
+        }
+
+        function saveEditedItem() {
+            if (!state.editingItem) return;
+
+            var type = state.editingItem.type;
+            var id = state.editingItem.item.id;
+            var name = document.getElementById('edit-name').value.trim();
+
+            if (!name) {
+                showToast('Error: Name is required');
+                return;
+            }
+
+            var updates = {
+                name: name,
+                notes: document.getElementById('edit-notes').value.trim()
+            };
+
+            if (type !== 'shopping') {
+                updates.assignee = document.getElementById('edit-assignee').value || null;
+                updates.due = document.getElementById('edit-due').value || '';
+            }
+
+            // Update local state
+            var item;
+            if (type === 'shopping') {
+                item = state.shopping.find(function(i) { return i.id === id; });
+            } else {
+                item = state[type].find(function(i) { return i.id === id; });
+            }
+
+            if (item) {
+                Object.assign(item, updates);
+                saveData();
+
+                // Update in Supabase
+                if (type === 'shopping') {
+                    updateShoppingInSupabase(id, updates);
+                    renderShopping();
+                } else {
+                    updateTaskInSupabase(type, id, updates);
+                    if (type === 'tasks') renderTasks();
+                    else renderClifford();
+                }
+                renderDashboard();
+                showToast('Updated: ' + name);
+            }
+
+            // Close modal
+            closeModal('modal-edit');
+            state.editingItem = null;
+        }
+
         function toggleCollapsedSection(type) {
             state.collapsedSections[type] = !state.collapsedSections[type];
             if (type === 'shopping') renderShopping();
@@ -2933,16 +3364,20 @@
                 state.quickAdd[state.currentManageType].push(name);
                 input.value = '';
                 saveData();
+                addQuickAddToSupabase(state.currentManageType, name);
                 renderManageList();
                 renderQuickButtons(state.currentManageType);
             }
         }
 
         function removeStandardItem(index) {
-            state.quickAdd[state.currentManageType].splice(index, 1);
+            var type = state.currentManageType;
+            var name = state.quickAdd[type][index];
+            state.quickAdd[type].splice(index, 1);
             saveData();
+            removeQuickAddFromSupabase(type, name);
             renderManageList();
-            renderQuickButtons(state.currentManageType);
+            renderQuickButtons(type);
         }
 
         function closeModal(modalId) {
@@ -3112,6 +3547,14 @@
         // MODAL HANDLERS
         // ========================================
         function setupModals() {
+            // Edit modal
+            document.querySelector('#modal-edit .modal-close').addEventListener('click', function() { closeModal('modal-edit'); });
+            document.getElementById('btn-cancel-edit').addEventListener('click', function() { closeModal('modal-edit'); });
+            document.getElementById('form-edit-item').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveEditedItem();
+            });
+
             // Manage modal
             document.querySelector('#modal-manage .modal-close').addEventListener('click', function() { closeModal('modal-manage'); });
             document.getElementById('btn-add-standard').addEventListener('click', addStandardItem);
@@ -3343,14 +3786,8 @@
                     }
                 });
             } else {
-                // Offline mode - load from localStorage
-                loadData();
-                showMainApp();
-                renderAll();
-                setupNavigation();
-                setupForms();
-                setupModals();
-                setupSettings();
+                // Supabase not available - show auth screen
+                showAuthScreen();
             }
 
             // Online/offline detection
