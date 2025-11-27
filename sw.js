@@ -1,11 +1,10 @@
 // Service Worker for Thibault PWA
-// Version 1.4.0
-// Note: This service worker only caches network requests.
-// It does NOT interfere with localStorage or session storage.
+// Version 1.5.0
+// Note: This service worker only caches STATIC assets (HTML, CSS, JS, images).
+// It NEVER caches API requests to prevent stale connections.
 
-const CACHE_NAME = 'hoi-cache-v1.4';
-const RUNTIME_CACHE = 'hoi-runtime-v1.4';
-const SUPABASE_CACHE = 'hoi-supabase-v1.4';
+const CACHE_NAME = 'hoi-cache-v1.5';
+const RUNTIME_CACHE = 'hoi-runtime-v1.5';
 
 // Files to cache immediately on install (using relative paths)
 const PRECACHE_URLS = [
@@ -39,9 +38,8 @@ self.addEventListener('activate', (event) => {
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME &&
-                        cacheName !== RUNTIME_CACHE &&
-                        cacheName !== SUPABASE_CACHE) {
+                    // Remove old caches, including any old Supabase caches
+                    if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
                         console.log('[ServiceWorker] Removing old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
@@ -56,29 +54,15 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Skip non-GET requests
-    if (request.method !== 'GET') {
+    // NEVER cache Supabase API requests - always go to network
+    // Caching API requests causes stale connections and auth issues
+    if (url.origin === SUPABASE_URL) {
+        // Just pass through to network, don't cache
         return;
     }
 
-    // Handle Supabase API requests
-    if (url.origin === SUPABASE_URL) {
-        event.respondWith(
-            caches.open(SUPABASE_CACHE).then((cache) => {
-                return fetch(request)
-                    .then((response) => {
-                        // Cache successful responses
-                        if (response.status === 200) {
-                            cache.put(request, response.clone());
-                        }
-                        return response;
-                    })
-                    .catch(() => {
-                        // Return cached version if network fails
-                        return cache.match(request);
-                    });
-            })
-        );
+    // Skip non-GET requests for other resources
+    if (request.method !== 'GET') {
         return;
     }
 

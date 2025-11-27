@@ -2653,8 +2653,8 @@
 
                 var result = await withTimeout(
                     insertPromise,
-                    10000,
-                    'Database insert timed out after 10 seconds'
+                    30000,
+                    'Database insert timed out after 30 seconds'
                 );
 
                 console.log('📦 INSERT completed, result:', result);
@@ -2765,8 +2765,8 @@
 
                 var result = await withTimeout(
                     insertPromise,
-                    10000,
-                    'Database insert timed out after 10 seconds'
+                    30000,
+                    'Database insert timed out after 30 seconds'
                 );
 
                 console.log('📦 INSERT completed, result:', result);
@@ -4342,11 +4342,12 @@
                 showSyncStatus('offline', 'Offline');
             });
 
-            // Handle page visibility - refresh session when app becomes visible
+            // Handle page visibility - refresh session and wake up connection when app becomes visible
             document.addEventListener('visibilitychange', async function() {
-                if (!document.hidden && supabase && state.user) {
-                    console.log('👁️ App became visible, refreshing session...');
+                if (!document.hidden && supabase && state.user && state.household) {
+                    console.log('👁️ App became visible, refreshing session and waking up connection...');
                     try {
+                        // First, refresh the session
                         const { data: { session }, error } = await supabase.auth.getSession();
                         if (error) {
                             console.error('❌ Session refresh error:', error);
@@ -4355,15 +4356,31 @@
                                 error.message.includes('invalid_grant')) {
                                 showAuthScreen();
                             }
+                            return;
                         } else if (session) {
                             console.log('✅ Session refreshed successfully');
                             state.user = session.user;
                         } else {
                             console.log('⚠️ No session found, showing auth screen');
                             showAuthScreen();
+                            return;
+                        }
+
+                        // Wake up the database connection with a simple query
+                        // This prevents the first real query from timing out
+                        console.log('🔄 Warming up database connection...');
+                        const warmupQuery = await Promise.race([
+                            supabase.from('households').select('id').eq('id', state.household.id).limit(1),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Warmup timeout')), 5000))
+                        ]);
+
+                        if (warmupQuery && !warmupQuery.error) {
+                            console.log('✅ Database connection active');
+                        } else {
+                            console.warn('⚠️ Database warmup failed, but continuing anyway');
                         }
                     } catch (e) {
-                        console.error('❌ Error refreshing session:', e);
+                        console.error('❌ Error refreshing session or warming up connection:', e);
                     }
                 }
             });
