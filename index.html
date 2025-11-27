@@ -2405,7 +2405,17 @@
 
                 if (result.error) {
                     console.error('❌ Supabase shopping insert error:', result.error);
-                    showToast('Failed to add item: ' + result.error.message);
+
+                    // Check if it's an auth/permission error
+                    if (result.error.code === '42501' || result.error.message.includes('policy') || result.error.message.includes('JWT')) {
+                        showToast('Session expired. Please log in again.');
+                        setTimeout(function() {
+                            supabase.auth.signOut();
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        showToast('Failed to add item: ' + result.error.message);
+                    }
                     return false;
                 }
 
@@ -2468,7 +2478,17 @@
 
                 if (result.error) {
                     console.error('❌ Supabase task insert error:', result.error);
-                    showToast('Failed to add task: ' + result.error.message);
+
+                    // Check if it's an auth/permission error
+                    if (result.error.code === '42501' || result.error.message.includes('policy') || result.error.message.includes('JWT')) {
+                        showToast('Session expired. Please log in again.');
+                        setTimeout(function() {
+                            supabase.auth.signOut();
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        showToast('Failed to add task: ' + result.error.message);
+                    }
                     return false;
                 }
 
@@ -3909,6 +3929,8 @@
 
                 // Listen for auth changes
                 supabase.auth.onAuthStateChange(async function(event, session) {
+                    console.log('🔐 Auth state changed:', event);
+
                     if (event === 'SIGNED_IN' && session) {
                         state.user = session.user;
                         var household = await getUserHousehold();
@@ -3925,6 +3947,10 @@
                         } else {
                             showHouseholdSetup();
                         }
+                    } else if (event === 'TOKEN_REFRESHED' && session) {
+                        // Update user session when token refreshes
+                        state.user = session.user;
+                        console.log('✅ Session token refreshed');
                     } else if (event === 'SIGNED_OUT') {
                         showAuthScreen();
                     }
