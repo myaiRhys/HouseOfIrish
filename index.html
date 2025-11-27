@@ -2174,6 +2174,18 @@
             }
         }
 
+        // Helper function to add timeout to promises
+        function withTimeout(promise, timeoutMs, errorMessage) {
+            return Promise.race([
+                promise,
+                new Promise(function(_, reject) {
+                    setTimeout(function() {
+                        reject(new Error(errorMessage || 'Operation timed out'));
+                    }, timeoutMs);
+                })
+            ]);
+        }
+
         async function handleLogout() {
             if (supabase) {
                 await supabase.auth.signOut();
@@ -2444,13 +2456,20 @@
 
             try {
                 console.log('⏳ Executing INSERT query...');
-                var result = await supabase.from('shopping').insert({
+
+                var insertPromise = supabase.from('shopping').insert({
                     household_id: state.household.id,
                     name: item.name,
                     notes: item.notes,
                     completed: item.completed,
                     created_by: state.user.id
                 }).select().single();
+
+                var result = await withTimeout(
+                    insertPromise,
+                    10000,
+                    'Database insert timed out after 10 seconds'
+                );
 
                 console.log('📦 INSERT completed, result:', result);
 
@@ -2536,7 +2555,8 @@
 
             try {
                 console.log('⏳ Executing INSERT query...');
-                var result = await supabase.from(table).insert({
+
+                var insertPromise = supabase.from(table).insert({
                     household_id: state.household.id,
                     name: item.name,
                     notes: item.notes,
@@ -2545,6 +2565,12 @@
                     completed: item.completed,
                     created_by: state.user.id
                 }).select().single();
+
+                var result = await withTimeout(
+                    insertPromise,
+                    10000,
+                    'Database insert timed out after 10 seconds'
+                );
 
                 console.log('📦 INSERT completed, result:', result);
 
