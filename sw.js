@@ -1,9 +1,11 @@
 // Service Worker for House of Irish PWA
-// Version 1.0.0
+// Version 1.1.0
+// Note: This service worker only caches network requests.
+// It does NOT interfere with localStorage or session storage.
 
-const CACHE_NAME = 'hoi-cache-v1';
-const RUNTIME_CACHE = 'hoi-runtime-v1';
-const SUPABASE_CACHE = 'hoi-supabase-v1';
+const CACHE_NAME = 'hoi-cache-v1.1';
+const RUNTIME_CACHE = 'hoi-runtime-v1.1';
+const SUPABASE_CACHE = 'hoi-supabase-v1.1';
 
 // Files to cache immediately on install
 const PRECACHE_URLS = [

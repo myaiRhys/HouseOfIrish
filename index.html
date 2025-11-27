@@ -1884,10 +1884,19 @@
         const SUPABASE_URL = 'https://gyutgfsdtsbbymhwrqka.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5dXRnZnNkdHNiYnltaHdycWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzM1MDgsImV4cCI6MjA3OTU0OTUwOH0.MT8uHkOR5nmnB1VqOXelaMUM24aWiTYISmGK4VcSt4g';
 
-        // Initialize Supabase client
+        // Initialize Supabase client with persistent auth
         let supabase = null;
         try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    autoRefreshToken: true,
+                    persistSession: true,
+                    detectSessionInUrl: true,
+                    storage: window.localStorage,
+                    storageKey: 'hoi-supabase-auth'
+                }
+            });
+            console.log('✅ Supabase client initialized with persistent auth');
         } catch (e) {
             console.warn('Supabase not available, running in offline mode');
         }
@@ -2210,10 +2219,16 @@
                 return false;
             }
             try {
+                console.log('🔐 Attempting login for:', email);
                 var result = await supabase.auth.signInWithPassword({ email: email, password: password });
                 if (result.error) throw result.error;
+
+                console.log('✅ Login successful, session stored in localStorage');
+                console.log('📦 Session data:', result.data.session ? 'Present' : 'Missing');
+
                 return true;
             } catch (e) {
+                console.error('❌ Login failed:', e.message);
                 showAuthError(e.message || 'Login failed');
                 return false;
             }
@@ -4050,32 +4065,66 @@
         // INITIALIZATION
         // ========================================
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 App initializing...');
+
+            // Debug: Check localStorage for session data
+            console.log('🔍 Checking localStorage...');
+            const authKey = localStorage.getItem('hoi-supabase-auth');
+            if (authKey) {
+                console.log('✅ Auth data found in localStorage');
+                try {
+                    const authData = JSON.parse(authKey);
+                    console.log('📦 Session expires at:', authData?.expires_at ? new Date(authData.expires_at * 1000) : 'Unknown');
+                } catch (e) {
+                    console.log('⚠️ Could not parse auth data');
+                }
+            } else {
+                console.log('ℹ️ No auth data in localStorage');
+            }
+
             applyTheme();
             applyLanguage();
             setupAuthUI();
 
             // Check for existing session
             if (supabase) {
-                var session = await supabase.auth.getSession();
-                if (session.data.session) {
-                    state.user = session.data.session.user;
+                try {
+                    console.log('🔍 Checking for existing session...');
+                    const { data: sessionData, error } = await supabase.auth.getSession();
 
-                    // Check if user has a household
-                    var household = await getUserHousehold();
-                    if (household) {
-                        state.household = household;
-                        await loadFromSupabase();
-                        setupRealtimeSubscriptions();
-                        showMainApp();
-                        renderAll();
-                        setupNavigation();
-                        setupForms();
-                        setupModals();
-                        setupSettings();
-                    } else {
-                        showHouseholdSetup();
+                    if (error) {
+                        console.error('❌ Session check error:', error);
+                        showAuthScreen();
+                        return;
                     }
-                } else {
+
+                    if (sessionData && sessionData.session) {
+                        console.log('✅ Found existing session for user:', sessionData.session.user.email);
+                        state.user = sessionData.session.user;
+
+                        // Check if user has a household
+                        var household = await getUserHousehold();
+                        if (household) {
+                            console.log('✅ User has household:', household.name);
+                            state.household = household;
+                            await loadFromSupabase();
+                            setupRealtimeSubscriptions();
+                            showMainApp();
+                            renderAll();
+                            setupNavigation();
+                            setupForms();
+                            setupModals();
+                            setupSettings();
+                        } else {
+                            console.log('⚠️ User has no household, showing setup...');
+                            showHouseholdSetup();
+                        }
+                    } else {
+                        console.log('ℹ️ No existing session found, showing auth screen');
+                        showAuthScreen();
+                    }
+                } catch (error) {
+                    console.error('❌ Initialization error:', error);
                     showAuthScreen();
                 }
 
