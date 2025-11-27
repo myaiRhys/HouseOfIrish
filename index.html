@@ -3513,15 +3513,13 @@
 
                 console.log('🚀 Quick Add: Creating shopping item:', item);
 
-                // Add to Supabase first, then to local state only if successful
+                // Add to Supabase - real-time subscription will update local state
                 var success = await addShoppingToSupabase(item);
 
                 if (success) {
-                    state.shopping.unshift(item);
-                    renderShopping();
-                    saveData();
-                    renderDashboard();
                     showToast(t('itemAdded', { name: name }));
+                    console.log('✅ Quick Add: Shopping item added, real-time will sync');
+                    // Note: Don't add to local state here - real-time subscription handles it
                 } else {
                     console.error('❌ Quick Add: Shopping item not added due to database error');
                 }
@@ -3539,16 +3537,13 @@
 
                 console.log('🚀 Quick Add: Creating task item:', { type: type, item: taskItem });
 
-                // Add to Supabase first, then to local state only if successful
+                // Add to Supabase - real-time subscription will update local state
                 var success = await addTaskToSupabase(type, taskItem);
 
                 if (success) {
-                    list.unshift(taskItem);
-                    if (type === 'tasks') renderTasks();
-                    else renderClifford();
-                    saveData();
-                    renderDashboard();
                     showToast(t('itemAdded', { name: name }));
+                    console.log('✅ Quick Add: Task item added, real-time will sync');
+                    // Note: Don't add to local state here - real-time subscription handles it
                 } else {
                     console.error('❌ Quick Add: Task item not added due to database error');
                 }
@@ -3631,18 +3626,16 @@
 
                 console.log('📝 Manual shopping form submit:', item);
 
-                // Add to Supabase first, then to local state only if successful
+                // Add to Supabase - real-time subscription will update local state
                 var success = await addShoppingToSupabase(item);
 
                 if (success) {
-                    state.shopping.unshift(item);
-                    saveData();
                     formShopping.reset();
                     formShopping.classList.remove('open');
                     btnAddShopping.setAttribute('aria-expanded', 'false');
-                    renderShopping();
-                    renderDashboard();
                     showToast(t('itemAdded', { name: name }));
+                    console.log('✅ Manual shopping form: Item added, real-time will sync');
+                    // Note: Don't add to local state here - real-time subscription handles it
                 } else {
                     console.error('❌ Manual shopping form: Item not added due to database error');
                 }
@@ -3680,18 +3673,16 @@
 
                 console.log('📝 Manual task form submit:', item);
 
-                // Add to Supabase first, then to local state only if successful
+                // Add to Supabase - real-time subscription will update local state
                 var success = await addTaskToSupabase('tasks', item);
 
                 if (success) {
-                    state.tasks.unshift(item);
-                    saveData();
                     formTask.reset();
                     formTask.classList.remove('open');
                     btnAddTask.setAttribute('aria-expanded', 'false');
-                    renderTasks();
-                    renderDashboard();
                     showToast(t('itemAdded', { name: name }));
+                    console.log('✅ Manual task form: Item added, real-time will sync');
+                    // Note: Don't add to local state here - real-time subscription handles it
                 } else {
                     console.error('❌ Manual task form: Item not added due to database error');
                 }
@@ -3729,18 +3720,16 @@
 
                 console.log('📝 Manual Clifford form submit:', item);
 
-                // Add to Supabase first, then to local state only if successful
+                // Add to Supabase - real-time subscription will update local state
                 var success = await addTaskToSupabase('clifford', item);
 
                 if (success) {
-                    state.clifford.unshift(item);
-                    saveData();
                     formClifford.reset();
                     formClifford.classList.remove('open');
                     btnAddClifford.setAttribute('aria-expanded', 'false');
-                    renderClifford();
-                    renderDashboard();
                     showToast(t('itemAdded', { name: name }));
+                    console.log('✅ Manual Clifford form: Item added, real-time will sync');
+                    // Note: Don't add to local state here - real-time subscription handles it
                 } else {
                     console.error('❌ Manual Clifford form: Item not added due to database error');
                 }
