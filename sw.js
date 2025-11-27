@@ -1,11 +1,11 @@
 // Service Worker for Thibault PWA
-// Version 1.3.0
+// Version 1.4.0
 // Note: This service worker only caches network requests.
 // It does NOT interfere with localStorage or session storage.
 
-const CACHE_NAME = 'hoi-cache-v1.3';
-const RUNTIME_CACHE = 'hoi-runtime-v1.3';
-const SUPABASE_CACHE = 'hoi-supabase-v1.3';
+const CACHE_NAME = 'hoi-cache-v1.4';
+const RUNTIME_CACHE = 'hoi-runtime-v1.4';
+const SUPABASE_CACHE = 'hoi-supabase-v1.4';
 
 // Files to cache immediately on install (using relative paths)
 const PRECACHE_URLS = [
@@ -157,10 +157,10 @@ self.addEventListener('push', (event) => {
     let notificationData = {
         title: 'Thibault',
         body: 'You have a new notification',
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
+        icon: './icons/icon-192x192.png',
+        badge: './icons/icon-72x72.png',
         data: {
-            url: '/index.html'
+            url: './index.html'
         }
     };
 
@@ -196,7 +196,7 @@ self.addEventListener('notificationclick', (event) => {
 
     event.notification.close();
 
-    const urlToOpen = event.notification.data?.url || '/index.html';
+    const urlToOpen = event.notification.data?.url || './index.html';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })

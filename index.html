@@ -8,18 +8,18 @@
     <title>Thibault</title>
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="./manifest.json">
 
     <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96x96.png">
-    <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128x128.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
-    <link rel="apple-touch-icon" sizes="384x384" href="/icons/icon-384x384.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png">
+    <link rel="apple-touch-icon" href="./icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="./icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="./icons/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="./icons/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="./icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="./icons/icon-384x384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="./icons/icon-512x512.png">
 
     <!-- Apple Mobile Web App -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2129,6 +2129,9 @@
                 clifford: ['💉 Vaccines due', '🍼 Buy formula', '👶 Buy nappies', '🥄 Buy baby food', '👨‍⚕️ Doctor appointment', '🛁 Bath supplies', '🧸 Toys/activities', '📏 Milestone check']
             },
 
+            // Realtime subscription
+            realtimeChannel: null,
+
             // UI state
             currentManageType: null,
             editingItem: null, // { type: 'shopping'|'tasks'|'clifford', item: {...} }
@@ -2882,15 +2885,31 @@
         function setupRealtimeSubscriptions() {
             if (!supabase || !state.household) return;
 
-            var householdId = state.household.id;
+            // Clean up existing subscription first to prevent memory leaks
+            if (state.realtimeChannel) {
+                console.log('🔌 Cleaning up old realtime subscription...');
+                supabase.removeChannel(state.realtimeChannel);
+                state.realtimeChannel = null;
+            }
 
-            supabase.channel('household-changes')
+            var householdId = state.household.id;
+            console.log('📡 Setting up realtime subscriptions for household:', householdId);
+
+            state.realtimeChannel = supabase.channel('household-changes-' + householdId)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping', filter: 'household_id=eq.' + householdId }, handleShoppingChange)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: 'household_id=eq.' + householdId }, handleTasksChange)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'clifford', filter: 'household_id=eq.' + householdId }, handleCliffordChange)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: 'household_id=eq.' + householdId }, handleMembersChange)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_add', filter: 'household_id=eq.' + householdId }, handleQuickAddChange)
-                .subscribe();
+                .subscribe(function(status) {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('✅ Realtime subscriptions active');
+                    } else if (status === 'CLOSED') {
+                        console.log('❌ Realtime subscription closed');
+                    } else if (status === 'CHANNEL_ERROR') {
+                        console.error('❌ Realtime subscription error');
+                    }
+                });
         }
 
         function handleShoppingChange(payload) {
@@ -4455,8 +4474,8 @@
                 // Test notification
                 new Notification('Thibault', {
                     body: 'Notifications are enabled! You will receive updates for tasks and shopping items.',
-                    icon: '/icons/icon-192x192.png',
-                    badge: '/icons/icon-72x72.png'
+                    icon: './icons/icon-192x192.png',
+                    badge: './icons/icon-72x72.png'
                 });
                 return;
             }
@@ -4480,8 +4499,8 @@
                             // For now, just show a notification
                             new Notification('Thibault', {
                                 body: 'Notifications enabled! You will receive updates.',
-                                icon: '/icons/icon-192x192.png',
-                                badge: '/icons/icon-72x72.png'
+                                icon: './icons/icon-192x192.png',
+                                badge: './icons/icon-72x72.png'
                             });
 
                             // TODO: Subscribe to push service
