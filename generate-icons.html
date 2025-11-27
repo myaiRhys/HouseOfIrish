@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate HOI Icons</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generate HOI App Icons</h1>
+    <p>Click the button below to generate all required PWA icons:</p>
+    <button onclick="generateAllIcons()">Generate All Icons</button>
+    <div id="status"></div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+        function generateIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Background - black
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw shamrock-inspired design
+            ctx.fillStyle = '#00FF00';
+
+            // Center circle
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = size * 0.15;
+
+            // Draw three circles forming a shamrock
+            // Top circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY - radius * 1.2, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bottom left circle
+            ctx.beginPath();
+            ctx.arc(centerX - radius * 1.1, centerY + radius * 0.6, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bottom right circle
+            ctx.beginPath();
+            ctx.arc(centerX + radius * 1.1, centerY + radius * 0.6, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Stem
+            ctx.fillStyle = '#00DD00';
+            ctx.fillRect(centerX - radius * 0.2, centerY + radius * 1.2, radius * 0.4, radius * 1.5);
+
+            // Add text "HOI"
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = `bold ${size * 0.2}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('HOI', centerX, centerY + radius * 2.5);
+
+            return canvas;
+        }
+
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function generateAllIcons() {
+            const status = document.getElementById('status');
+            status.innerHTML = '<p>Generating icons...</p>';
+
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const canvas = generateIcon(size);
+                    downloadCanvas(canvas, `icon-${size}x${size}.png`);
+                    status.innerHTML += `<p>✓ Generated icon-${size}x${size}.png</p>`;
+
+                    if (index === sizes.length - 1) {
+                        status.innerHTML += '<p><strong>All icons generated! Move them to the /icons/ directory.</strong></p>';
+                    }
+                }, index * 500);
+            });
+        }
+    </script>
+</body>
+</html>
