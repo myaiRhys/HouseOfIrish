@@ -2437,7 +2437,8 @@
                         timeSinceLastRefresh: state._lastSessionRefresh ? Math.round(timeSinceLastRefresh / 1000) + 's' : 'never'
                     });
 
-                    // CRITICAL: Use refreshSession() not getSession() to actually validate with server
+                    // Use refreshSession() to actually validate with server
+                    // Note: refreshSession() automatically updates the client's internal session
                     const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
                     if (refreshError) {
@@ -2456,26 +2457,15 @@
                         throw new Error('Session expired - please log in again');
                     }
 
-                    // CRITICAL: Explicitly set the session in the Supabase client
-                    // This ensures all subsequent requests use the fresh token
-                    const { error: setError } = await supabase.auth.setSession({
-                        access_token: refreshData.session.access_token,
-                        refresh_token: refreshData.session.refresh_token
-                    });
-
-                    if (setError) {
-                        console.error('❌ Failed to set refreshed session:', setError);
-                        throw new Error('Failed to apply refreshed session');
-                    }
-
+                    // refreshSession() already updates the Supabase client internally
+                    // We just need to update our state
                     state.user = refreshData.session.user;
                     state._lastSessionRefresh = now;
 
-                    console.log('✅ Session refreshed and applied successfully', {
+                    console.log('✅ Session refreshed successfully', {
                         userId: refreshData.session.user.id,
                         expiresAt: new Date(refreshData.session.expires_at * 1000).toLocaleString(),
-                        newExpiresIn: Math.round((refreshData.session.expires_at * 1000 - now) / 1000) + 's',
-                        accessTokenLength: refreshData.session.access_token.length
+                        newExpiresIn: Math.round((refreshData.session.expires_at * 1000 - now) / 1000) + 's'
                     });
 
                     return refreshData.session;
@@ -2516,20 +2506,10 @@
                     throw new Error('Session expired - please log in again');
                 }
 
-                // Explicitly set the session in the Supabase client
-                const { error: setError } = await supabase.auth.setSession({
-                    access_token: refreshData.session.access_token,
-                    refresh_token: refreshData.session.refresh_token
-                });
-
-                if (setError) {
-                    console.error('❌ Failed to set session during wakeup:', setError);
-                    throw new Error('Failed to apply session');
-                }
-
+                // refreshSession() automatically updates the Supabase client
                 state.user = refreshData.session.user;
                 state._lastSessionRefresh = Date.now();
-                console.log('✅ Session refreshed and applied successfully');
+                console.log('✅ Session refreshed successfully');
 
                 // Step 2: Test DB connection with a simple query
                 console.log('🔄 Step 2: Testing database connection...');
@@ -2903,12 +2883,7 @@
                         console.log('🔄 Auth error detected, forcing session refresh and retrying...');
                         // Force session refresh
                         const { data: refreshData } = await supabase.auth.refreshSession();
-                        if (refreshData.session) {
-                            // Explicitly set the session
-                            await supabase.auth.setSession({
-                                access_token: refreshData.session.access_token,
-                                refresh_token: refreshData.session.refresh_token
-                            });
+                        if (refreshData && refreshData.session) {
                             state.user = refreshData.session.user;
                             state._lastSessionRefresh = Date.now();
                             // Retry
@@ -2951,12 +2926,7 @@
                         console.log('🔄 Session error, refreshing and retrying...');
                         try {
                             const { data: refreshData } = await supabase.auth.refreshSession();
-                            if (refreshData.session) {
-                                // Explicitly set the session
-                                await supabase.auth.setSession({
-                                    access_token: refreshData.session.access_token,
-                                    refresh_token: refreshData.session.refresh_token
-                                });
+                            if (refreshData && refreshData.session) {
                                 state.user = refreshData.session.user;
                                 state._lastSessionRefresh = Date.now();
                                 return await addShoppingToSupabase(item, retryCount + 1);
@@ -3064,12 +3034,7 @@
                         console.log('🔄 Auth error detected, forcing session refresh and retrying...');
                         // Force session refresh
                         const { data: refreshData } = await supabase.auth.refreshSession();
-                        if (refreshData.session) {
-                            // Explicitly set the session
-                            await supabase.auth.setSession({
-                                access_token: refreshData.session.access_token,
-                                refresh_token: refreshData.session.refresh_token
-                            });
+                        if (refreshData && refreshData.session) {
                             state.user = refreshData.session.user;
                             state._lastSessionRefresh = Date.now();
                             // Retry
@@ -3112,12 +3077,7 @@
                         console.log('🔄 Session error, refreshing and retrying...');
                         try {
                             const { data: refreshData } = await supabase.auth.refreshSession();
-                            if (refreshData.session) {
-                                // Explicitly set the session
-                                await supabase.auth.setSession({
-                                    access_token: refreshData.session.access_token,
-                                    refresh_token: refreshData.session.refresh_token
-                                });
+                            if (refreshData && refreshData.session) {
                                 state.user = refreshData.session.user;
                                 state._lastSessionRefresh = Date.now();
                                 return await addTaskToSupabase(table, item, retryCount + 1);
