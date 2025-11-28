@@ -3046,13 +3046,31 @@
                 clearTimeout(realtimeReconnectTimer);
             }
 
-            realtimeReconnectTimer = setTimeout(function() {
+            realtimeReconnectTimer = setTimeout(async function() {
                 console.log(`🔄 Reconnecting realtime (attempt ${realtimeReconnectAttempts})...`);
-                setupRealtimeSubscriptions();
+
+                try {
+                    // CRITICAL: Refresh the session BEFORE reconnecting realtime
+                    // Otherwise the JWT token might be expired and database operations will fail
+                    console.log('🔄 Refreshing session before reconnecting...');
+                    await ensureFreshSession();
+                    console.log('✅ Session refreshed, now reconnecting realtime...');
+
+                    // Now reconnect the realtime channel with fresh auth
+                    setupRealtimeSubscriptions();
+                } catch (error) {
+                    console.error('❌ Failed to refresh session during reconnect:', error);
+                    showSyncStatus('offline', 'Session expired - please refresh');
+
+                    // If session refresh failed, try again with more delay
+                    if (realtimeReconnectAttempts < 10) {
+                        attemptRealtimeReconnect();
+                    }
+                }
             }, delay);
         }
 
-        function checkRealtimeHealth() {
+        async function checkRealtimeHealth() {
             if (!state.realtimeChannel || !supabase) return true;
 
             try {
@@ -3062,15 +3080,31 @@
 
                 // If channel is not in joined state, reconnect
                 if (channelState !== 'joined') {
-                    console.warn('⚠️ Realtime channel not healthy, reconnecting...');
-                    setupRealtimeSubscriptions();
+                    console.warn('⚠️ Realtime channel not healthy, refreshing session and reconnecting...');
+
+                    try {
+                        // Refresh session first before reconnecting
+                        await ensureFreshSession();
+                        setupRealtimeSubscriptions();
+                    } catch (error) {
+                        console.error('❌ Failed to refresh session during health check:', error);
+                    }
+
                     return false;
                 }
 
                 return true;
             } catch (e) {
                 console.error('❌ Error checking realtime health:', e);
-                setupRealtimeSubscriptions();
+
+                try {
+                    // Refresh session first before reconnecting
+                    await ensureFreshSession();
+                    setupRealtimeSubscriptions();
+                } catch (error) {
+                    console.error('❌ Failed to refresh session after health check error:', error);
+                }
+
                 return false;
             }
         }
@@ -4493,18 +4527,28 @@
             }
 
             // Online/offline detection
-            window.addEventListener('online', function() {
+            window.addEventListener('online', async function() {
                 console.log('🌐 App came online');
                 state.isOnline = true;
-                if (state.household) {
-                    loadFromSupabase();
-                    // Reconnect realtime when coming back online
-                    if (state.user && supabase) {
+                if (state.household && state.user && supabase) {
+                    try {
+                        // Refresh session first when coming back online
+                        console.log('🔄 Refreshing session after coming online...');
+                        await ensureFreshSession();
+
+                        // Then reload data
+                        await loadFromSupabase();
+
+                        // Reconnect realtime
                         console.log('🔄 Reconnecting realtime after coming online...');
-                        checkRealtimeHealth();
+                        await checkRealtimeHealth();
+
+                        showSyncStatus('synced', 'Back online');
+                    } catch (error) {
+                        console.error('❌ Error reconnecting after coming online:', error);
+                        showSyncStatus('offline', 'Reconnection failed');
                     }
                 }
-                showSyncStatus('online', 'Online');
             });
 
             window.addEventListener('offline', function() {
@@ -4518,11 +4562,20 @@
                 }
             });
 
-            // Periodic health check for realtime connection
+            // Periodic health check for realtime connection and session refresh
             // Check every 60 seconds to ensure connection is alive
-            setInterval(function() {
+            setInterval(async function() {
                 if (state.user && state.household && supabase && !document.hidden && state.isOnline) {
-                    checkRealtimeHealth();
+                    try {
+                        // Refresh session periodically to prevent expiration
+                        console.log('🔄 Periodic session refresh...');
+                        await ensureFreshSession();
+
+                        // Then check realtime health
+                        await checkRealtimeHealth();
+                    } catch (error) {
+                        console.error('❌ Periodic health check failed:', error);
+                    }
                 }
             }, 60000); // 60 seconds
 
@@ -4566,9 +4619,9 @@
 
                         // Check realtime subscription health and reconnect if needed
                         console.log('🔄 Checking realtime subscription health...');
-                        const isHealthy = checkRealtimeHealth();
+                        const isHealthy = await checkRealtimeHealth();
                         if (!isHealthy) {
-                            console.log('⚠️ Realtime connection was unhealthy, reconnecting...');
+                            console.log('⚠️ Realtime connection was unhealthy, it has been reconnected');
                         } else {
                             console.log('✅ Realtime connection is healthy');
                         }
