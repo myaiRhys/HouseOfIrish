@@ -2486,23 +2486,51 @@
 
         // Wake up app after being backgrounded or idle
         // Forces full session refresh, DB test, and realtime reconnection
-        async function wakeUpApp() {
-            if (state._isWakingUp) {
-                console.log('⏸️ Already waking up, skipping...');
+        async function wakeUpApp(retryCount = 0) {
+            const MAX_RETRIES = 2;
+
+            if (state._isWakingUp && retryCount === 0) {
+                console.log('⏸️ Already waking up, waiting...');
+                // Wait for current wake up to finish
+                await new Promise(resolve => {
+                    const checkInterval = setInterval(() => {
+                        if (!state._isWakingUp) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }, 10000);
+                });
                 return;
             }
 
             state._isWakingUp = true;
-            console.log('🌅 Waking up app...');
+            console.log('🌅 Waking up app (attempt ' + (retryCount + 1) + '/' + (MAX_RETRIES + 1) + ')...');
             showSyncStatus('syncing', 'Reconnecting...');
 
             try {
+                // Small delay to let network stabilize after app switch
+                if (retryCount === 0) {
+                    console.log('⏳ Waiting for network to stabilize...');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
                 // Step 1: Force token refresh with refreshSession()
                 console.log('🔄 Step 1: Force refreshing session...');
                 const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
-                if (refreshError || !refreshData.session) {
+                if (refreshError || !refreshData || !refreshData.session) {
                     console.error('❌ Session refresh failed during wakeup:', refreshError);
+                    if (retryCount < MAX_RETRIES) {
+                        console.log('🔄 Retrying wake up...');
+                        state._isWakingUp = false;
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        return await wakeUpApp(retryCount + 1);
+                    }
                     throw new Error('Session expired - please log in again');
                 }
 
@@ -2515,11 +2543,17 @@
                 console.log('🔄 Step 2: Testing database connection...');
                 const testQuery = await Promise.race([
                     supabase.from('households').select('id').eq('id', state.household.id).limit(1),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('DB test timeout')), 5000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('DB test timeout')), 8000))
                 ]);
 
                 if (testQuery.error) {
                     console.error('❌ Database test failed:', testQuery.error);
+                    if (retryCount < MAX_RETRIES) {
+                        console.log('🔄 Retrying wake up after DB failure...');
+                        state._isWakingUp = false;
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        return await wakeUpApp(retryCount + 1);
+                    }
                     throw new Error('Database connection failed');
                 }
 
@@ -2533,6 +2567,7 @@
                 console.log('🔄 Step 4: Reloading data...');
                 await loadFromSupabase();
 
+                state._lastSuccessfulOperation = Date.now();
                 showSyncStatus('synced', 'Connected');
                 console.log('✅ App wake up complete');
             } catch (error) {
@@ -4792,24 +4827,29 @@
                     // App became visible
                     const now = Date.now();
                     const hiddenDuration = state._lastHiddenAt ? (now - state._lastHiddenAt) : 0;
-                    const ONE_MINUTE = 60 * 1000;
 
                     console.log('👁️ App became visible, hidden for:', Math.round(hiddenDuration / 1000) + 's');
+                    showSyncStatus('syncing', 'Reconnecting...');
 
                     try {
-                        if (hiddenDuration > ONE_MINUTE) {
-                            // App was backgrounded for > 1 minute - do full wake up
-                            console.log('🌅 App was hidden for > 1 minute, doing full wake up...');
-                            await wakeUpApp();
-                        } else {
-                            // App was hidden briefly - just quick session check
-                            console.log('⚡ App was hidden briefly, doing quick session check...');
-                            await ensureFreshSession();
-                            await checkRealtimeHealth();
-                        }
+                        // ALWAYS do a full wake up when coming back from background
+                        // Mobile apps can lose connection even after brief switches
+                        console.log('🌅 Doing full wake up after app switch...');
+                        await wakeUpApp();
+                        console.log('✅ App wake up complete');
                     } catch (e) {
                         console.error('❌ Error during app visibility recovery:', e);
-                        showSyncStatus('offline', 'Connection error');
+                        showSyncStatus('offline', 'Connection error - tap to retry');
+
+                        // If wakeup failed, try a simpler recovery
+                        try {
+                            console.log('🔄 Trying simpler recovery...');
+                            await ensureFreshSession();
+                            setupRealtimeSubscriptions();
+                            showSyncStatus('synced', 'Reconnected');
+                        } catch (e2) {
+                            console.error('❌ Simple recovery also failed:', e2);
+                        }
                     }
                 } else if (document.hidden) {
                     // App became hidden - track when
