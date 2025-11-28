@@ -2456,13 +2456,26 @@
                         throw new Error('Session expired - please log in again');
                     }
 
+                    // CRITICAL: Explicitly set the session in the Supabase client
+                    // This ensures all subsequent requests use the fresh token
+                    const { error: setError } = await supabase.auth.setSession({
+                        access_token: refreshData.session.access_token,
+                        refresh_token: refreshData.session.refresh_token
+                    });
+
+                    if (setError) {
+                        console.error('❌ Failed to set refreshed session:', setError);
+                        throw new Error('Failed to apply refreshed session');
+                    }
+
                     state.user = refreshData.session.user;
                     state._lastSessionRefresh = now;
 
-                    console.log('✅ Session refreshed successfully', {
+                    console.log('✅ Session refreshed and applied successfully', {
                         userId: refreshData.session.user.id,
                         expiresAt: new Date(refreshData.session.expires_at * 1000).toLocaleString(),
-                        newExpiresIn: Math.round((refreshData.session.expires_at * 1000 - now) / 1000) + 's'
+                        newExpiresIn: Math.round((refreshData.session.expires_at * 1000 - now) / 1000) + 's',
+                        accessTokenLength: refreshData.session.access_token.length
                     });
 
                     return refreshData.session;
@@ -2503,9 +2516,20 @@
                     throw new Error('Session expired - please log in again');
                 }
 
+                // Explicitly set the session in the Supabase client
+                const { error: setError } = await supabase.auth.setSession({
+                    access_token: refreshData.session.access_token,
+                    refresh_token: refreshData.session.refresh_token
+                });
+
+                if (setError) {
+                    console.error('❌ Failed to set session during wakeup:', setError);
+                    throw new Error('Failed to apply session');
+                }
+
                 state.user = refreshData.session.user;
                 state._lastSessionRefresh = Date.now();
-                console.log('✅ Session refreshed successfully');
+                console.log('✅ Session refreshed and applied successfully');
 
                 // Step 2: Test DB connection with a simple query
                 console.log('🔄 Step 2: Testing database connection...');
@@ -2835,10 +2859,20 @@
 
             try {
                 // Ensure session is fresh before database operation
+                console.log('🔍 Step 1: Ensuring fresh session...');
+                const sessionStart = Date.now();
                 await ensureFreshSession();
+                console.log('✅ Session ensured in', Date.now() - sessionStart, 'ms');
 
-                console.log('⏳ Executing INSERT query...');
+                console.log('⏳ Step 2: Executing INSERT query...');
+                console.log('📋 Insert data:', {
+                    household_id: state.household.id,
+                    name: item.name,
+                    user_id: state.user.id,
+                    connection_status: state.realtimeChannel ? state.realtimeChannel.state : 'no channel'
+                });
 
+                const insertStart = Date.now();
                 var insertPromise = supabase.from('shopping').insert({
                     household_id: state.household.id,
                     name: item.name,
@@ -2853,7 +2887,7 @@
                     'Database insert timed out after 30 seconds'
                 );
 
-                console.log('📦 INSERT completed, result:', result);
+                console.log('📦 INSERT completed in', Date.now() - insertStart, 'ms, result:', result);
 
                 if (result.error) {
                     console.error('❌ Supabase shopping insert error:', result.error);
@@ -2870,6 +2904,11 @@
                         // Force session refresh
                         const { data: refreshData } = await supabase.auth.refreshSession();
                         if (refreshData.session) {
+                            // Explicitly set the session
+                            await supabase.auth.setSession({
+                                access_token: refreshData.session.access_token,
+                                refresh_token: refreshData.session.refresh_token
+                            });
                             state.user = refreshData.session.user;
                             state._lastSessionRefresh = Date.now();
                             // Retry
@@ -2913,6 +2952,11 @@
                         try {
                             const { data: refreshData } = await supabase.auth.refreshSession();
                             if (refreshData.session) {
+                                // Explicitly set the session
+                                await supabase.auth.setSession({
+                                    access_token: refreshData.session.access_token,
+                                    refresh_token: refreshData.session.refresh_token
+                                });
                                 state.user = refreshData.session.user;
                                 state._lastSessionRefresh = Date.now();
                                 return await addShoppingToSupabase(item, retryCount + 1);
@@ -3021,6 +3065,11 @@
                         // Force session refresh
                         const { data: refreshData } = await supabase.auth.refreshSession();
                         if (refreshData.session) {
+                            // Explicitly set the session
+                            await supabase.auth.setSession({
+                                access_token: refreshData.session.access_token,
+                                refresh_token: refreshData.session.refresh_token
+                            });
                             state.user = refreshData.session.user;
                             state._lastSessionRefresh = Date.now();
                             // Retry
@@ -3064,6 +3113,11 @@
                         try {
                             const { data: refreshData } = await supabase.auth.refreshSession();
                             if (refreshData.session) {
+                                // Explicitly set the session
+                                await supabase.auth.setSession({
+                                    access_token: refreshData.session.access_token,
+                                    refresh_token: refreshData.session.refresh_token
+                                });
                                 state.user = refreshData.session.user;
                                 state._lastSessionRefresh = Date.now();
                                 return await addTaskToSupabase(table, item, retryCount + 1);
