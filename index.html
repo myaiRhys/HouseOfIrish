@@ -2561,7 +2561,8 @@
 
                 // Step 3: Reconnect realtime subscriptions
                 console.log('🔄 Step 3: Reconnecting realtime...');
-                setupRealtimeSubscriptions();
+                await setupRealtimeSubscriptions();
+                console.log('✅ Realtime reconnected');
 
                 // Step 4: Reload data from Supabase
                 console.log('🔄 Step 4: Reloading data...');
@@ -3203,18 +3204,24 @@
         let realtimeReconnectAttempts = 0;
         let realtimeReconnectTimer = null;
 
-        function setupRealtimeSubscriptions() {
-            if (!supabase || !state.household) return;
+        async function setupRealtimeSubscriptions() {
+            if (!supabase || !state.household) {
+                throw new Error('Missing supabase client or household');
+            }
 
             // Clean up existing subscription first to prevent memory leaks
             if (state.realtimeChannel) {
                 console.log('🔌 Cleaning up old realtime subscription...');
                 try {
-                    supabase.removeChannel(state.realtimeChannel);
+                    await supabase.removeChannel(state.realtimeChannel);
+                    console.log('✅ Old channel removed');
                 } catch (e) {
                     console.warn('Error removing channel:', e);
                 }
                 state.realtimeChannel = null;
+
+                // Add a small delay to ensure old channel is fully cleaned up
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
 
             // Clear any pending reconnect timer
@@ -3226,31 +3233,48 @@
             var householdId = state.household.id;
             console.log('📡 Setting up realtime subscriptions for household:', householdId);
 
-            state.realtimeChannel = supabase.channel('household-changes-' + householdId)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping', filter: 'household_id=eq.' + householdId }, handleShoppingChange)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: 'household_id=eq.' + householdId }, handleTasksChange)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'clifford', filter: 'household_id=eq.' + householdId }, handleCliffordChange)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: 'household_id=eq.' + householdId }, handleMembersChange)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_add', filter: 'household_id=eq.' + householdId }, handleQuickAddChange)
-                .subscribe(function(status, error) {
-                    console.log('🔔 Realtime status:', status, error || '');
+            // Return a Promise that resolves when connection succeeds or rejects on failure
+            return new Promise((resolve, reject) => {
+                // Set a timeout to detect stuck connections
+                const connectionTimeout = setTimeout(() => {
+                    console.error('⏱️ Realtime connection timeout after 15 seconds');
+                    reject(new Error('Connection timeout'));
+                }, 15000);
 
-                    if (status === 'SUBSCRIBED') {
-                        console.log('✅ Realtime subscriptions active');
-                        // Reset reconnect attempts on successful connection
-                        realtimeReconnectAttempts = 0;
-                        showSyncStatus('online', 'Online');
-                    } else if (status === 'CLOSED') {
-                        console.log('❌ Realtime subscription closed - attempting reconnect...');
-                        attemptRealtimeReconnect();
-                    } else if (status === 'CHANNEL_ERROR') {
-                        console.error('❌ Realtime subscription error - attempting reconnect...', error);
-                        attemptRealtimeReconnect();
-                    } else if (status === 'TIMED_OUT') {
-                        console.error('⏱️ Realtime subscription timed out - attempting reconnect...');
-                        attemptRealtimeReconnect();
-                    }
-                });
+                state.realtimeChannel = supabase.channel('household-changes-' + householdId)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping', filter: 'household_id=eq.' + householdId }, handleShoppingChange)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: 'household_id=eq.' + householdId }, handleTasksChange)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'clifford', filter: 'household_id=eq.' + householdId }, handleCliffordChange)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: 'household_id=eq.' + householdId }, handleMembersChange)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_add', filter: 'household_id=eq.' + householdId }, handleQuickAddChange)
+                    .subscribe(function(status, error) {
+                        console.log('🔔 Realtime status:', status, error || '');
+
+                        if (status === 'SUBSCRIBED') {
+                            clearTimeout(connectionTimeout);
+                            console.log('✅ Realtime subscriptions active');
+                            // Reset reconnect attempts on successful connection
+                            realtimeReconnectAttempts = 0;
+                            showSyncStatus('online', 'Online');
+                            resolve();  // Resolve the promise on success
+                        } else if (status === 'CLOSED') {
+                            clearTimeout(connectionTimeout);
+                            console.log('❌ Realtime subscription closed - attempting reconnect...');
+                            reject(new Error('Subscription closed'));
+                            attemptRealtimeReconnect();
+                        } else if (status === 'CHANNEL_ERROR') {
+                            clearTimeout(connectionTimeout);
+                            console.error('❌ Realtime subscription error - attempting reconnect...', error);
+                            reject(error || new Error('Channel error'));
+                            attemptRealtimeReconnect();
+                        } else if (status === 'TIMED_OUT') {
+                            clearTimeout(connectionTimeout);
+                            console.error('⏱️ Realtime subscription timed out - attempting reconnect...');
+                            reject(new Error('Subscription timed out'));
+                            attemptRealtimeReconnect();
+                        }
+                    });
+            });
         }
 
         function attemptRealtimeReconnect() {
@@ -3288,15 +3312,19 @@
                     await ensureFreshSession();
                     console.log('✅ Session refreshed, now reconnecting realtime...');
 
-                    // Now reconnect the realtime channel with fresh auth
-                    setupRealtimeSubscriptions();
+                    // Now reconnect the realtime channel with fresh auth - AWAIT the result!
+                    await setupRealtimeSubscriptions();
+                    console.log('✅ Realtime reconnection succeeded');
                 } catch (error) {
-                    console.error('❌ Failed to refresh session during reconnect:', error);
-                    showSyncStatus('offline', 'Session expired - please refresh');
+                    console.error('❌ Reconnection failed:', error);
+                    showSyncStatus('offline', 'Reconnection failed - retrying...');
 
-                    // If session refresh failed, try again with more delay
+                    // Retry with exponential backoff (up to 10 attempts)
                     if (realtimeReconnectAttempts < 10) {
                         attemptRealtimeReconnect();
+                    } else {
+                        console.error('❌ Max reconnect attempts reached');
+                        showSyncStatus('offline', 'Connection failed - please refresh page');
                     }
                 }
             }, delay);
@@ -3317,9 +3345,9 @@
                     try {
                         // Refresh session first before reconnecting
                         await ensureFreshSession();
-                        setupRealtimeSubscriptions();
+                        await setupRealtimeSubscriptions();
                     } catch (error) {
-                        console.error('❌ Failed to refresh session during health check:', error);
+                        console.error('❌ Failed during health check recovery:', error);
                     }
 
                     return false;
@@ -3332,9 +3360,9 @@
                 try {
                     // Refresh session first before reconnecting
                     await ensureFreshSession();
-                    setupRealtimeSubscriptions();
+                    await setupRealtimeSubscriptions();
                 } catch (error) {
-                    console.error('❌ Failed to refresh session after health check error:', error);
+                    console.error('❌ Failed after health check error:', error);
                 }
 
                 return false;
@@ -4624,7 +4652,7 @@
             // Continue to app
             document.getElementById('continue-to-app').addEventListener('click', async function() {
                 await loadFromSupabase();
-                setupRealtimeSubscriptions();
+                await setupRealtimeSubscriptions();
                 showMainApp();
                 renderAll();
                 setupNavigation();
@@ -4644,7 +4672,7 @@
                 if (household) {
                     state.household = household;
                     await loadFromSupabase();
-                    setupRealtimeSubscriptions();
+                    await setupRealtimeSubscriptions();
                     showMainApp();
                     renderAll();
                     setupNavigation();
@@ -4705,7 +4733,7 @@
                             console.log('✅ User has household:', household.name);
                             state.household = household;
                             await loadFromSupabase();
-                            setupRealtimeSubscriptions();
+                            await setupRealtimeSubscriptions();
                             showMainApp();
                             renderAll();
                             setupNavigation();
@@ -4735,7 +4763,7 @@
                         if (household) {
                             state.household = household;
                             await loadFromSupabase();
-                            setupRealtimeSubscriptions();
+                            await setupRealtimeSubscriptions();
                             showMainApp();
                             renderAll();
                             setupNavigation();
@@ -4845,10 +4873,11 @@
                         try {
                             console.log('🔄 Trying simpler recovery...');
                             await ensureFreshSession();
-                            setupRealtimeSubscriptions();
+                            await setupRealtimeSubscriptions();
                             showSyncStatus('synced', 'Reconnected');
                         } catch (e2) {
                             console.error('❌ Simple recovery also failed:', e2);
+                            showSyncStatus('offline', 'Connection failed - please refresh');
                         }
                     }
                 } else if (document.hidden) {
