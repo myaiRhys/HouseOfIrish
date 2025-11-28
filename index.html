@@ -2200,6 +2200,12 @@
             // Realtime subscription
             realtimeChannel: null,
 
+            // Session tracking
+            _lastSessionRefresh: null,
+            _lastHiddenAt: null,
+            _isWakingUp: false,
+            _lastSuccessfulOperation: null,
+
             // UI state
             currentManageType: null,
             editingItem: null, // { type: 'shopping'|'tasks'|'clifford', item: {...} }
@@ -2392,6 +2398,7 @@
         }
 
         // Helper function to ensure session is fresh before database operations
+        // CRITICAL: This now actually refreshes tokens, not just gets cached session
         async function ensureFreshSession() {
             console.log('🔍 Checking session freshness...');
 
@@ -2406,34 +2413,130 @@
             }
 
             try {
+                // First check the cached session to see if we need to refresh
                 const { data: { session }, error } = await supabase.auth.getSession();
-                if (error) {
-                    console.error('❌ Session validation error:', error);
-                    // Try to refresh the token
-                    console.log('🔄 Attempting to refresh session...');
-                    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-                    if (refreshError || !refreshData.session) {
-                        console.error('❌ Session refresh failed:', refreshError);
-                        throw new Error('Session expired - please log in again');
-                    }
-                    state.user = refreshData.session.user;
-                    console.log('✅ Session refreshed successfully after error');
-                    return refreshData.session;
-                }
-                if (!session) {
-                    console.error('❌ No active session found');
+
+                if (error || !session) {
+                    console.error('❌ Session check error or no session:', error);
                     throw new Error('Session expired - please log in again');
                 }
-                // Update state with fresh session
-                state.user = session.user;
-                console.log('✅ Session validated and refreshed', {
-                    userId: session.user.id,
-                    expiresAt: new Date(session.expires_at * 1000).toLocaleString()
-                });
-                return session;
+
+                const now = Date.now();
+                const expiresAt = session.expires_at * 1000; // Convert to milliseconds
+                const timeUntilExpiry = expiresAt - now;
+                const timeSinceLastRefresh = state._lastSessionRefresh ? (now - state._lastSessionRefresh) : Infinity;
+
+                // Refresh if: token expires within 5 minutes OR hasn't been refreshed in 10 minutes
+                const FIVE_MINUTES = 5 * 60 * 1000;
+                const TEN_MINUTES = 10 * 60 * 1000;
+                const shouldRefresh = timeUntilExpiry < FIVE_MINUTES || timeSinceLastRefresh > TEN_MINUTES;
+
+                if (shouldRefresh) {
+                    console.log('🔄 Token needs refresh:', {
+                        expiresIn: Math.round(timeUntilExpiry / 1000) + 's',
+                        timeSinceLastRefresh: state._lastSessionRefresh ? Math.round(timeSinceLastRefresh / 1000) + 's' : 'never'
+                    });
+
+                    // CRITICAL: Use refreshSession() not getSession() to actually validate with server
+                    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+                    if (refreshError) {
+                        console.error('❌ Session refresh failed:', refreshError);
+
+                        // Handle invalid_grant error (refresh token invalid/expired)
+                        if (refreshError.message && refreshError.message.includes('invalid_grant')) {
+                            throw new Error('Session expired - please log in again');
+                        }
+
+                        throw new Error('Session refresh failed: ' + refreshError.message);
+                    }
+
+                    if (!refreshData.session) {
+                        console.error('❌ No session returned from refresh');
+                        throw new Error('Session expired - please log in again');
+                    }
+
+                    state.user = refreshData.session.user;
+                    state._lastSessionRefresh = now;
+
+                    console.log('✅ Session refreshed successfully', {
+                        userId: refreshData.session.user.id,
+                        expiresAt: new Date(refreshData.session.expires_at * 1000).toLocaleString(),
+                        newExpiresIn: Math.round((refreshData.session.expires_at * 1000 - now) / 1000) + 's'
+                    });
+
+                    return refreshData.session;
+                } else {
+                    // Session is still fresh, just update state
+                    state.user = session.user;
+                    console.log('✅ Session still fresh', {
+                        userId: session.user.id,
+                        expiresIn: Math.round(timeUntilExpiry / 1000) + 's'
+                    });
+                    return session;
+                }
             } catch (error) {
                 console.error('❌ Error ensuring fresh session:', error);
                 throw error;
+            }
+        }
+
+        // Wake up app after being backgrounded or idle
+        // Forces full session refresh, DB test, and realtime reconnection
+        async function wakeUpApp() {
+            if (state._isWakingUp) {
+                console.log('⏸️ Already waking up, skipping...');
+                return;
+            }
+
+            state._isWakingUp = true;
+            console.log('🌅 Waking up app...');
+            showSyncStatus('syncing', 'Reconnecting...');
+
+            try {
+                // Step 1: Force token refresh with refreshSession()
+                console.log('🔄 Step 1: Force refreshing session...');
+                const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+                if (refreshError || !refreshData.session) {
+                    console.error('❌ Session refresh failed during wakeup:', refreshError);
+                    throw new Error('Session expired - please log in again');
+                }
+
+                state.user = refreshData.session.user;
+                state._lastSessionRefresh = Date.now();
+                console.log('✅ Session refreshed successfully');
+
+                // Step 2: Test DB connection with a simple query
+                console.log('🔄 Step 2: Testing database connection...');
+                const testQuery = await Promise.race([
+                    supabase.from('households').select('id').eq('id', state.household.id).limit(1),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('DB test timeout')), 5000))
+                ]);
+
+                if (testQuery.error) {
+                    console.error('❌ Database test failed:', testQuery.error);
+                    throw new Error('Database connection failed');
+                }
+
+                console.log('✅ Database connection active');
+
+                // Step 3: Reconnect realtime subscriptions
+                console.log('🔄 Step 3: Reconnecting realtime...');
+                setupRealtimeSubscriptions();
+
+                // Step 4: Reload data from Supabase
+                console.log('🔄 Step 4: Reloading data...');
+                await loadFromSupabase();
+
+                showSyncStatus('synced', 'Connected');
+                console.log('✅ App wake up complete');
+            } catch (error) {
+                console.error('❌ Wake up failed:', error);
+                showSyncStatus('offline', 'Connection failed');
+                throw error;
+            } finally {
+                state._isWakingUp = false;
             }
         }
 
@@ -2689,7 +2792,22 @@
             };
         }
 
-        async function addShoppingToSupabase(item) {
+        async function addShoppingToSupabase(item, retryCount = 0) {
+            const MAX_RETRIES = 2;
+
+            // Wait if app is waking up
+            if (state._isWakingUp) {
+                console.log('⏸️ Waiting for app to wake up...');
+                await new Promise(resolve => {
+                    const checkInterval = setInterval(() => {
+                        if (!state._isWakingUp) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }
+
             if (!supabase) {
                 console.error('❌ addShoppingToSupabase failed: Supabase client is null');
                 showToast('Database connection error. Please refresh the page.');
@@ -2697,26 +2815,18 @@
             }
 
             if (!state.household) {
-                console.error('❌ addShoppingToSupabase failed: No household in state', {
-                    stateKeys: Object.keys(state),
-                    hasUser: !!state.user,
-                    userId: state.user ? state.user.id : 'NO USER'
-                });
+                console.error('❌ addShoppingToSupabase failed: No household in state');
                 showToast('No household selected. Please refresh and try again.');
                 return false;
             }
 
             if (!state.user || !state.user.id) {
-                console.error('❌ addShoppingToSupabase failed: No user in state', {
-                    hasUser: !!state.user,
-                    stateKeys: Object.keys(state),
-                    household: state.household ? state.household.id : 'NO HOUSEHOLD'
-                });
+                console.error('❌ addShoppingToSupabase failed: No user in state');
                 showToast('User session lost. Please refresh and log in again.');
                 return false;
             }
 
-            console.log('🚀 Adding shopping to Supabase:', {
+            console.log('🚀 Adding shopping to Supabase (attempt ' + (retryCount + 1) + '/' + (MAX_RETRIES + 1) + '):', {
                 name: item.name,
                 notes: item.notes,
                 household_id: state.household.id,
@@ -2748,36 +2858,70 @@
                 if (result.error) {
                     console.error('❌ Supabase shopping insert error:', result.error);
 
-                    // Check if it's an auth/permission error
-                    if (result.error.code === '42501' || result.error.message.includes('policy') || result.error.message.includes('JWT')) {
-                        showToast('Session expired. Please log in again.');
-                        setTimeout(function() {
-                            supabase.auth.signOut();
-                            location.reload();
-                        }, 2000);
-                    } else {
-                        showToast('Failed to add item: ' + result.error.message);
+                    // Check if it's an auth/permission error (42501, PGRST301, JWT)
+                    const isAuthError = result.error.code === '42501' ||
+                                       result.error.code === 'PGRST301' ||
+                                       result.error.message.includes('policy') ||
+                                       result.error.message.includes('JWT') ||
+                                       result.error.message.includes('JWTExpired');
+
+                    if (isAuthError && retryCount < MAX_RETRIES) {
+                        console.log('🔄 Auth error detected, forcing session refresh and retrying...');
+                        // Force session refresh
+                        const { data: refreshData } = await supabase.auth.refreshSession();
+                        if (refreshData.session) {
+                            state.user = refreshData.session.user;
+                            state._lastSessionRefresh = Date.now();
+                            // Retry
+                            return await addShoppingToSupabase(item, retryCount + 1);
+                        }
                     }
+
+                    showToast('Failed to add item: ' + result.error.message);
                     return false;
                 }
 
                 if (result.data) {
                     item.id = result.data.id;
+                    state._lastSuccessfulOperation = Date.now(); // Track successful operation
                     console.log('✅ Shopping added successfully:', { id: result.data.id, name: item.name });
                     return true;
                 }
 
-                // Fallback: if no error and no data, something unexpected happened
                 console.error('❌ Supabase shopping insert returned no error and no data');
                 return false;
             } catch (e) {
                 console.error('❌ Failed to add shopping (exception):', e);
+
+                // Check if it's a timeout
+                if (e.message && e.message.includes('timed out')) {
+                    if (retryCount < MAX_RETRIES) {
+                        console.log('⏱️ Timeout detected, waking up app and retrying...');
+                        try {
+                            await wakeUpApp();
+                            return await addShoppingToSupabase(item, retryCount + 1);
+                        } catch (wakeError) {
+                            console.error('❌ Wake up failed:', wakeError);
+                        }
+                    }
+                }
+
                 // Check if it's a session error
                 if (e.message && (e.message.includes('Session expired') || e.message.includes('Not authenticated'))) {
+                    if (retryCount < MAX_RETRIES) {
+                        console.log('🔄 Session error, refreshing and retrying...');
+                        try {
+                            const { data: refreshData } = await supabase.auth.refreshSession();
+                            if (refreshData.session) {
+                                state.user = refreshData.session.user;
+                                state._lastSessionRefresh = Date.now();
+                                return await addShoppingToSupabase(item, retryCount + 1);
+                            }
+                        } catch (refreshError) {
+                            console.error('❌ Refresh failed:', refreshError);
+                        }
+                    }
                     showToast('Session expired. Please refresh the page.');
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000);
                 } else {
                     showToast('Failed to add item. Please try again.');
                 }
@@ -2795,7 +2939,22 @@
             }
         }
 
-        async function addTaskToSupabase(table, item) {
+        async function addTaskToSupabase(table, item, retryCount = 0) {
+            const MAX_RETRIES = 2;
+
+            // Wait if app is waking up
+            if (state._isWakingUp) {
+                console.log('⏸️ Waiting for app to wake up...');
+                await new Promise(resolve => {
+                    const checkInterval = setInterval(() => {
+                        if (!state._isWakingUp) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }
+
             if (!supabase) {
                 console.error('❌ addTaskToSupabase failed: Supabase client is null');
                 showToast('Database connection error. Please refresh the page.');
@@ -2803,28 +2962,18 @@
             }
 
             if (!state.household) {
-                console.error('❌ addTaskToSupabase failed: No household in state', {
-                    table: table,
-                    stateKeys: Object.keys(state),
-                    hasUser: !!state.user,
-                    userId: state.user ? state.user.id : 'NO USER'
-                });
+                console.error('❌ addTaskToSupabase failed: No household in state');
                 showToast('No household selected. Please refresh and try again.');
                 return false;
             }
 
             if (!state.user || !state.user.id) {
-                console.error('❌ addTaskToSupabase failed: No user in state', {
-                    table: table,
-                    hasUser: !!state.user,
-                    stateKeys: Object.keys(state),
-                    household: state.household ? state.household.id : 'NO HOUSEHOLD'
-                });
+                console.error('❌ addTaskToSupabase failed: No user in state');
                 showToast('User session lost. Please refresh and log in again.');
                 return false;
             }
 
-            console.log('🚀 Adding task to Supabase:', {
+            console.log('🚀 Adding task to Supabase (attempt ' + (retryCount + 1) + '/' + (MAX_RETRIES + 1) + '):', {
                 table: table,
                 name: item.name,
                 notes: item.notes,
@@ -2860,36 +3009,70 @@
                 if (result.error) {
                     console.error('❌ Supabase task insert error:', result.error);
 
-                    // Check if it's an auth/permission error
-                    if (result.error.code === '42501' || result.error.message.includes('policy') || result.error.message.includes('JWT')) {
-                        showToast('Session expired. Please log in again.');
-                        setTimeout(function() {
-                            supabase.auth.signOut();
-                            location.reload();
-                        }, 2000);
-                    } else {
-                        showToast('Failed to add task: ' + result.error.message);
+                    // Check if it's an auth/permission error (42501, PGRST301, JWT)
+                    const isAuthError = result.error.code === '42501' ||
+                                       result.error.code === 'PGRST301' ||
+                                       result.error.message.includes('policy') ||
+                                       result.error.message.includes('JWT') ||
+                                       result.error.message.includes('JWTExpired');
+
+                    if (isAuthError && retryCount < MAX_RETRIES) {
+                        console.log('🔄 Auth error detected, forcing session refresh and retrying...');
+                        // Force session refresh
+                        const { data: refreshData } = await supabase.auth.refreshSession();
+                        if (refreshData.session) {
+                            state.user = refreshData.session.user;
+                            state._lastSessionRefresh = Date.now();
+                            // Retry
+                            return await addTaskToSupabase(table, item, retryCount + 1);
+                        }
                     }
+
+                    showToast('Failed to add task: ' + result.error.message);
                     return false;
                 }
 
                 if (result.data) {
                     item.id = result.data.id;
+                    state._lastSuccessfulOperation = Date.now(); // Track successful operation
                     console.log('✅ Task added successfully:', { table: table, id: result.data.id, name: item.name });
                     return true;
                 }
 
-                // Fallback: if no error and no data, something unexpected happened
                 console.error('❌ Supabase task insert returned no error and no data');
                 return false;
             } catch (e) {
                 console.error('❌ Failed to add ' + table + ' (exception):', e);
+
+                // Check if it's a timeout
+                if (e.message && e.message.includes('timed out')) {
+                    if (retryCount < MAX_RETRIES) {
+                        console.log('⏱️ Timeout detected, waking up app and retrying...');
+                        try {
+                            await wakeUpApp();
+                            return await addTaskToSupabase(table, item, retryCount + 1);
+                        } catch (wakeError) {
+                            console.error('❌ Wake up failed:', wakeError);
+                        }
+                    }
+                }
+
                 // Check if it's a session error
                 if (e.message && (e.message.includes('Session expired') || e.message.includes('Not authenticated'))) {
+                    if (retryCount < MAX_RETRIES) {
+                        console.log('🔄 Session error, refreshing and retrying...');
+                        try {
+                            const { data: refreshData } = await supabase.auth.refreshSession();
+                            if (refreshData.session) {
+                                state.user = refreshData.session.user;
+                                state._lastSessionRefresh = Date.now();
+                                return await addTaskToSupabase(table, item, retryCount + 1);
+                            }
+                        } catch (refreshError) {
+                            console.error('❌ Refresh failed:', refreshError);
+                        }
+                    }
                     showToast('Session expired. Please refresh the page.');
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000);
                 } else {
                     showToast('Failed to add task. Please try again.');
                 }
@@ -4563,12 +4746,22 @@
             });
 
             // Periodic health check for realtime connection and session refresh
-            // Check every 60 seconds to ensure connection is alive
+            // Check every 30 seconds to ensure connection is alive
             setInterval(async function() {
                 if (state.user && state.household && supabase && !document.hidden && state.isOnline) {
                     try {
-                        // Refresh session periodically to prevent expiration
-                        console.log('🔄 Periodic session refresh...');
+                        const now = Date.now();
+                        const timeSinceLastOp = state._lastSuccessfulOperation ? (now - state._lastSuccessfulOperation) : Infinity;
+                        const FIVE_MINUTES = 5 * 60 * 1000;
+
+                        // Proactively refresh if no successful operation in 5 minutes
+                        if (timeSinceLastOp > FIVE_MINUTES) {
+                            console.log('⚠️ No successful operations in 5 minutes, proactively refreshing session...');
+                            await ensureFreshSession();
+                        }
+
+                        // Regular session refresh check
+                        console.log('🔄 Periodic health check...');
                         await ensureFreshSession();
 
                         // Then check realtime health
@@ -4577,58 +4770,38 @@
                         console.error('❌ Periodic health check failed:', error);
                     }
                 }
-            }, 60000); // 60 seconds
+            }, 30000); // 30 seconds
 
-            // Handle page visibility - refresh session and wake up connection when app becomes visible
+            // Handle page visibility - track hidden time and wake up app if needed
             document.addEventListener('visibilitychange', async function() {
                 if (!document.hidden && supabase && state.user && state.household) {
-                    console.log('👁️ App became visible, refreshing session and waking up connection...');
+                    // App became visible
+                    const now = Date.now();
+                    const hiddenDuration = state._lastHiddenAt ? (now - state._lastHiddenAt) : 0;
+                    const ONE_MINUTE = 60 * 1000;
+
+                    console.log('👁️ App became visible, hidden for:', Math.round(hiddenDuration / 1000) + 's');
+
                     try {
-                        // First, refresh the session
-                        const { data: { session }, error } = await supabase.auth.getSession();
-                        if (error) {
-                            console.error('❌ Session refresh error:', error);
-                            // If session is invalid, show auth screen
-                            if (error.message.includes('refresh_token_not_found') ||
-                                error.message.includes('invalid_grant')) {
-                                showAuthScreen();
-                            }
-                            return;
-                        } else if (session) {
-                            console.log('✅ Session refreshed successfully');
-                            state.user = session.user;
+                        if (hiddenDuration > ONE_MINUTE) {
+                            // App was backgrounded for > 1 minute - do full wake up
+                            console.log('🌅 App was hidden for > 1 minute, doing full wake up...');
+                            await wakeUpApp();
                         } else {
-                            console.log('⚠️ No session found, showing auth screen');
-                            showAuthScreen();
-                            return;
-                        }
-
-                        // Wake up the database connection with a simple query
-                        // This prevents the first real query from timing out
-                        console.log('🔄 Warming up database connection...');
-                        const warmupQuery = await Promise.race([
-                            supabase.from('households').select('id').eq('id', state.household.id).limit(1),
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('Warmup timeout')), 5000))
-                        ]);
-
-                        if (warmupQuery && !warmupQuery.error) {
-                            console.log('✅ Database connection active');
-                        } else {
-                            console.warn('⚠️ Database warmup failed, but continuing anyway');
-                        }
-
-                        // Check realtime subscription health and reconnect if needed
-                        console.log('🔄 Checking realtime subscription health...');
-                        const isHealthy = await checkRealtimeHealth();
-                        if (!isHealthy) {
-                            console.log('⚠️ Realtime connection was unhealthy, it has been reconnected');
-                        } else {
-                            console.log('✅ Realtime connection is healthy');
+                            // App was hidden briefly - just quick session check
+                            console.log('⚡ App was hidden briefly, doing quick session check...');
+                            await ensureFreshSession();
+                            await checkRealtimeHealth();
                         }
                     } catch (e) {
-                        console.error('❌ Error refreshing session or warming up connection:', e);
+                        console.error('❌ Error during app visibility recovery:', e);
+                        showSyncStatus('offline', 'Connection error');
                     }
                 } else if (document.hidden) {
+                    // App became hidden - track when
+                    state._lastHiddenAt = Date.now();
+                    console.log('🌙 App became hidden at', new Date().toLocaleTimeString());
+
                     // When page is hidden, clear any pending reconnect timers
                     if (realtimeReconnectTimer) {
                         console.log('⏸️ Page hidden, pausing reconnect attempts');
