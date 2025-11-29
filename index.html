@@ -2289,6 +2289,11 @@
 
         // Update the debug panel with current state
         function updateDebugPanel() {
+            // Don't try to update if state isn't defined yet
+            if (typeof state === 'undefined') {
+                return;
+            }
+
             // Network status
             const networkEl = document.getElementById('debug-network');
             if (networkEl) {
