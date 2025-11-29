@@ -4032,6 +4032,7 @@ ${logs}
         // Splash screen management
         let splashMinTimeElapsed = false;
         let appReady = false;
+        let splashHidden = false;
 
         // Set minimum splash time of 3 seconds
         setTimeout(function() {
@@ -4039,14 +4040,32 @@ ${logs}
             hideSplashIfReady();
         }, 3000);
 
+        // Failsafe: Always hide splash after 5 seconds, even if app isn't ready
+        // This prevents the splash screen from blocking the UI if there's an error
+        setTimeout(function() {
+            if (!splashHidden) {
+                console.log('⏱️ Splash screen failsafe timeout - forcing hide');
+                debugLog('Splash: Forcing hide after 5s timeout', 'warning');
+                var splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('fade-out');
+                    setTimeout(function() {
+                        splash.style.display = 'none';
+                    }, 500);
+                    splashHidden = true;
+                }
+            }
+        }, 5000);
+
         function hideSplashIfReady() {
-            if (splashMinTimeElapsed && appReady) {
+            if ((splashMinTimeElapsed && appReady) && !splashHidden) {
                 var splash = document.getElementById('splash-screen');
                 splash.classList.add('fade-out');
                 // Remove from DOM after transition
                 setTimeout(function() {
                     splash.style.display = 'none';
                 }, 500);
+                splashHidden = true;
             }
         }
 
