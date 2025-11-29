@@ -1516,6 +1516,198 @@
                 opacity: 0.8;
             }
         }
+
+        /* ========================================
+           DEBUG PANEL STYLES
+           ======================================== */
+        .debug-panel {
+            position: fixed;
+            top: 60px;
+            right: 8px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            background: var(--card);
+            border: 2px solid var(--warning);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .debug-panel.open {
+            display: flex;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .debug-header {
+            background: var(--warning);
+            color: var(--bg);
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .debug-close-btn {
+            background: none;
+            border: none;
+            color: var(--bg);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .debug-close-btn:hover {
+            background: rgba(0,0,0,0.2);
+        }
+
+        .debug-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 0.75rem;
+        }
+
+        .debug-section {
+            margin-bottom: 12px;
+            padding: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+
+        .debug-section-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+        }
+
+        .debug-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .debug-row:last-child {
+            border-bottom: none;
+        }
+
+        .debug-label {
+            color: var(--text-light);
+        }
+
+        .debug-value {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .debug-value.online {
+            color: var(--primary);
+        }
+
+        .debug-value.offline {
+            color: var(--danger);
+        }
+
+        .debug-value.reconnecting {
+            color: var(--warning);
+        }
+
+        .debug-logs {
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 6px;
+            font-family: monospace;
+            font-size: 0.65rem;
+        }
+
+        .debug-log-entry {
+            margin-bottom: 4px;
+            padding: 4px;
+            border-left: 2px solid var(--border);
+            padding-left: 6px;
+        }
+
+        .debug-log-entry.error {
+            border-left-color: var(--danger);
+            background: rgba(225, 98, 89, 0.1);
+        }
+
+        .debug-log-entry.success {
+            border-left-color: var(--primary);
+            background: rgba(55, 197, 171, 0.1);
+        }
+
+        .debug-log-entry.warning {
+            border-left-color: var(--warning);
+            background: rgba(233, 185, 73, 0.1);
+        }
+
+        .debug-log-time {
+            color: var(--text-muted);
+            font-size: 0.6rem;
+        }
+
+        .debug-log-message {
+            color: var(--text);
+            word-wrap: break-word;
+        }
+
+        .debug-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .debug-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .debug-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .debug-btn:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 <body>
@@ -1876,6 +2068,67 @@
     </main>
 
     <!-- ========================================
+         DEBUG PANEL
+         ======================================== -->
+    <div id="debug-panel" class="debug-panel">
+        <div class="debug-header">
+            <span>🐛 Debug Panel</span>
+            <button class="debug-close-btn" onclick="toggleDebugPanel()">✕</button>
+        </div>
+        <div class="debug-body">
+            <div class="debug-section">
+                <div class="debug-section-title">Connection Status</div>
+                <div class="debug-row">
+                    <span class="debug-label">Network:</span>
+                    <span id="debug-network" class="debug-value online">-</span>
+                </div>
+                <div class="debug-row">
+                    <span class="debug-label">Realtime:</span>
+                    <span id="debug-realtime" class="debug-value">-</span>
+                </div>
+            </div>
+
+            <div class="debug-section">
+                <div class="debug-section-title">Session Info</div>
+                <div class="debug-row">
+                    <span class="debug-label">Expires:</span>
+                    <span id="debug-session-expiry" class="debug-value">-</span>
+                </div>
+                <div class="debug-row">
+                    <span class="debug-label">Last Refresh:</span>
+                    <span id="debug-session-refresh" class="debug-value">-</span>
+                </div>
+            </div>
+
+            <div class="debug-section">
+                <div class="debug-section-title">Last Operations</div>
+                <div class="debug-row">
+                    <span class="debug-label">DB Operation:</span>
+                    <span id="debug-last-db" class="debug-value">-</span>
+                </div>
+                <div class="debug-row">
+                    <span class="debug-label">App Visibility:</span>
+                    <span id="debug-visibility" class="debug-value">-</span>
+                </div>
+            </div>
+
+            <div class="debug-section">
+                <div class="debug-section-title">Recent Logs (Last 10)</div>
+                <div id="debug-logs" class="debug-logs">
+                    <div class="debug-log-entry">
+                        <div class="debug-log-time">No logs yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="debug-actions">
+                <button class="debug-btn" onclick="copyDebugLogs()">📋 Copy Logs</button>
+                <button class="debug-btn" onclick="clearDebugLogs()">🗑️ Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
          BOTTOM NAVIGATION
          ======================================== -->
     <nav class="bottom-nav" aria-label="Main navigation">
@@ -2022,6 +2275,231 @@
         } catch (e) {
             console.warn('Supabase not available, running in offline mode');
         }
+
+        // ========================================
+        // DEBUG LOGGING SYSTEM
+        // ========================================
+        const DEBUG_LOG_KEY = 'hoi-debug-logs';
+        const MAX_LOGS = 50;
+        const DISPLAY_LOGS = 10;
+
+        // Debug state
+        const debugState = {
+            logs: [],
+            enabled: false
+        };
+
+        // Load existing logs from localStorage
+        function loadDebugLogs() {
+            try {
+                const stored = localStorage.getItem(DEBUG_LOG_KEY);
+                if (stored) {
+                    debugState.logs = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.error('Failed to load debug logs:', e);
+            }
+        }
+
+        // Save logs to localStorage
+        function saveDebugLogs() {
+            try {
+                localStorage.setItem(DEBUG_LOG_KEY, JSON.stringify(debugState.logs));
+            } catch (e) {
+                console.error('Failed to save debug logs:', e);
+            }
+        }
+
+        // Add a debug log entry
+        function debugLog(message, type = 'info', data = null) {
+            const timestamp = new Date().toISOString();
+            const entry = {
+                timestamp,
+                message,
+                type, // 'info', 'success', 'error', 'warning'
+                data: data ? JSON.stringify(data) : null
+            };
+
+            debugState.logs.push(entry);
+
+            // Keep only the last MAX_LOGS entries
+            if (debugState.logs.length > MAX_LOGS) {
+                debugState.logs = debugState.logs.slice(-MAX_LOGS);
+            }
+
+            saveDebugLogs();
+            updateDebugPanel();
+
+            // Also log to console for immediate visibility
+            const emoji = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️'
+            }[type] || 'ℹ️';
+
+            console.log(`${emoji} [DEBUG] ${message}`, data || '');
+        }
+
+        // Update the debug panel with current state
+        function updateDebugPanel() {
+            // Network status
+            const networkEl = document.getElementById('debug-network');
+            if (networkEl) {
+                const isOnline = navigator.onLine;
+                networkEl.textContent = isOnline ? 'Online' : 'Offline';
+                networkEl.className = 'debug-value ' + (isOnline ? 'online' : 'offline');
+            }
+
+            // Realtime status
+            const realtimeEl = document.getElementById('debug-realtime');
+            if (realtimeEl && state) {
+                const channelState = state.realtimeChannel ? state.realtimeChannel.state : 'no-channel';
+                realtimeEl.textContent = channelState;
+                realtimeEl.className = 'debug-value ' +
+                    (channelState === 'joined' ? 'online' :
+                     channelState === 'no-channel' ? 'offline' : 'reconnecting');
+            }
+
+            // Session expiry
+            const expiryEl = document.getElementById('debug-session-expiry');
+            if (expiryEl && state && state.user) {
+                // We'll update this when we have session info
+                if (state._sessionExpiresAt) {
+                    const now = Date.now();
+                    const timeLeft = state._sessionExpiresAt - now;
+                    const minutes = Math.floor(timeLeft / 60000);
+                    expiryEl.textContent = minutes > 0 ? `${minutes}m` : 'Expired';
+                } else {
+                    expiryEl.textContent = '-';
+                }
+            }
+
+            // Last session refresh
+            const refreshEl = document.getElementById('debug-session-refresh');
+            if (refreshEl && state && state._lastSessionRefresh) {
+                const ago = Date.now() - state._lastSessionRefresh;
+                const seconds = Math.floor(ago / 1000);
+                refreshEl.textContent = seconds < 60 ? `${seconds}s ago` : `${Math.floor(seconds / 60)}m ago`;
+            }
+
+            // Last DB operation
+            const dbEl = document.getElementById('debug-last-db');
+            if (dbEl && state && state._lastSuccessfulOperation) {
+                const ago = Date.now() - state._lastSuccessfulOperation;
+                const seconds = Math.floor(ago / 1000);
+                dbEl.textContent = seconds < 60 ? `${seconds}s ago` : `${Math.floor(seconds / 60)}m ago`;
+            }
+
+            // Visibility
+            const visEl = document.getElementById('debug-visibility');
+            if (visEl) {
+                visEl.textContent = document.hidden ? 'Hidden' : 'Visible';
+            }
+
+            // Logs
+            const logsEl = document.getElementById('debug-logs');
+            if (logsEl) {
+                const recentLogs = debugState.logs.slice(-DISPLAY_LOGS).reverse();
+                if (recentLogs.length === 0) {
+                    logsEl.innerHTML = '<div class="debug-log-entry"><div class="debug-log-time">No logs yet</div></div>';
+                } else {
+                    logsEl.innerHTML = recentLogs.map(log => {
+                        const time = new Date(log.timestamp).toLocaleTimeString();
+                        return `
+                            <div class="debug-log-entry ${log.type}">
+                                <div class="debug-log-time">${time}</div>
+                                <div class="debug-log-message">${log.message}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        // Toggle debug panel
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            if (panel) {
+                panel.classList.toggle('open');
+                if (panel.classList.contains('open')) {
+                    updateDebugPanel();
+                    // Update panel every second while open
+                    if (!debugState.updateInterval) {
+                        debugState.updateInterval = setInterval(updateDebugPanel, 1000);
+                    }
+                } else {
+                    if (debugState.updateInterval) {
+                        clearInterval(debugState.updateInterval);
+                        debugState.updateInterval = null;
+                    }
+                }
+            }
+        }
+
+        // Copy debug logs to clipboard
+        function copyDebugLogs() {
+            const logs = debugState.logs.map(log => {
+                const time = new Date(log.timestamp).toLocaleString();
+                return `[${time}] ${log.type.toUpperCase()}: ${log.message}${log.data ? ' | Data: ' + log.data : ''}`;
+            }).join('\n');
+
+            const summaryInfo = `
+=== DEBUG LOG SUMMARY ===
+Generated: ${new Date().toLocaleString()}
+Total Logs: ${debugState.logs.length}
+Network: ${navigator.onLine ? 'Online' : 'Offline'}
+User Agent: ${navigator.userAgent}
+
+=== LOGS ===
+${logs}
+            `.trim();
+
+            navigator.clipboard.writeText(summaryInfo).then(() => {
+                alert('Debug logs copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy logs:', err);
+                // Fallback: show in alert
+                alert('Failed to copy. Logs:\n\n' + summaryInfo);
+            });
+        }
+
+        // Clear debug logs
+        function clearDebugLogs() {
+            if (confirm('Clear all debug logs?')) {
+                debugState.logs = [];
+                saveDebugLogs();
+                updateDebugPanel();
+                debugLog('Debug logs cleared', 'info');
+            }
+        }
+
+        // Triple-tap handler for header
+        let headerTapCount = 0;
+        let headerTapTimer = null;
+
+        function setupDebugPanelTrigger() {
+            const header = document.querySelector('.app-header h1');
+            if (header) {
+                header.addEventListener('click', function() {
+                    headerTapCount++;
+
+                    if (headerTapCount === 1) {
+                        headerTapTimer = setTimeout(() => {
+                            headerTapCount = 0;
+                        }, 500);
+                    } else if (headerTapCount === 3) {
+                        clearTimeout(headerTapTimer);
+                        headerTapCount = 0;
+                        toggleDebugPanel();
+                    }
+                });
+            }
+        }
+
+        // Initialize debug system
+        loadDebugLogs();
+        debugLog('Debug system initialized', 'success');
 
         // ========================================
         // TRANSLATIONS
@@ -2202,6 +2680,7 @@
 
             // Session tracking
             _lastSessionRefresh: null,
+            _sessionExpiresAt: null,
             _lastHiddenAt: null,
             _isWakingUp: false,
             _lastSuccessfulOperation: null,
@@ -2401,23 +2880,28 @@
         // CRITICAL: This now actually refreshes tokens, not just gets cached session
         async function ensureFreshSession() {
             console.log('🔍 Checking session freshness...');
+            debugLog('ensureFreshSession: Starting session check', 'info');
 
             if (!supabase) {
                 console.error('❌ Supabase client not initialized');
+                debugLog('ensureFreshSession: Supabase client not initialized', 'error');
                 throw new Error('Supabase not available');
             }
 
             if (!state.user) {
                 console.error('❌ No user in state');
+                debugLog('ensureFreshSession: No user in state', 'error');
                 throw new Error('Not authenticated');
             }
 
             try {
                 // First check the cached session to see if we need to refresh
+                debugLog('ensureFreshSession: Getting cached session', 'info');
                 const { data: { session }, error } = await supabase.auth.getSession();
 
                 if (error || !session) {
                     console.error('❌ Session check error or no session:', error);
+                    debugLog('ensureFreshSession: No valid session found', 'error', { error: error?.message });
                     throw new Error('Session expired - please log in again');
                 }
 
@@ -2426,16 +2910,27 @@
                 const timeUntilExpiry = expiresAt - now;
                 const timeSinceLastRefresh = state._lastSessionRefresh ? (now - state._lastSessionRefresh) : Infinity;
 
+                // Track session expiry for debug panel
+                state._sessionExpiresAt = expiresAt;
+
                 // Refresh if: token expires within 5 minutes OR hasn't been refreshed in 10 minutes
                 const FIVE_MINUTES = 5 * 60 * 1000;
                 const TEN_MINUTES = 10 * 60 * 1000;
                 const shouldRefresh = timeUntilExpiry < FIVE_MINUTES || timeSinceLastRefresh > TEN_MINUTES;
+
+                const sessionInfo = {
+                    expiresIn: Math.round(timeUntilExpiry / 1000) + 's',
+                    timeSinceLastRefresh: state._lastSessionRefresh ? Math.round(timeSinceLastRefresh / 1000) + 's' : 'never',
+                    shouldRefresh: shouldRefresh
+                };
+                debugLog('ensureFreshSession: Session status', 'info', sessionInfo);
 
                 if (shouldRefresh) {
                     console.log('🔄 Token needs refresh:', {
                         expiresIn: Math.round(timeUntilExpiry / 1000) + 's',
                         timeSinceLastRefresh: state._lastSessionRefresh ? Math.round(timeSinceLastRefresh / 1000) + 's' : 'never'
                     });
+                    debugLog('ensureFreshSession: Starting session refresh', 'warning');
 
                     // Use refreshSession() to actually validate with server
                     // Note: refreshSession() automatically updates the client's internal session
@@ -2443,6 +2938,7 @@
 
                     if (refreshError) {
                         console.error('❌ Session refresh failed:', refreshError);
+                        debugLog('ensureFreshSession: Refresh failed', 'error', { error: refreshError.message });
 
                         // Handle invalid_grant error (refresh token invalid/expired)
                         if (refreshError.message && refreshError.message.includes('invalid_grant')) {
@@ -2454,6 +2950,7 @@
 
                     if (!refreshData.session) {
                         console.error('❌ No session returned from refresh');
+                        debugLog('ensureFreshSession: No session in refresh response', 'error');
                         throw new Error('Session expired - please log in again');
                     }
 
@@ -2461,25 +2958,35 @@
                     // We just need to update our state
                     state.user = refreshData.session.user;
                     state._lastSessionRefresh = now;
+                    state._sessionExpiresAt = refreshData.session.expires_at * 1000;
+
+                    const refreshInfo = {
+                        userId: refreshData.session.user.id,
+                        newExpiresIn: Math.round((refreshData.session.expires_at * 1000 - now) / 1000) + 's'
+                    };
 
                     console.log('✅ Session refreshed successfully', {
                         userId: refreshData.session.user.id,
                         expiresAt: new Date(refreshData.session.expires_at * 1000).toLocaleString(),
                         newExpiresIn: Math.round((refreshData.session.expires_at * 1000 - now) / 1000) + 's'
                     });
+                    debugLog('ensureFreshSession: Session refreshed successfully', 'success', refreshInfo);
 
                     return refreshData.session;
                 } else {
                     // Session is still fresh, just update state
                     state.user = session.user;
+                    state._sessionExpiresAt = expiresAt;
                     console.log('✅ Session still fresh', {
                         userId: session.user.id,
                         expiresIn: Math.round(timeUntilExpiry / 1000) + 's'
                     });
+                    debugLog('ensureFreshSession: Session still fresh', 'success', { expiresIn: Math.round(timeUntilExpiry / 1000) + 's' });
                     return session;
                 }
             } catch (error) {
                 console.error('❌ Error ensuring fresh session:', error);
+                debugLog('ensureFreshSession: Error occurred', 'error', { error: error.message });
                 throw error;
             }
         }
@@ -2491,6 +2998,7 @@
 
             if (state._isWakingUp && retryCount === 0) {
                 console.log('⏸️ Already waking up, waiting...');
+                debugLog('wakeUpApp: Already in progress, waiting', 'warning');
                 // Wait for current wake up to finish
                 await new Promise(resolve => {
                     const checkInterval = setInterval(() => {
@@ -2510,23 +3018,28 @@
 
             state._isWakingUp = true;
             console.log('🌅 Waking up app (attempt ' + (retryCount + 1) + '/' + (MAX_RETRIES + 1) + ')...');
+            debugLog('wakeUpApp: Starting wake up', 'info', { attempt: retryCount + 1, maxRetries: MAX_RETRIES + 1 });
             showSyncStatus('syncing', 'Reconnecting...');
 
             try {
                 // Small delay to let network stabilize after app switch
                 if (retryCount === 0) {
                     console.log('⏳ Waiting for network to stabilize...');
+                    debugLog('wakeUpApp: Waiting for network to stabilize', 'info');
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
 
                 // Step 1: Force token refresh with refreshSession()
                 console.log('🔄 Step 1: Force refreshing session...');
+                debugLog('wakeUpApp: Step 1 - Refreshing session', 'info');
                 const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
                 if (refreshError || !refreshData || !refreshData.session) {
                     console.error('❌ Session refresh failed during wakeup:', refreshError);
+                    debugLog('wakeUpApp: Session refresh failed', 'error', { error: refreshError?.message });
                     if (retryCount < MAX_RETRIES) {
                         console.log('🔄 Retrying wake up...');
+                        debugLog('wakeUpApp: Retrying after session refresh failure', 'warning', { nextAttempt: retryCount + 2 });
                         state._isWakingUp = false;
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         return await wakeUpApp(retryCount + 1);
@@ -2537,10 +3050,13 @@
                 // refreshSession() automatically updates the Supabase client
                 state.user = refreshData.session.user;
                 state._lastSessionRefresh = Date.now();
+                state._sessionExpiresAt = refreshData.session.expires_at * 1000;
                 console.log('✅ Session refreshed successfully');
+                debugLog('wakeUpApp: Step 1 complete - Session refreshed', 'success');
 
                 // Step 2: Test DB connection with a simple query
                 console.log('🔄 Step 2: Testing database connection...');
+                debugLog('wakeUpApp: Step 2 - Testing database connection', 'info');
                 const testQuery = await Promise.race([
                     supabase.from('households').select('id').eq('id', state.household.id).limit(1),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('DB test timeout')), 8000))
@@ -2548,8 +3064,10 @@
 
                 if (testQuery.error) {
                     console.error('❌ Database test failed:', testQuery.error);
+                    debugLog('wakeUpApp: Database test failed', 'error', { error: testQuery.error.message });
                     if (retryCount < MAX_RETRIES) {
                         console.log('🔄 Retrying wake up after DB failure...');
+                        debugLog('wakeUpApp: Retrying after DB failure', 'warning', { nextAttempt: retryCount + 2 });
                         state._isWakingUp = false;
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         return await wakeUpApp(retryCount + 1);
@@ -2558,21 +3076,27 @@
                 }
 
                 console.log('✅ Database connection active');
+                debugLog('wakeUpApp: Step 2 complete - Database connected', 'success');
 
                 // Step 3: Reconnect realtime subscriptions
                 console.log('🔄 Step 3: Reconnecting realtime...');
+                debugLog('wakeUpApp: Step 3 - Reconnecting realtime', 'info');
                 await setupRealtimeSubscriptions();
                 console.log('✅ Realtime reconnected');
+                debugLog('wakeUpApp: Step 3 complete - Realtime reconnected', 'success');
 
                 // Step 4: Reload data from Supabase
                 console.log('🔄 Step 4: Reloading data...');
+                debugLog('wakeUpApp: Step 4 - Reloading data', 'info');
                 await loadFromSupabase();
 
                 state._lastSuccessfulOperation = Date.now();
                 showSyncStatus('synced', 'Connected');
                 console.log('✅ App wake up complete');
+                debugLog('wakeUpApp: Wake up complete - All steps successful', 'success');
             } catch (error) {
                 console.error('❌ Wake up failed:', error);
+                debugLog('wakeUpApp: Wake up failed', 'error', { error: error.message });
                 showSyncStatus('offline', 'Connection failed');
                 throw error;
             } finally {
@@ -2835,9 +3359,12 @@
         async function addShoppingToSupabase(item, retryCount = 0) {
             const MAX_RETRIES = 2;
 
+            debugLog('addShopping: Function called', 'info', { itemName: item.name, attempt: retryCount + 1 });
+
             // Wait if app is waking up
             if (state._isWakingUp) {
                 console.log('⏸️ Waiting for app to wake up...');
+                debugLog('addShopping: Waiting for app wake up', 'warning');
                 await new Promise(resolve => {
                     const checkInterval = setInterval(() => {
                         if (!state._isWakingUp) {
@@ -2850,18 +3377,21 @@
 
             if (!supabase) {
                 console.error('❌ addShoppingToSupabase failed: Supabase client is null');
+                debugLog('addShopping: Supabase client is null', 'error');
                 showToast('Database connection error. Please refresh the page.');
                 return false;
             }
 
             if (!state.household) {
                 console.error('❌ addShoppingToSupabase failed: No household in state');
+                debugLog('addShopping: No household in state', 'error');
                 showToast('No household selected. Please refresh and try again.');
                 return false;
             }
 
             if (!state.user || !state.user.id) {
                 console.error('❌ addShoppingToSupabase failed: No user in state');
+                debugLog('addShopping: No user in state', 'error');
                 showToast('User session lost. Please refresh and log in again.');
                 return false;
             }
@@ -2873,12 +3403,21 @@
                 user_id: state.user.id
             });
 
+            const channelState = state.realtimeChannel ? state.realtimeChannel.state : 'no-channel';
+            debugLog('addShopping: Pre-insert state', 'info', {
+                household: state.household.id,
+                user: state.user.id,
+                channelState: channelState
+            });
+
             try {
                 // Ensure session is fresh before database operation
                 console.log('🔍 Step 1: Ensuring fresh session...');
+                debugLog('addShopping: Ensuring fresh session', 'info');
                 const sessionStart = Date.now();
                 await ensureFreshSession();
                 console.log('✅ Session ensured in', Date.now() - sessionStart, 'ms');
+                debugLog('addShopping: Session ensured', 'success', { duration: Date.now() - sessionStart + 'ms' });
 
                 console.log('⏳ Step 2: Executing INSERT query...');
                 console.log('📋 Insert data:', {
@@ -2887,6 +3426,7 @@
                     user_id: state.user.id,
                     connection_status: state.realtimeChannel ? state.realtimeChannel.state : 'no channel'
                 });
+                debugLog('addShopping: Starting INSERT query', 'info', { itemName: item.name });
 
                 const insertStart = Date.now();
                 var insertPromise = supabase.from('shopping').insert({
@@ -2903,10 +3443,16 @@
                     'Database insert timed out after 30 seconds'
                 );
 
-                console.log('📦 INSERT completed in', Date.now() - insertStart, 'ms, result:', result);
+                const insertDuration = Date.now() - insertStart;
+                console.log('📦 INSERT completed in', insertDuration, 'ms, result:', result);
 
                 if (result.error) {
                     console.error('❌ Supabase shopping insert error:', result.error);
+                    debugLog('addShopping: INSERT error', 'error', {
+                        error: result.error.message,
+                        code: result.error.code,
+                        duration: insertDuration + 'ms'
+                    });
 
                     // Check if it's an auth/permission error (42501, PGRST301, JWT)
                     const isAuthError = result.error.code === '42501' ||
@@ -2917,11 +3463,13 @@
 
                     if (isAuthError && retryCount < MAX_RETRIES) {
                         console.log('🔄 Auth error detected, forcing session refresh and retrying...');
+                        debugLog('addShopping: Auth error, retrying', 'warning', { nextAttempt: retryCount + 2 });
                         // Force session refresh
                         const { data: refreshData } = await supabase.auth.refreshSession();
                         if (refreshData && refreshData.session) {
                             state.user = refreshData.session.user;
                             state._lastSessionRefresh = Date.now();
+                            state._sessionExpiresAt = refreshData.session.expires_at * 1000;
                             // Retry
                             return await addShoppingToSupabase(item, retryCount + 1);
                         }
@@ -2935,46 +3483,60 @@
                     item.id = result.data.id;
                     state._lastSuccessfulOperation = Date.now(); // Track successful operation
                     console.log('✅ Shopping added successfully:', { id: result.data.id, name: item.name });
+                    debugLog('addShopping: INSERT successful', 'success', {
+                        itemName: item.name,
+                        duration: insertDuration + 'ms'
+                    });
                     return true;
                 }
 
                 console.error('❌ Supabase shopping insert returned no error and no data');
+                debugLog('addShopping: No error and no data returned', 'error');
                 return false;
             } catch (e) {
                 console.error('❌ Failed to add shopping (exception):', e);
+                debugLog('addShopping: Exception caught', 'error', { error: e.message });
 
                 // Check if it's a timeout
                 if (e.message && e.message.includes('timed out')) {
+                    debugLog('addShopping: Timeout detected', 'warning');
                     if (retryCount < MAX_RETRIES) {
                         console.log('⏱️ Timeout detected, waking up app and retrying...');
+                        debugLog('addShopping: Attempting wake up after timeout', 'warning');
                         try {
                             await wakeUpApp();
                             return await addShoppingToSupabase(item, retryCount + 1);
                         } catch (wakeError) {
                             console.error('❌ Wake up failed:', wakeError);
+                            debugLog('addShopping: Wake up failed', 'error', { error: wakeError.message });
                         }
                     }
                 }
 
                 // Check if it's a session error
                 if (e.message && (e.message.includes('Session expired') || e.message.includes('Not authenticated'))) {
+                    debugLog('addShopping: Session error detected', 'error');
                     if (retryCount < MAX_RETRIES) {
                         console.log('🔄 Session error, refreshing and retrying...');
+                        debugLog('addShopping: Attempting refresh after session error', 'warning');
                         try {
                             const { data: refreshData } = await supabase.auth.refreshSession();
                             if (refreshData && refreshData.session) {
                                 state.user = refreshData.session.user;
                                 state._lastSessionRefresh = Date.now();
+                                state._sessionExpiresAt = refreshData.session.expires_at * 1000;
                                 return await addShoppingToSupabase(item, retryCount + 1);
                             }
                         } catch (refreshError) {
                             console.error('❌ Refresh failed:', refreshError);
+                            debugLog('addShopping: Refresh failed', 'error', { error: refreshError.message });
                         }
                     }
                     showToast('Session expired. Please refresh the page.');
                 } else {
                     showToast('Failed to add item. Please try again.');
                 }
+                debugLog('addShopping: Operation failed, returning false', 'error');
                 return false;
             }
         }
@@ -3205,18 +3767,24 @@
         let realtimeReconnectTimer = null;
 
         async function setupRealtimeSubscriptions() {
+            debugLog('setupRealtime: Starting setup', 'info');
+
             if (!supabase || !state.household) {
+                debugLog('setupRealtime: Missing client or household', 'error');
                 throw new Error('Missing supabase client or household');
             }
 
             // Clean up existing subscription first to prevent memory leaks
             if (state.realtimeChannel) {
                 console.log('🔌 Cleaning up old realtime subscription...');
+                debugLog('setupRealtime: Cleaning up old subscription', 'info');
                 try {
                     await supabase.removeChannel(state.realtimeChannel);
                     console.log('✅ Old channel removed');
+                    debugLog('setupRealtime: Old channel removed', 'success');
                 } catch (e) {
                     console.warn('Error removing channel:', e);
+                    debugLog('setupRealtime: Error removing channel', 'warning', { error: e.message });
                 }
                 state.realtimeChannel = null;
 
@@ -3232,12 +3800,14 @@
 
             var householdId = state.household.id;
             console.log('📡 Setting up realtime subscriptions for household:', householdId);
+            debugLog('setupRealtime: Creating new channel', 'info', { household: householdId });
 
             // Return a Promise that resolves when connection succeeds or rejects on failure
             return new Promise((resolve, reject) => {
                 // Set a timeout to detect stuck connections
                 const connectionTimeout = setTimeout(() => {
                     console.error('⏱️ Realtime connection timeout after 15 seconds');
+                    debugLog('setupRealtime: Connection timeout', 'error');
                     reject(new Error('Connection timeout'));
                 }, 15000);
 
@@ -3249,10 +3819,12 @@
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'quick_add', filter: 'household_id=eq.' + householdId }, handleQuickAddChange)
                     .subscribe(function(status, error) {
                         console.log('🔔 Realtime status:', status, error || '');
+                        debugLog('setupRealtime: Status change', 'info', { status: status, error: error?.message });
 
                         if (status === 'SUBSCRIBED') {
                             clearTimeout(connectionTimeout);
                             console.log('✅ Realtime subscriptions active');
+                            debugLog('setupRealtime: Subscribed successfully', 'success');
                             // Reset reconnect attempts on successful connection
                             realtimeReconnectAttempts = 0;
                             showSyncStatus('online', 'Online');
@@ -3260,16 +3832,19 @@
                         } else if (status === 'CLOSED') {
                             clearTimeout(connectionTimeout);
                             console.log('❌ Realtime subscription closed - attempting reconnect...');
+                            debugLog('setupRealtime: Subscription closed', 'error');
                             reject(new Error('Subscription closed'));
                             attemptRealtimeReconnect();
                         } else if (status === 'CHANNEL_ERROR') {
                             clearTimeout(connectionTimeout);
                             console.error('❌ Realtime subscription error - attempting reconnect...', error);
+                            debugLog('setupRealtime: Channel error', 'error', { error: error?.message });
                             reject(error || new Error('Channel error'));
                             attemptRealtimeReconnect();
                         } else if (status === 'TIMED_OUT') {
                             clearTimeout(connectionTimeout);
                             console.error('⏱️ Realtime subscription timed out - attempting reconnect...');
+                            debugLog('setupRealtime: Subscription timed out', 'error');
                             reject(new Error('Subscription timed out'));
                             attemptRealtimeReconnect();
                         }
@@ -4710,6 +5285,7 @@
             applyTheme();
             applyLanguage();
             setupAuthUI();
+            setupDebugPanelTrigger();
 
             // Check for existing session
             if (supabase) {
@@ -4857,26 +5433,33 @@
                     const hiddenDuration = state._lastHiddenAt ? (now - state._lastHiddenAt) : 0;
 
                     console.log('👁️ App became visible, hidden for:', Math.round(hiddenDuration / 1000) + 's');
+                    debugLog('Visibility: App became visible', 'info', { hiddenDuration: Math.round(hiddenDuration / 1000) + 's' });
                     showSyncStatus('syncing', 'Reconnecting...');
 
                     try {
                         // ALWAYS do a full wake up when coming back from background
                         // Mobile apps can lose connection even after brief switches
                         console.log('🌅 Doing full wake up after app switch...');
+                        debugLog('Visibility: Starting wake up', 'info');
                         await wakeUpApp();
                         console.log('✅ App wake up complete');
+                        debugLog('Visibility: Wake up successful', 'success');
                     } catch (e) {
                         console.error('❌ Error during app visibility recovery:', e);
+                        debugLog('Visibility: Wake up failed', 'error', { error: e.message });
                         showSyncStatus('offline', 'Connection error - tap to retry');
 
                         // If wakeup failed, try a simpler recovery
                         try {
                             console.log('🔄 Trying simpler recovery...');
+                            debugLog('Visibility: Attempting simple recovery', 'warning');
                             await ensureFreshSession();
                             await setupRealtimeSubscriptions();
                             showSyncStatus('synced', 'Reconnected');
+                            debugLog('Visibility: Simple recovery successful', 'success');
                         } catch (e2) {
                             console.error('❌ Simple recovery also failed:', e2);
+                            debugLog('Visibility: Simple recovery failed', 'error', { error: e2.message });
                             showSyncStatus('offline', 'Connection failed - please refresh');
                         }
                     }
@@ -4884,10 +5467,12 @@
                     // App became hidden - track when
                     state._lastHiddenAt = Date.now();
                     console.log('🌙 App became hidden at', new Date().toLocaleTimeString());
+                    debugLog('Visibility: App became hidden', 'info', { time: new Date().toLocaleTimeString() });
 
                     // When page is hidden, clear any pending reconnect timers
                     if (realtimeReconnectTimer) {
                         console.log('⏸️ Page hidden, pausing reconnect attempts');
+                        debugLog('Visibility: Pausing reconnect attempts', 'info');
                         clearTimeout(realtimeReconnectTimer);
                         realtimeReconnectTimer = null;
                     }
