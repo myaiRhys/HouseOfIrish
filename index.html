@@ -1472,52 +1472,6 @@
         }
 
         /* ========================================
-           SPLASH SCREEN
-           ======================================== */
-        .splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-
-        .splash-screen.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .splash-logo {
-            font-size: 5rem;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .splash-title {
-            margin-top: 1rem;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.1);
-                opacity: 0.8;
-            }
-        }
-
-        /* ========================================
            DEBUG PANEL STYLES
            ======================================== */
         .debug-panel {
@@ -1711,14 +1665,6 @@
     </style>
 </head>
 <body>
-    <!-- ========================================
-         SPLASH SCREEN
-         ======================================== -->
-    <div id="splash-screen" class="splash-screen">
-        <div class="splash-logo">🏠</div>
-        <div class="splash-title">Thibault</div>
-    </div>
-
     <!-- ========================================
          AUTH SCREENS
          ======================================== -->
@@ -4029,49 +3975,7 @@ ${logs}
         // ========================================
         // UI SCREEN MANAGEMENT
         // ========================================
-        // Splash screen management
-        let splashMinTimeElapsed = false;
-        let appReady = false;
-        let splashHidden = false;
-
-        // Set minimum splash time of 3 seconds
-        setTimeout(function() {
-            splashMinTimeElapsed = true;
-            hideSplashIfReady();
-        }, 3000);
-
-        // Failsafe: Always hide splash after 5 seconds, even if app isn't ready
-        // This prevents the splash screen from blocking the UI if there's an error
-        setTimeout(function() {
-            if (!splashHidden) {
-                console.log('⏱️ Splash screen failsafe timeout - forcing hide');
-                debugLog('Splash: Forcing hide after 5s timeout', 'warning');
-                var splash = document.getElementById('splash-screen');
-                if (splash) {
-                    splash.classList.add('fade-out');
-                    setTimeout(function() {
-                        splash.style.display = 'none';
-                    }, 500);
-                    splashHidden = true;
-                }
-            }
-        }, 5000);
-
-        function hideSplashIfReady() {
-            if ((splashMinTimeElapsed && appReady) && !splashHidden) {
-                var splash = document.getElementById('splash-screen');
-                splash.classList.add('fade-out');
-                // Remove from DOM after transition
-                setTimeout(function() {
-                    splash.style.display = 'none';
-                }, 500);
-                splashHidden = true;
-            }
-        }
-
         function showAuthScreen() {
-            appReady = true;
-            hideSplashIfReady();
             document.getElementById('auth-screen').classList.remove('hidden');
             document.getElementById('main-app').classList.add('hidden');
             document.getElementById('login-form').classList.remove('hidden');
@@ -4082,8 +3986,6 @@ ${logs}
         }
 
         function showHouseholdSetup() {
-            appReady = true;
-            hideSplashIfReady();
             document.getElementById('login-form').classList.add('hidden');
             document.getElementById('signup-form').classList.add('hidden');
             document.getElementById('household-setup').classList.remove('hidden');
@@ -4096,8 +3998,6 @@ ${logs}
         }
 
         function showMainApp() {
-            appReady = true;
-            hideSplashIfReady();
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             if (state.household) {
