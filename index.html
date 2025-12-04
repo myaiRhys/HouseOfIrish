@@ -1668,7 +1668,7 @@
     <!-- ========================================
          AUTH SCREENS
          ======================================== -->
-    <div id="auth-screen" class="auth-container">
+    <div id="auth-screen" class="auth-container hidden">
         <div class="auth-card">
             <div class="auth-header">
                 <div class="logo">🏠</div>
@@ -1773,7 +1773,7 @@
     <!-- ========================================
          MAIN APP (hidden until authenticated)
          ======================================== -->
-    <div id="main-app" class="hidden">
+    <div id="main-app">
     <!-- ========================================
          HEADER
          ======================================== -->
@@ -5189,102 +5189,37 @@ ${logs}
         // INITIALIZATION
         // ========================================
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 App initializing...');
+            console.log('🚀 App initializing (NO AUTH MODE)...');
 
-            // Debug: Check localStorage for session data
-            console.log('🔍 Checking localStorage...');
-            const authKey = localStorage.getItem('hoi-supabase-auth');
-            if (authKey) {
-                console.log('✅ Auth data found in localStorage');
-                try {
-                    const authData = JSON.parse(authKey);
-                    console.log('📦 Session expires at:', authData?.expires_at ? new Date(authData.expires_at * 1000) : 'Unknown');
-                } catch (e) {
-                    console.log('⚠️ Could not parse auth data');
-                }
-            } else {
-                console.log('ℹ️ No auth data in localStorage');
-            }
+            // BYPASS ALL AUTHENTICATION - Mock user and household
+            console.log('⚠️ Authentication bypassed - using mock data');
+
+            // Create a mock user object
+            state.user = {
+                id: 'mock-user-' + Date.now(),
+                email: 'guest@local.app',
+                user_metadata: { name: 'Guest User' }
+            };
+
+            // Create a mock household object
+            state.household = {
+                id: 'mock-household-' + Date.now(),
+                name: 'Guest Household',
+                invite_code: 'GUEST'
+            };
 
             applyTheme();
             applyLanguage();
-            setupAuthUI();
             setupDebugPanelTrigger();
 
-            // Check for existing session
-            if (supabase) {
-                try {
-                    console.log('🔍 Checking for existing session...');
-                    const { data: sessionData, error } = await supabase.auth.getSession();
-
-                    if (error) {
-                        console.error('❌ Session check error:', error);
-                        showAuthScreen();
-                        return;
-                    }
-
-                    if (sessionData && sessionData.session) {
-                        console.log('✅ Found existing session for user:', sessionData.session.user.email);
-                        state.user = sessionData.session.user;
-
-                        // Check if user has a household
-                        var household = await getUserHousehold();
-                        if (household) {
-                            console.log('✅ User has household:', household.name);
-                            state.household = household;
-                            await loadFromSupabase();
-                            await setupRealtimeSubscriptions();
-                            showMainApp();
-                            renderAll();
-                            setupNavigation();
-                            setupForms();
-                            setupModals();
-                            setupSettings();
-                        } else {
-                            console.log('⚠️ User has no household, showing setup...');
-                            showHouseholdSetup();
-                        }
-                    } else {
-                        console.log('ℹ️ No existing session found, showing auth screen');
-                        showAuthScreen();
-                    }
-                } catch (error) {
-                    console.error('❌ Initialization error:', error);
-                    showAuthScreen();
-                }
-
-                // Listen for auth changes
-                supabase.auth.onAuthStateChange(async function(event, session) {
-                    console.log('🔐 Auth state changed:', event);
-
-                    if (event === 'SIGNED_IN' && session) {
-                        state.user = session.user;
-                        var household = await getUserHousehold();
-                        if (household) {
-                            state.household = household;
-                            await loadFromSupabase();
-                            await setupRealtimeSubscriptions();
-                            showMainApp();
-                            renderAll();
-                            setupNavigation();
-                            setupForms();
-                            setupModals();
-                            setupSettings();
-                        } else {
-                            showHouseholdSetup();
-                        }
-                    } else if (event === 'TOKEN_REFRESHED' && session) {
-                        // Update user session when token refreshes
-                        state.user = session.user;
-                        console.log('✅ Session token refreshed');
-                    } else if (event === 'SIGNED_OUT') {
-                        showAuthScreen();
-                    }
-                });
-            } else {
-                // Supabase not available - show auth screen
-                showAuthScreen();
-            }
+            // Go straight to the main app without any auth checks
+            console.log('✅ Loading main app without authentication...');
+            showMainApp();
+            renderAll();
+            setupNavigation();
+            setupForms();
+            setupModals();
+            setupSettings();
 
             // Online/offline detection
             window.addEventListener('online', async function() {
